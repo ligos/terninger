@@ -8,6 +8,8 @@ namespace MurrayGrant.Terninger
 {
     public class TerningerCPRNG
     {
+        public static readonly Uri Website = new Uri("https://bitbucket/ligos/terninger");
+
         // TODO: a way to select your entropy sources & state
         public static Task<TerningerCPRNG> CreateStrictFortuna() { throw new NotImplementedException(); }
         // TODO: a way to select your entropy sources & state & other config

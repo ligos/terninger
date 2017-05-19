@@ -17,6 +17,11 @@ namespace MurrayGrant.Terninger.Helpers
             }
             return result.ToString();
         }
+
+        public static byte ToHexAsciiHighNibble(this byte b) => HexToAsciiByteLookup[((b & 0x000000f0) >> 4)];
+        public static byte ToHexAsciiLowNibble(this byte b) => HexToAsciiByteLookup[(b & 0x0000000f)];
+        private static byte[] HexToAsciiByteLookup = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' }.Select(ch => (byte)ch).ToArray();
+
         public static byte[] ParseFromHexString(this string s)
         {
             var result = new byte[s.Length / 2];
@@ -24,6 +29,16 @@ namespace MurrayGrant.Terninger.Helpers
             {
                 result[i] = Byte.Parse(s.Substring(i * 2, 2));
             }
+            return result;
+        }
+
+        private static HashSet<char> HexDigits = new HashSet<char>(new [] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F' });
+        public static bool IsHexString(this string s)
+        {
+            if (s == null) return false;
+            if (s == "") return false;
+            if (s.Length % 2 != 0) return false;        // Hex strings always have an even number of characters.
+            var result = s.All(ch => HexDigits.Contains(ch));
             return result;
         }
     }
