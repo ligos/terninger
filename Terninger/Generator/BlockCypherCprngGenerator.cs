@@ -111,7 +111,7 @@ namespace MurrayGrant.Terninger.Generator
             Reseed(newKeyData);
 
             // Extra: Counting bytes requested.
-            BytesRequested = BytesRequested + toFill.Length;
+            BytesRequested = BytesRequested + count;
         }
 
         public void Reseed(byte[] newSeed)
