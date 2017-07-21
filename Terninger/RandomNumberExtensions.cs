@@ -9,6 +9,7 @@ namespace MurrayGrant.Terninger
 {
     public static class RandomNumberExtensions
     {
+        #region GetRandomBytes()
         /// <summary>
         /// Generates the requested number of random bytes.
         /// </summary>
@@ -41,26 +42,129 @@ namespace MurrayGrant.Terninger
             }
             return result;
         }
+        #endregion
 
+        #region GetRandomBoolean()
         public static bool GetRandomBoolean(this IRandomNumberGenerator generator)
         {
-            throw new NotImplementedException();
+            var buf = new byte[1];      // PERF: pre-allocate or pool or cache the buffers.
+            generator.FillWithRandomBytes(buf);
+            return buf[0] >= 128;       // Low values of the byte are false, high values are true.
+        }
+        #endregion
+
+
+        // Implementation for GetRandom...() based on http://codereview.stackexchange.com/questions/6304/algorithm-to-convert-random-bytes-to-integers
+        #region GetRandom[U]Int32()
+        public static uint GetRandomUInt32(this IRandomNumberGenerator generator)
+        {
+            var buf = new byte[4];      // PERF: pre-allocate or pool or cache the buffers.
+            generator.FillWithRandomBytes(buf);
+            var i = BitConverter.ToUInt32(buf, 0);
+            return i;
         }
         public static int GetRandomInt32(this IRandomNumberGenerator generator)
         {
-            throw new NotImplementedException();
+            var i = GetRandomUInt32(generator);
+            return (int)(i & (uint)Int32.MaxValue);
+        }
+        public static int GetRandomInt32(this IRandomNumberGenerator generator, int maxExlusive)
+        {
+            if (maxExlusive <= 0) throw new ArgumentOutOfRangeException("maxExlusive", maxExlusive, "maxExlusive must be positive");
+
+            // Let k = (Int32.MaxValue + 1) % maxExcl
+            // Then we want to exclude the top k values in order to get a uniform distribution
+            // You can do the calculations using uints if you prefer to only have one %
+            uint k = (((uint)Int32.MaxValue % (uint)maxExlusive) + (uint)1);
+            var result = GetRandomInt32(generator);
+            while (result > Int32.MaxValue - (int)k)
+                result = GetRandomInt32(generator);
+            return result % maxExlusive;
+        }
+        public static int GetRandomInt32(this IRandomNumberGenerator generator, int minValue, int maxValue)
+        {
+            if (minValue < 0)
+                throw new ArgumentOutOfRangeException("minValue", minValue, "minValue must be non-negative");
+            if (maxValue <= minValue)
+                throw new ArgumentOutOfRangeException("maxValue", maxValue, "maxValue must be greater than minValue");
+            return minValue + GetRandomInt32(generator, maxValue - minValue);
+        }
+        #endregion
+
+        #region GetRandom[U]Int64()
+        public static ulong GetRandomUInt64(this IRandomNumberGenerator generator)
+        {
+            var buf = new byte[8];      // PERF: pre-allocate or pool or cache the buffers.
+            generator.FillWithRandomBytes(buf);
+            ulong i = BitConverter.ToUInt64(buf, 0);
+            return i;
         }
         public static long GetRandomInt64(this IRandomNumberGenerator generator)
         {
-            throw new NotImplementedException();
+            var i = GetRandomUInt64(generator);
+            return (long)(i & (ulong)Int64.MaxValue);
         }
+        public static long GetRandomInt64(this IRandomNumberGenerator generator, long maxExlusive)
+        {
+            if (maxExlusive <= 0) throw new ArgumentOutOfRangeException("maxExlusive", maxExlusive, "maxExlusive must be positive");
+
+            // Let k = (Int64.MaxValue + 1) % maxExcl
+            // Then we want to exclude the top k values in order to get a uniform distribution
+            // You can do the calculations using uints if you prefer to only have one %
+            ulong k = (((ulong)Int64.MaxValue % (ulong)maxExlusive) + (ulong)1);
+            var result = GetRandomInt64(generator);
+            while (result > Int64.MaxValue - (long)k)
+                result = GetRandomInt64(generator);
+            return result % maxExlusive;
+        }
+        public static long GetRandomInt64(this IRandomNumberGenerator generator, long minValue, long maxValue)
+        {
+            if (minValue < 0)
+                throw new ArgumentOutOfRangeException("minValue", minValue, "minValue must be non-negative");
+            if (maxValue <= minValue)
+                throw new ArgumentOutOfRangeException("maxValue", maxValue, "maxValue must be greater than minValue");
+            return minValue + GetRandomInt64(generator, maxValue - minValue);
+        }
+        #endregion
+
+        #region GetRandomSingle|Double|Decimal()
         public static float GetRandomSingle(this IRandomNumberGenerator generator)
         {
-            throw new NotImplementedException();
+            return GetRandomUInt32(generator) * (1.0f / UInt32.MaxValue);
         }
         public static double GetRandomDouble(this IRandomNumberGenerator generator)
         {
-            throw new NotImplementedException();
+            return GetRandomUInt64(generator) * (1.0 / UInt64.MaxValue);
+        }
+        public static decimal GetRandomDecimal(this IRandomNumberGenerator generator)
+        {
+            // Generate 96 bits of randomness for the decimal (which is its full precision).
+            // However, 96 bits will sometimes exceed the required range of 0.0-1.0
+            // Masking off the top bit (giving 95 bits precision) gives a distribution of 0.0-0.25.
+            // And we multiply by 4 to spread that in the range 0.0-1.0 nicely.
+            // Note that the .038m part is based on looking at the final distribution and fitting to right up to the top.
+            // PERF: no loops! Just a bitwise and and decimal multiply.
+            // PERF: cache / reuse the byte array.
+
+            var rawBytes = new byte[12];
+            generator.FillWithRandomBytes(rawBytes);
+
+            var lo = BitConverter.ToInt32(rawBytes, 0);
+            var mid = BitConverter.ToInt32(rawBytes, 4);
+            var hi = BitConverter.ToInt32(rawBytes, 8) & 0x7ffffff;     
+            var d = new decimal(lo, mid, hi, false, 28);
+            d = d * 4.038m;
+            return d;
+        }
+        #endregion
+
+
+        public static Guid GetRandomGuid(this IRandomNumberGenerator generator)
+        {
+            var rawBytes = GetRandomBytes(generator, 16);
+            rawBytes[7] = (byte)(rawBytes[7] & (byte)0x0f | (byte)0x40);        // Set the magic version bits.
+            var result = new Guid(rawBytes);
+            return result;
         }
 
         public static RandomByteStream GetRandomStream(this IRandomNumberGenerator generator)

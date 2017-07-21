@@ -71,6 +71,7 @@
   <ItemGroup>
     <Compile Include="Benchmarks\CrypoOperations.cs" />
     <Compile Include="Benchmarks\CheapEntropy.cs" />
+    <Compile Include="Benchmarks\GenerateNumbers.cs" />
     <Compile Include="Benchmarks\GenerateBlocks.cs" />
     <Compile Include="Benchmarks\CreateGenerator.cs" />
     <Compile Include="Program.cs" />

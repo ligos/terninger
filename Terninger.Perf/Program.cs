@@ -10,7 +10,8 @@ namespace MurrayGrant.Terninger.Perf
     {
         static void Main(string[] args)
         {
-            BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.CrypoOperations>();
+            BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.GenerateNumbers>();
+            //BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.CrypoOperations>();
             //BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.CheapEntropy>();
             //BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.CreateGenerator>();
             //BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.GenerateBlocks>();
