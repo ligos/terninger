@@ -165,7 +165,7 @@ namespace MurrayGrant.Terninger
             // https://en.wikipedia.org/wiki/Universally_unique_identifier
             // https://tools.ietf.org/html/rfc4122
             rawBytes[7] = (byte)(rawBytes[7] & (byte)0x0f | (byte)0x40);        // Set the magic version bits.
-            rawBytes[8] = (byte)(rawBytes[8] & (byte)0x3f | (byte)0x80);        // Set the magic varient bits.
+            rawBytes[8] = (byte)(rawBytes[8] & (byte)0x3f | (byte)0x80);        // Set the magic variant bits.
             var result = new Guid(rawBytes);
             return result;
         }
