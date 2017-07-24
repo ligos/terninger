@@ -272,16 +272,16 @@ namespace MurrayGrant.Terninger.Test
         {
             var prng = new BlockCypherCprngGenerator(new byte[32]);
             // First 10 guids pre-computed based on null seed and default generator.
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "5237d376-ebdf-481b-f298-101006618da8");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "a85070ad-bc17-46b1-4b4c-2f319ecfce98");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "bd067c01-1915-490e-d32b-3181f77d3b42");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "2ca9272f-09d0-4752-3566-63705c348c44");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "7b18e139-41eb-4493-3367-2225c7c86743");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "4862e965-7e07-443f-0ea8-abbcf732c9f3");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "d2c6b7f0-b7a9-425a-e4bf-3b96a2872763");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "e8e26fa6-491e-42c6-e4bd-3aff50e11db0");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "5237d376-ebdf-481b-b298-101006618da8");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "a85070ad-bc17-46b1-8b4c-2f319ecfce98");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "bd067c01-1915-490e-932b-3181f77d3b42");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "2ca9272f-09d0-4752-b566-63705c348c44");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "7b18e139-41eb-4493-b367-2225c7c86743");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "4862e965-7e07-443f-8ea8-abbcf732c9f3");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "d2c6b7f0-b7a9-425a-a4bf-3b96a2872763");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "e8e26fa6-491e-42c6-a4bd-3aff50e11db0");
             Assert.AreEqual(prng.GetRandomGuid().ToString(), "3ecf19b9-f44c-45b1-9ee8-db6d5095f87f");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "7d516699-bcdf-4555-44f5-99d8eba05a0b");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "7d516699-bcdf-4555-84f5-99d8eba05a0b");
         }
         #endregion
 
@@ -336,7 +336,7 @@ namespace MurrayGrant.Terninger.Test
                 for (int i = 0; i < 10000; i++)
                 {
                     var theVal = prng.GetRandomSingle();
-                    Assert.IsTrue(theVal >= 0.0f && theVal <= 1.0f);
+                    Assert.IsTrue(theVal >= 0.0f && theVal < 1.0f);
                     sw.WriteLine(theVal);
                 }
             }
@@ -354,7 +354,7 @@ namespace MurrayGrant.Terninger.Test
                 for (int i = 0; i < 10000; i++)
                 {
                     var theVal = prng.GetRandomDouble();
-                    Assert.IsTrue(theVal >= 0.0 && theVal <= 1.0);
+                    Assert.IsTrue(theVal >= 0.0 && theVal < 1.0);
                     sw.WriteLine(theVal);
                 }
             }
@@ -372,7 +372,7 @@ namespace MurrayGrant.Terninger.Test
                 for (int i = 0; i < 10000; i++)
                 {
                     var theVal = prng.GetRandomDecimal();
-                    Assert.IsTrue(theVal >= 0m && theVal <= 1.0m, "Decimal: " + theVal + ", i: " + i);
+                    Assert.IsTrue(theVal >= 0m && theVal < 1.0m, "Decimal: " + theVal + ", i: " + i);
                     sw.WriteLine(theVal);
                 }
             }
