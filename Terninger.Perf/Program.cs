@@ -10,11 +10,13 @@ namespace MurrayGrant.Terninger.Perf
     {
         static void Main(string[] args)
         {
-            BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.GenerateNumbers>();
-            //BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.CrypoOperations>();
-            //BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.CheapEntropy>();
-            //BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.CreateGenerator>();
-            //BenchmarkDotNet.Running.BenchmarkRunner.Run<Benchmarks.GenerateBlocks>();
+            BenchmarkDotNet.Running.BenchmarkSwitcher.FromTypes(new[] {
+                typeof(Benchmarks.GenerateNumbers),
+                typeof(Benchmarks.GenerateBlocks),
+                typeof(Benchmarks.CreateGenerator),
+                typeof(Benchmarks.CheapEntropy),
+                typeof(Benchmarks.CrypoOperations),
+            }).Run();
         }
     }
 }
