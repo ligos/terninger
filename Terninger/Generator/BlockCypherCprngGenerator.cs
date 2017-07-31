@@ -19,7 +19,7 @@ namespace MurrayGrant.Terninger.Generator
         // C, as specified in 9.4.1
         // A 128 bit integer, and a string of bytes to be encrypted.
         // FUTURE: make a class to encapsulate the counter to allow for counters of different size.
-        private readonly byte[] _CounterData;           
+        private readonly CypherCounter _Counter;           
 
         // FUTURE: make these read only variable based on the cypher passed in.
         private const int _BlockSizeInBytes = 128 / 8;
@@ -39,7 +39,7 @@ namespace MurrayGrant.Terninger.Generator
 
 
         /// <summary>
-        /// Initialise the CPRNG with the given key material.
+        /// Initialise the CPRNG with the given key material, and .
         /// </summary>
         public BlockCypherCprngGenerator(byte[] key) 
         {
@@ -54,7 +54,7 @@ namespace MurrayGrant.Terninger.Generator
                 IV = new byte[_BlockSizeInBytes],
                 Mode = CipherMode.CBC,
             };
-            _CounterData = new byte[_BlockSizeInBytes];
+            _Counter = new CypherCounter(_BlockSizeInBytes);
             _HashFunction = new SHA256Managed();
 
             // Difference from spec: re key our cypher immediately with the supplied key.
@@ -70,8 +70,9 @@ namespace MurrayGrant.Terninger.Generator
                 Array.Clear(_Cypher.Key, 0, _Cypher.Key.Length);
                 Array.Clear(_Cypher.IV, 0, _Cypher.IV.Length);
             }
-            if (_CounterData != null)
-                Array.Clear(_CounterData, 0, _CounterData.Length);
+            if (_Counter != null && !_Counter.Disposed)
+                _Counter.Dispose();
+                
             // Dispose disposable .NET objects
             try { _Cypher.Dispose(); } catch { }
             try { _HashFunction.Dispose(); } catch { }
@@ -128,7 +129,7 @@ namespace MurrayGrant.Terninger.Generator
             // As per spec: Increment the counter data.
             // Implementation specific: this is a separate method to abstract the duel byte[] and Int128 type.
             // FUTURE: make a class to encapsulate the counter to allow for counters of different size.
-            IncrementCounterData();
+            _Counter.Increment();
         }
 
 
@@ -146,42 +147,12 @@ namespace MurrayGrant.Terninger.Generator
             for (int i = 0; i < blockCount; i++)
             {
                 // As per spec: Encrypt and accumulate - but we don't need to concat as we have preallocted the array.
-                var encryptedCount = encryptor.TransformBlock(_CounterData, 0, _CounterData.Length, result, i * _BlockSizeInBytes);
-                Debug.Assert(encryptedCount == _CounterData.Length);
                 // As per spec: Increment the counter
-                IncrementCounterData();
+                _Counter.EncryptAndIncrement(encryptor, result, i);
             }
             // Extra: counting bytes generated.
             BytesGenerated = BytesGenerated + result.Length;
             return result;
-        }
-
-        private void IncrementCounterData()
-        {
-            // Assumption: 16 byte counter data which is incremented in two 64 bit halves.
-            // FUTURE: make a class to encapsulate the counter to allow for counters of different size.
-            try
-            {
-                ulong c1 = BitConverter.ToUInt64(_CounterData, 0) + 1;
-                var c1Bytes = BitConverter.GetBytes(c1);
-                Buffer.BlockCopy(c1Bytes, 0, _CounterData, 0, c1Bytes.Length);
-            }
-            catch (OverflowException)
-            {
-                // Lower half overflowed: increment the upper half and reset lower.
-                try
-                {
-                    ulong c2 = BitConverter.ToUInt64(_CounterData, 8) + 1;
-                    var c2Bytes = BitConverter.GetBytes(c2);
-                    Array.Clear(_CounterData, 0, 8);
-                    Buffer.BlockCopy(c2Bytes, 0, _CounterData, 8, c2Bytes.Length);
-                }
-                catch (OverflowException)
-                {
-                    // Both overflowed: reset counter.
-                    Array.Clear(_CounterData, 0, _CounterData.Length);
-                }
-            }
         }
     }
 }
