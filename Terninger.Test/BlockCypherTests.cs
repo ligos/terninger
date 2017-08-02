@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -21,11 +22,49 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(crng.BytesGenerated, 0L);
             Assert.AreEqual(crng.BytesRequested, 0L);
         }
+        [TestMethod]
+        public void ConstructAesManagedCrng()
+        {
+            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, new AesManaged());
+            // Creating a generator should not actually generate any bytes.
+            Assert.AreEqual(crng.BytesGenerated, 0L);
+            Assert.AreEqual(crng.BytesRequested, 0L);
+        }
+        [TestMethod]
+        public void ConstructAesCspCrng()
+        {
+            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, new AesCryptoServiceProvider());
+            // Creating a generator should not actually generate any bytes.
+            Assert.AreEqual(crng.BytesGenerated, 0L);
+            Assert.AreEqual(crng.BytesRequested, 0L);
+        }
 
         [TestMethod]
         public void GenerateSingleBlock()
         {
             var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            var buffer = new byte[crng.BlockSizeBytes];
+            crng.FillWithRandomBytes(buffer);
+
+            Assert.IsFalse(buffer.All(b => b == 0));
+            Assert.AreEqual(crng.BytesGenerated, buffer.Length + (crng.BlockSizeBytes * 2));
+            Assert.AreEqual(crng.BytesRequested, buffer.Length);
+        }
+        [TestMethod]
+        public void GenerateSingleBlockAesManaged()
+        {
+            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, new AesManaged());
+            var buffer = new byte[crng.BlockSizeBytes];
+            crng.FillWithRandomBytes(buffer);
+
+            Assert.IsFalse(buffer.All(b => b == 0));
+            Assert.AreEqual(crng.BytesGenerated, buffer.Length + (crng.BlockSizeBytes * 2));
+            Assert.AreEqual(crng.BytesRequested, buffer.Length);
+        }
+        [TestMethod]
+        public void GenerateSingleBlockAesCsp()
+        {
+            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, new AesCryptoServiceProvider());
             var buffer = new byte[crng.BlockSizeBytes];
             crng.FillWithRandomBytes(buffer);
 
@@ -44,6 +83,18 @@ namespace MurrayGrant.Terninger.Test
             Assert.IsFalse(buffer.All(b => b == 0));
             Assert.AreEqual(crng.BytesGenerated, buffer.Length + (crng.BlockSizeBytes * 2));
             Assert.AreEqual(crng.BytesRequested, buffer.Length);
+        }
+        [TestMethod]
+        public void AesCyphersProduceSameRandomBlocks()
+        {
+            var crngManaged = new BlockCypherCprngGenerator(_ZeroKey32Bytes, new AesManaged());
+            var crngCsp = new BlockCypherCprngGenerator(_ZeroKey32Bytes, new AesCryptoServiceProvider());
+            var bufferManaged = new byte[crngManaged.BlockSizeBytes * 2];
+            var bufferCsp = new byte[crngManaged.BlockSizeBytes * 2];
+            crngManaged.FillWithRandomBytes(bufferManaged);
+            crngCsp.FillWithRandomBytes(bufferCsp);
+
+            CollectionAssert.AreEqual(bufferManaged, bufferCsp);
         }
 
         [TestMethod]

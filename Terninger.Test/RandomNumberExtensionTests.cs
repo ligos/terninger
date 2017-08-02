@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Text;
+using System.Security.Cryptography;
 
 using MurrayGrant.Terninger;
 using MurrayGrant.Terninger.Generator;

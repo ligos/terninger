@@ -39,21 +39,27 @@ namespace MurrayGrant.Terninger.Generator
 
 
         /// <summary>
-        /// Initialise the CPRNG with the given key material, and .
+        /// Initialise the CPRNG with the given key material, and default cypher (AES).
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key) 
+        public BlockCypherCprngGenerator(byte[] key) : this(key, Aes.Create()) { }
+
+        /// <summary>
+        /// Initialise the CPRNG with the given key material, and specified encryption algorithm.
+        /// </summary>
+        public BlockCypherCprngGenerator(byte[] key, SymmetricAlgorithm encryptionAlgorithm) 
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             if (key.Length != _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(key), $"Key must be ${_KeySizeInBytes} bytes long.");
 
             // Section 9.4.1 - Initialisation
             // Main difference from spec: we accept a key rather than waiting for a Reseed event.
-            _Cypher = new AesManaged() {
-                KeySize = 256,
-                Key = new byte[_KeySizeInBytes],
-                IV = new byte[_BlockSizeInBytes],
-                Mode = CipherMode.CBC,
-            };
+            // TODO: allow for different block and key sizes.
+            encryptionAlgorithm.BlockSize = _BlockSizeInBytes * 8;
+            encryptionAlgorithm.KeySize = _KeySizeInBytes * 8;
+            encryptionAlgorithm.Key = new byte[_KeySizeInBytes];
+            encryptionAlgorithm.IV = new byte[_BlockSizeInBytes];
+            _Cypher = encryptionAlgorithm;
+
             _Counter = new CypherCounter(_BlockSizeInBytes);
             _HashFunction = new SHA256Managed();
 
