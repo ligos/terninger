@@ -28,7 +28,7 @@ namespace MurrayGrant.Terninger.Helpers
             var result = new byte[s.Length / 2];
             for (int i = 0; i < s.Length / 2; i++)
             {
-                result[i] = Byte.Parse(s.Substring(i * 2, 2));
+                result[i] = Byte.Parse(s.Substring(i * 2, 2), System.Globalization.NumberStyles.HexNumber);
             }
             return result;
         }

@@ -157,5 +157,13 @@ namespace MurrayGrant.Terninger.Test
                 new BlockCypherCprngGenerator(new byte[14], new TripleDESCryptoServiceProvider(), SHA256.Create())
             );
         }
+
+        [TestMethod]
+        public void SmallerHashThanCypherKeySizeThrows()
+        {
+            Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+                new BlockCypherCprngGenerator(_ZeroKey32Bytes, Aes.Create(), MD5.Create())
+            );
+        }
     }
 }

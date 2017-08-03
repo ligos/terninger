@@ -18,7 +18,6 @@ namespace MurrayGrant.Terninger.Generator
         // TODO: this will eventually need to be an array of counters to allow for higher encryption performance.
         // However, to be compatible with ICryptoTransform, it needs to remain as a byte[].
         private readonly byte[] _Counter;
-        private readonly Action _Incrementor;
 
         // Counter must always be a multiple of BlockSize.
         public int BlockSizeBytes { get; private set; }
@@ -35,9 +34,6 @@ namespace MurrayGrant.Terninger.Generator
 
             BlockSizeBytes = blockSizeBytes;
             _Counter = counter;
-            if (blockSizeBytes == 16) _Incrementor = IncrementNested16;
-            if (blockSizeBytes == 32) _Incrementor = IncrementNested32;
-            if (blockSizeBytes == 64) _Incrementor = IncrementNested64;
         }
 
         /// <summary>
@@ -51,6 +47,7 @@ namespace MurrayGrant.Terninger.Generator
 
         /// <summary>
         /// Lets you observe the current counter value.
+        /// Primarily for unit testing.
         /// </summary>
         public byte[] GetCounter()
         {
@@ -64,7 +61,14 @@ namespace MurrayGrant.Terninger.Generator
         public void Increment()
         {
             if (Disposed) throw new ObjectDisposedException(nameof(CypherCounter));
-            _Incrementor();
+            try
+            {
+                IncrementLower();
+            }
+            catch (OverflowException)
+            {
+                IncrementNested();
+            }
         }
 
         /// <summary>
@@ -78,33 +82,33 @@ namespace MurrayGrant.Terninger.Generator
             Increment();
         }
 
-        private void IncrementNested16()
+        private void IncrementLower()
         {
-            try
+            // PERF: common case.
+            ulong c = BitConverter.ToUInt64(_Counter, 0) + 1;      // Will throw on overflow.
+            var bytes = BitConverter.GetBytes(c);
+            Buffer.BlockCopy(bytes, 0, _Counter, 0, bytes.Length);
+        }
+        private void IncrementNested()
+        {
+            // PERF: Uncommon case.
+            var maxIterations = _Counter.Length / 8;
+            for (int i = 0; i < maxIterations; i++)
             {
-                ulong c1 = BitConverter.ToUInt64(_Counter, 0) + 1;
-                var c1Bytes = BitConverter.GetBytes(c1);
-                Buffer.BlockCopy(c1Bytes, 0, _Counter, 0, c1Bytes.Length);
-            }
-            catch (OverflowException)
-            {
-                // Lower half overflowed: increment the upper half and reset lower.
                 try
                 {
-                    ulong c2 = BitConverter.ToUInt64(_Counter, 8) + 1;
-                    var c2Bytes = BitConverter.GetBytes(c2);
-                    Array.Clear(_Counter, 0, 8);
-                    Buffer.BlockCopy(c2Bytes, 0, _Counter, 8, c2Bytes.Length);
+                    ulong c = BitConverter.ToUInt64(_Counter, i * 8) + 1;       // Will throw on overflow.
+                    var bytes = BitConverter.GetBytes(c);
+                    Buffer.BlockCopy(bytes, 0, _Counter, i * 8, bytes.Length);
+                    return;     // If this does not overflow, we should break out of the loop.
                 }
                 catch (OverflowException)
                 {
-                    // Both overflowed: reset counter.
-                    Array.Clear(_Counter, 0, _Counter.Length);
+                    // On overflow, clear the chunk we just overflowed on, and loop to increment the next chunk.
+                    Array.Clear(_Counter, i*8, 8);
                 }
             }
         }
-        private void IncrementNested32() { throw new NotImplementedException(); }
-        private void IncrementNested64() { throw new NotImplementedException(); }
 
         private static byte[] CreateCounterWithInitialValue(int blockSizeBytes, ulong value)
         {
