@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 namespace MurrayGrant.Terninger.Helpers
 {
@@ -40,6 +41,27 @@ namespace MurrayGrant.Terninger.Helpers
             if (s.Length % 2 != 0) return false;        // Hex strings always have an even number of characters.
             var result = s.All(ch => HexDigits.Contains(ch));
             return result;
+        }
+
+        /// <summary>
+        /// Ensure the byte array passed in is exactly required bytes in length.
+        /// Longer arrays are trucated, shorter arrays are padded.
+        /// </summary>
+        public static byte[] EnsureArraySize(this byte[] bytes, int requiredSize)
+        {
+            if (bytes == null) throw new ArgumentNullException(nameof(bytes));
+            // Simple case.
+            if (bytes.Length == requiredSize) return bytes;
+            // More bytes than required: truncate.
+            if (bytes.Length > requiredSize) return bytes.Take(requiredSize).ToArray();
+            // Need more bytes than are available: pad with zeros (as we can't magically add extra entropy).
+            if (bytes.Length < requiredSize)
+            {
+                var result = new byte[requiredSize];
+                Buffer.BlockCopy(bytes, 0, result, 0, bytes.Length);
+                return result;
+            }
+            throw new Exception("Unexpected state");
         }
     }
 }

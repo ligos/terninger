@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Security.Cryptography;
 
+using MurrayGrant.Terninger.Helpers;
+
 namespace MurrayGrant.Terninger.Generator
 {
     public class BlockCypherCprngGenerator : IRandomNumberGenerator, IDisposable
@@ -17,15 +19,13 @@ namespace MurrayGrant.Terninger.Generator
         private readonly SymmetricAlgorithm _Cypher;
 
         // C, as specified in 9.4.1
-        // A 128 bit integer, and a string of bytes to be encrypted.
-        // FUTURE: make a class to encapsulate the counter to allow for counters of different size.
+        // A 128, 256 or 512 bit integer, and a string of bytes to be encrypted.
         private readonly CypherCounter _Counter;           
+        
+        private readonly int _BlockSizeInBytes;     // 16, 32 or 64 bytes. Most block cyphers are 16 bytes; Rijndael and HMACs can be longer.
+        private readonly int _KeySizeInBytes;       // 16 or 32 bytes. 16 is allowed for HMACs; but also allows for AES 128.
 
-        // FUTURE: make these read only variable based on the cypher passed in.
-        private const int _BlockSizeInBytes = 128 / 8;
-        private const int _KeySizeInBytes = 256 / 8;
-
-        // SHA256, as specified in 9.4
+        // Defaults to SHA256, as specified in 9.4
         private readonly HashAlgorithm _HashFunction;
 
         private bool _Disposed = false;
@@ -39,30 +39,34 @@ namespace MurrayGrant.Terninger.Generator
 
 
         /// <summary>
-        /// Initialise the CPRNG with the given key material, and default cypher (AES).
+        /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256).
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key) : this(key, Aes.Create()) { }
+        public BlockCypherCprngGenerator(byte[] key) : this(key, Aes.Create(), SHA256.Create()) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, and specified encryption algorithm.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key, SymmetricAlgorithm encryptionAlgorithm) 
+        public BlockCypherCprngGenerator(byte[] key, SymmetricAlgorithm encryptionAlgorithm, HashAlgorithm hashAlgorithm) 
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            if (key.Length != _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(key), $"Key must be ${_KeySizeInBytes} bytes long.");
+            if (encryptionAlgorithm == null) throw new ArgumentNullException(nameof(encryptionAlgorithm));
+            if (hashAlgorithm == null) throw new ArgumentNullException(nameof(hashAlgorithm));
+            _KeySizeInBytes = encryptionAlgorithm.KeySize / 8;
+            _BlockSizeInBytes = encryptionAlgorithm.BlockSize / 8;
+            if (!(_KeySizeInBytes == 16 || _KeySizeInBytes == 32)) throw new ArgumentOutOfRangeException(nameof(encryptionAlgorithm), $"Encryption Algorithm KeySize must be 16 or 32 bytes long.");
+            if (!(_BlockSizeInBytes == 16 || _BlockSizeInBytes == 32 || _BlockSizeInBytes == 64)) throw new ArgumentOutOfRangeException(nameof(encryptionAlgorithm), $"Encryption Algorithm BlockSize must be 16, 32 or 64 bytes long.");
+            if (key.Length != _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(key), $"Key must be {_KeySizeInBytes} bytes long, based on encryption algorithm used.");
+            if (hashAlgorithm.HashSize / 8 < _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(hashAlgorithm), $"Hash Algorithm Size must be at least cypher Key Size (${_KeySizeInBytes} bytes).");
 
             // Section 9.4.1 - Initialisation
             // Main difference from spec: we accept a key rather than waiting for a Reseed event.
-            // TODO: allow for different block and key sizes.
-            encryptionAlgorithm.BlockSize = _BlockSizeInBytes * 8;
-            encryptionAlgorithm.KeySize = _KeySizeInBytes * 8;
             encryptionAlgorithm.Key = new byte[_KeySizeInBytes];
             encryptionAlgorithm.IV = new byte[_BlockSizeInBytes];
             _Cypher = encryptionAlgorithm;
 
             _Counter = new CypherCounter(_BlockSizeInBytes);
-            _HashFunction = new SHA256Managed();
-
+            _HashFunction = hashAlgorithm;
+            
             // Difference from spec: re key our cypher immediately with the supplied key.
             Reseed(key);
         }
@@ -130,14 +134,14 @@ namespace MurrayGrant.Terninger.Generator
 
             // As per spec: Compute new key by combining the current key and new seed material using SHA 256.
             var combinedKeyMaterial = _Cypher.Key.Concat(newSeed).ToArray();
-            _Cypher.Key = _HashFunction.ComputeHash(combinedKeyMaterial).ToArray();
+            _Cypher.Key = _HashFunction.ComputeHash(combinedKeyMaterial).EnsureArraySize(_KeySizeInBytes);
 
             // As per spec: Increment the counter data.
             // Implementation specific: this is a separate method to abstract the duel byte[] and Int128 type.
             // FUTURE: make a class to encapsulate the counter to allow for counters of different size.
             _Counter.Increment();
         }
-
+        
 
         private byte[] GenerateRandomBlocks(int blockCount)
         {
