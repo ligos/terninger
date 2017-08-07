@@ -39,24 +39,26 @@ namespace MurrayGrant.Terninger.Generator
 
 
         /// <summary>
-        /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256).
+        /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), and zero counter.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key) : this(key, Aes.Create(), SHA256.Create()) { }
+        public BlockCypherCprngGenerator(byte[] key) : this(key, Aes.Create(), SHA256.Create(), new CypherCounter(16)) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, and specified encryption algorithm.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key, SymmetricAlgorithm encryptionAlgorithm, HashAlgorithm hashAlgorithm) 
+        public BlockCypherCprngGenerator(byte[] key, SymmetricAlgorithm encryptionAlgorithm, HashAlgorithm hashAlgorithm, CypherCounter initialCounter) 
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             if (encryptionAlgorithm == null) throw new ArgumentNullException(nameof(encryptionAlgorithm));
             if (hashAlgorithm == null) throw new ArgumentNullException(nameof(hashAlgorithm));
+            if (initialCounter == null) throw new ArgumentNullException(nameof(initialCounter));
             _KeySizeInBytes = encryptionAlgorithm.KeySize / 8;
             _BlockSizeInBytes = encryptionAlgorithm.BlockSize / 8;
             if (!(_KeySizeInBytes == 16 || _KeySizeInBytes == 32)) throw new ArgumentOutOfRangeException(nameof(encryptionAlgorithm), $"Encryption Algorithm KeySize must be 16 or 32 bytes long.");
             if (!(_BlockSizeInBytes == 16 || _BlockSizeInBytes == 32 || _BlockSizeInBytes == 64)) throw new ArgumentOutOfRangeException(nameof(encryptionAlgorithm), $"Encryption Algorithm BlockSize must be 16, 32 or 64 bytes long.");
             if (key.Length != _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(key), $"Key must be {_KeySizeInBytes} bytes long, based on encryption algorithm used.");
             if (hashAlgorithm.HashSize / 8 < _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(hashAlgorithm), $"Hash Algorithm Size must be at least cypher Key Size (${_KeySizeInBytes} bytes).");
+            if (initialCounter.BlockSizeBytes != _BlockSizeInBytes) throw new ArgumentOutOfRangeException(nameof(initialCounter), $"Cypher block size must be equal to Encryption Algorithm BlockSize.");
 
             // Section 9.4.1 - Initialisation
             // Main difference from spec: we accept a key rather than waiting for a Reseed event.
@@ -64,7 +66,7 @@ namespace MurrayGrant.Terninger.Generator
             encryptionAlgorithm.IV = new byte[_BlockSizeInBytes];
             _Cypher = encryptionAlgorithm;
 
-            _Counter = new CypherCounter(_BlockSizeInBytes);
+            _Counter = initialCounter;
             _HashFunction = hashAlgorithm;
             
             // Difference from spec: re key our cypher immediately with the supplied key.
