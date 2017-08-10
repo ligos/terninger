@@ -35,6 +35,13 @@ namespace MurrayGrant.Terninger.Generator
             BlockSizeBytes = blockSizeBytes;
             _Counter = counter;
         }
+        /// <summary>
+        /// Creates a random counter using the generator supplied.
+        /// </summary>
+        public static CypherCounter CreateRandom(int blockSizeBytes, IRandomNumberGenerator rand)
+        {
+            return new CypherCounter(blockSizeBytes, rand.GetRandomBytes(blockSizeBytes));
+        }
 
         /// <summary>
         /// Clears the counter and marks it as disposed. Further access to the counter will throw ObjectDisposedException.

@@ -38,6 +38,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EntropySources\CheapEntropy.cs" />
     <Compile Include="Generator\BlockCypherCprngGenerator.cs" />
     <Compile Include="Generator\IRandomNumberGenerator.cs" />
     <Compile Include="Generator\CypherCounter.cs" />

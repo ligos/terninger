@@ -29,48 +29,52 @@ namespace MurrayGrant.Terninger.Perf.Benchmarks
         [Benchmark]
         public DateTime DateTimeUtcNow()
         {
-            // ~33ns on Murray's laptop
+            // ~9ns on Murray's laptop
             return DateTime.UtcNow;
         }
         [Benchmark]
         public long GCTotalMemory()
         {
-            // ~95ns on Murray's laptop
+            // ~40ns on Murray's laptop
             return GC.GetTotalMemory(false);
         }
         [Benchmark]
         public long StopwatchElapsedTicks()
         {
-            // ~75ns on Murray's laptop
+            // ~30ns on Murray's laptop
             return _Stopwatch.ElapsedTicks;
         }
         [Benchmark]
         public long ProcessWorkingSet()
         {
-            // ~30ns on Murray's laptop
+            // ~12ns on Murray's laptop
             return _CurrentProcess.WorkingSet64;
         }
         [Benchmark]
         public long GCCollectionCount()
         {
-            // ~70ns on Murray's laptop
+            // ~24ns on Murray's laptop
             return ((long)GC.CollectionCount(0) << 32)
                 & ((long)GC.CollectionCount(1) ^ (long)GC.CollectionCount(2));
         }
         [Benchmark]
         public long EnvironmentTickCount()
         {
-            // ~11ns on Murray's laptop
+            // ~4ns on Murray's laptop
             return Environment.TickCount;
         }
+
         [Benchmark]
-        public long GetThreadTimes()
+        public byte[] Get16()
         {
-            // ~360ns on Murray's laptop
-            long user;
-            long kernal;
-            GetThreadTimes(_ThisThread, out _, out _, out user, out kernal);
-            return user;
+            // 230ns on Murray's laptop
+            return MurrayGrant.Terninger.EntropySources.CheapEntropy.Get16();
+        }
+        [Benchmark]
+        public byte[] Get32()
+        {
+            // 300ns on Murray's laptop
+            return MurrayGrant.Terninger.EntropySources.CheapEntropy.Get32();
         }
 
 
@@ -81,7 +85,7 @@ namespace MurrayGrant.Terninger.Perf.Benchmarks
             // This looks to create a new process object on each call.
             return Environment.WorkingSet;
         }
-        [Benchmark]
+        //[Benchmark]
         public long[] NetworkStats()
         {
             // ~170us on Murray's laptop
@@ -94,7 +98,7 @@ namespace MurrayGrant.Terninger.Perf.Benchmarks
             _NetstatsArray[5] = stats.UnicastPacketsSent;
             return _NetstatsArray;
         }
-        [Benchmark]
+        //[Benchmark]
         public long[] ProcessStats()
         {
             // ~22us on Murray's laptop
@@ -112,6 +116,17 @@ namespace MurrayGrant.Terninger.Perf.Benchmarks
             _ProcessStatsArray[11] = _CurrentProcess.TotalProcessorTime.Ticks;
             _ProcessStatsArray[12] = _CurrentProcess.PrivilegedProcessorTime.Ticks;
             return _ProcessStatsArray;
+        }
+
+        //[Benchmark]
+        public long GetThreadTimes()
+        {
+            // ~360ns on Murray's laptop
+            // Probably not portable to Linux.
+            long user;
+            long kernal;
+            GetThreadTimes(_ThisThread, out _, out _, out user, out kernal);
+            return user;
         }
 
     }

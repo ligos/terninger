@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using MurrayGrant.Terninger;
 using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.EntropySources;
 
 namespace MurrayGrant.Terninger.Test
 {
@@ -155,6 +156,32 @@ namespace MurrayGrant.Terninger.Test
 
             Assert.IsFalse(buffer.All(b => b == 0));
         }
+
+        [TestMethod]
+        public void SameCypherAndKeyButAdditionalEntropyProduceDifferentRandomBlocks16Bytes()
+        {
+            var crng1 = new BlockCypherCprngGenerator(_ZeroKey32Bytes, Aes.Create(), SHA256.Create(), new CypherCounter(16), CheapEntropy.Get16);
+            var crng2 = new BlockCypherCprngGenerator(_ZeroKey32Bytes, Aes.Create(), SHA256.Create(), new CypherCounter(16), CheapEntropy.Get16);
+            var buffer1 = new byte[crng1.BlockSizeBytes * 2];
+            var buffer2 = new byte[crng2.BlockSizeBytes * 2];
+            crng1.FillWithRandomBytes(buffer1);
+            crng2.FillWithRandomBytes(buffer2);
+
+            CollectionAssert.AreNotEqual(buffer1, buffer2);
+        }
+        [TestMethod]
+        public void SameCypherAndKeyButAdditionalEntropyProduceDifferentRandomBlocks32Bytes()
+        {
+            var crng1 = new BlockCypherCprngGenerator(_ZeroKey32Bytes, Aes.Create(), SHA256.Create(), new CypherCounter(16), CheapEntropy.Get32);
+            var crng2 = new BlockCypherCprngGenerator(_ZeroKey32Bytes, Aes.Create(), SHA256.Create(), new CypherCounter(16), CheapEntropy.Get32);
+            var buffer1 = new byte[crng1.BlockSizeBytes * 2];
+            var buffer2 = new byte[crng2.BlockSizeBytes * 2];
+            crng1.FillWithRandomBytes(buffer1);
+            crng2.FillWithRandomBytes(buffer2);
+
+            CollectionAssert.AreNotEqual(buffer1, buffer2);
+        }
+
 
         [TestMethod]
         public void MismatchedKeyMaterialAndCypherKeySizeThrows()

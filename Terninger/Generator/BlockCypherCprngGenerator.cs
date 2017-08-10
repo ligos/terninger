@@ -26,7 +26,12 @@ namespace MurrayGrant.Terninger.Generator
         private readonly int _KeySizeInBytes;       // 16 or 32 bytes. 16 is allowed for HMACs; but also allows for AES 128.
 
         // Defaults to SHA256, as specified in 9.4
+        // REVIEW: should default hash function be SHA512?
         private readonly HashAlgorithm _HashFunction;
+
+        // Additional to Fortuna spec: an source of cheap entropy which can be injected during re-seeds.
+        // Note: the use of this will make this non-deterministic.
+        private readonly Func<byte[]> _AdditionalEntropyGetter;     
 
         private bool _Disposed = false;
 
@@ -41,12 +46,19 @@ namespace MurrayGrant.Terninger.Generator
         /// <summary>
         /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), and zero counter.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key) : this(key, Aes.Create(), SHA256.Create(), new CypherCounter(16)) { }
+        public BlockCypherCprngGenerator(byte[] key) 
+            : this(key, Aes.Create(), SHA256.Create(), new CypherCounter(16), null) { }
 
         /// <summary>
-        /// Initialise the CPRNG with the given key material, and specified encryption algorithm.
+        /// Initialise the CPRNG with the given key material, specified encryption algorithm and initial counter.
         /// </summary>
         public BlockCypherCprngGenerator(byte[] key, SymmetricAlgorithm encryptionAlgorithm, HashAlgorithm hashAlgorithm, CypherCounter initialCounter) 
+            : this(key, encryptionAlgorithm, hashAlgorithm, initialCounter, null) { }
+
+        /// <summary>
+        /// Initialise the CPRNG with the given key material, specified encryption algorithm, initial counter and additional entropy source.
+        /// </summary>
+        public BlockCypherCprngGenerator(byte[] key, SymmetricAlgorithm encryptionAlgorithm, HashAlgorithm hashAlgorithm, CypherCounter initialCounter, Func<byte[]> additionalEntropyGetter) 
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             if (encryptionAlgorithm == null) throw new ArgumentNullException(nameof(encryptionAlgorithm));
@@ -68,9 +80,31 @@ namespace MurrayGrant.Terninger.Generator
 
             _Counter = initialCounter;
             _HashFunction = hashAlgorithm;
-            
+
+            // If no getter is supplied, we still create a function, which returns null.
+            if (additionalEntropyGetter == null)
+                _AdditionalEntropyGetter = () => null;
+            else
+                _AdditionalEntropyGetter = additionalEntropyGetter;
+
             // Difference from spec: re key our cypher immediately with the supplied key.
             Reseed(key);
+        }
+
+        /// <summary>
+        /// Alternate constructor with named parameters.
+        /// </summary>
+        public BlockCypherCprngGenerator Create(byte[] key, 
+                        SymmetricAlgorithm encryptionAlgorithm = null, 
+                        HashAlgorithm hashAlgorithm = null, 
+                        CypherCounter initialCounter = null, 
+                        Func<byte[]> additionalEntropyGetter = null)
+        {
+            return new BlockCypherCprngGenerator(key,
+                        encryptionAlgorithm ?? Aes.Create(),
+                        hashAlgorithm ?? SHA256.Create(),
+                        initialCounter ?? new CypherCounter(16),
+                        additionalEntropyGetter);
         }
 
         public void Dispose()
@@ -134,13 +168,18 @@ namespace MurrayGrant.Terninger.Generator
             if (newSeed.Length < _Cypher.Key.Length)
                 throw new InvalidOperationException($"New seed data must be at least {_Cypher.Key.Length} bytes.");
 
-            // As per spec: Compute new key by combining the current key and new seed material using SHA 256.
-            var combinedKeyMaterial = _Cypher.Key.Concat(newSeed).ToArray();
-            _Cypher.Key = _HashFunction.ComputeHash(combinedKeyMaterial).EnsureArraySize(_KeySizeInBytes);
+            // As per spec: Compute new key by combining the current key and new seed material.
+            var combinedKeyMaterial = _Cypher.Key.Concat(newSeed);
+            // Additional to spec: add the additional entropy, if any is supplied.
+            var additionalEntropy = _AdditionalEntropyGetter();
+            if (additionalEntropy != null && additionalEntropy.Length > 0)
+                combinedKeyMaterial = combinedKeyMaterial.Concat(additionalEntropy);
+            
+            // Spec says SHA 256 should be used as a hash function. We allow any hash function which produces the cypher key length of bytes.
+            // We ensure the cypher key is of the correct size (as the hash function may return more bytes than required).
+            _Cypher.Key = _HashFunction.ComputeHash(combinedKeyMaterial.ToArray()).EnsureArraySize(_KeySizeInBytes);
 
             // As per spec: Increment the counter data.
-            // Implementation specific: this is a separate method to abstract the duel byte[] and Int128 type.
-            // FUTURE: make a class to encapsulate the counter to allow for counters of different size.
             _Counter.Increment();
         }
         
