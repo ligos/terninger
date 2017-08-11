@@ -24,6 +24,8 @@ namespace MurrayGrant.Terninger.Generator
         
         private readonly int _BlockSizeInBytes;     // 16, 32 or 64 bytes. Most block cyphers are 16 bytes; Rijndael and HMACs can be longer.
         private readonly int _KeySizeInBytes;       // 16 or 32 bytes. 16 is allowed for HMACs; but also allows for AES 128.
+        private readonly int _RekeyBlockCount;      // Number of blocks required to re-key. At least key size.
+        private readonly int _RekeyByteCount;       // Number of bytes required to re-key. At least key size.
 
         // Defaults to SHA256, as specified in 9.4
         // REVIEW: should default hash function be SHA512?
@@ -71,6 +73,8 @@ namespace MurrayGrant.Terninger.Generator
             if (key.Length != _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(key), $"Key must be {_KeySizeInBytes} bytes long, based on encryption algorithm used.");
             if (hashAlgorithm.HashSize / 8 < _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(hashAlgorithm), $"Hash Algorithm Size must be at least cypher Key Size (${_KeySizeInBytes} bytes).");
             if (initialCounter.BlockSizeBytes != _BlockSizeInBytes) throw new ArgumentOutOfRangeException(nameof(initialCounter), $"Cypher block size must be equal to Encryption Algorithm BlockSize.");
+            _RekeyByteCount = _KeySizeInBytes;
+            _RekeyBlockCount = (int)Math.Ceiling((double)_RekeyByteCount / (double)_BlockSizeInBytes);
 
             // Section 9.4.1 - Initialisation
             // Main difference from spec: we accept a key rather than waiting for a Reseed event.
@@ -144,18 +148,18 @@ namespace MurrayGrant.Terninger.Generator
             if (remainder > 0)
                 blocksRequired = blocksRequired + 1;
 
-            // As per spec: generate blocks and copy to output.
+            // As per spec: generate blocks and copy to output, also include enough additional randomness for a re-key of the cypher.
             // In the event the requested bytes are not a multiple of the block size, additional bytes are discarded.
             // PERF: Can this be done without allocating an array in GenerateRandomBlocks()? 
             //       Any partial last block can't be allowed to spill over or escape though.
-            var randomData = GenerateRandomBlocks(blocksRequired);
-            Buffer.BlockCopy(randomData, 0, toFill, offset, count);         // PERF: copying bytes
+            var randomDataPlusNewKeyMaterial = GenerateRandomBlocks(blocksRequired + _RekeyBlockCount);
+            Buffer.BlockCopy(randomDataPlusNewKeyMaterial, 0, toFill, offset, count);         // PERF: copying bytes
 
             // As per spec: After each request for random bytes, rekey to destroy evidence of previous key.
             // This ensures you cannot "rewind" the generator if you discover the key.
             // PERF: could generate this random data at the same time as the data we are returning.
-            var newKeyData = GenerateRandomBlocks(2);
-            Reseed(newKeyData);
+
+            Reseed(randomDataPlusNewKeyMaterial.LastBytes(_RekeyByteCount));
 
             // Extra: Counting bytes requested.
             BytesRequested = BytesRequested + count;

@@ -63,5 +63,17 @@ namespace MurrayGrant.Terninger.Helpers
             }
             throw new Exception("Unexpected state");
         }
+
+        /// <summary>
+        /// Returns a new array with a copy of the last bytes of this array.
+        /// </summary>
+        public static byte[] LastBytes(this byte[] bytes, int count)
+        {
+            if (bytes == null) throw new ArgumentNullException(nameof(bytes));
+            if (bytes.Length < count) throw new ArgumentOutOfRangeException(nameof(count), count, $"Count {count} is larger than bytes {bytes.Length}.");
+            var result = new byte[count];
+            Buffer.BlockCopy(bytes, bytes.Length - count, result, 0, count);
+            return result;
+        }
     }
 }

@@ -48,7 +48,7 @@ namespace MurrayGrant.Terninger.Test
             crng.FillWithRandomBytes(buffer);
 
             Assert.IsFalse(buffer.All(b => b == 0));
-            Assert.AreEqual(crng.BytesGenerated, buffer.Length + (crng.BlockSizeBytes * 2));
+            Assert.AreEqual(crng.BytesGenerated, buffer.Length + 32);
             Assert.AreEqual(crng.BytesRequested, buffer.Length);
         }
 
@@ -60,7 +60,7 @@ namespace MurrayGrant.Terninger.Test
             crng.FillWithRandomBytes(buffer);
 
             Assert.IsFalse(buffer.All(b => b == 0));
-            Assert.AreEqual(crng.BytesGenerated, buffer.Length + (crng.BlockSizeBytes * 2));
+            Assert.AreEqual(crng.BytesGenerated, buffer.Length + 32);
             Assert.AreEqual(crng.BytesRequested, buffer.Length);
         }
 
@@ -76,7 +76,7 @@ namespace MurrayGrant.Terninger.Test
             Assert.IsFalse(buffer1.All(b => b == 0));
             Assert.IsFalse(buffer2.All(b => b == 0));
             Assert.IsFalse(buffer1.SequenceEqual(buffer2));
-            Assert.AreEqual(crng.BytesGenerated, buffer1.Length + buffer2.Length + (crng.BlockSizeBytes * 4));
+            Assert.AreEqual(crng.BytesGenerated, buffer1.Length + buffer2.Length + 64);
             Assert.AreEqual(crng.BytesRequested, buffer1.Length + buffer2.Length);
         }
 
@@ -112,7 +112,7 @@ namespace MurrayGrant.Terninger.Test
             var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
             var result = crng.GetRandomBytes(1);
 
-            Assert.AreEqual(crng.BytesGenerated, crng.BlockSizeBytes + (crng.BlockSizeBytes * 2));
+            Assert.AreEqual(crng.BytesGenerated, crng.BlockSizeBytes + 32);
             Assert.AreEqual(crng.BytesRequested, result.Length);
         }
         [TestMethod]
@@ -121,7 +121,7 @@ namespace MurrayGrant.Terninger.Test
             var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
             var result = crng.GetRandomBytes(4);
 
-            Assert.AreEqual(crng.BytesGenerated, crng.BlockSizeBytes + (crng.BlockSizeBytes * 2));
+            Assert.AreEqual(crng.BytesGenerated, crng.BlockSizeBytes + 32);
             Assert.AreEqual(crng.BytesRequested, result.Length);
         }
 
@@ -131,7 +131,7 @@ namespace MurrayGrant.Terninger.Test
             var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
             var result = crng.GetRandomBytes(crng.MaxRequestBytes);
 
-            Assert.AreEqual(crng.BytesGenerated, crng.MaxRequestBytes + (crng.BlockSizeBytes * 2));
+            Assert.AreEqual(crng.BytesGenerated, crng.MaxRequestBytes + 32);
             Assert.AreEqual(crng.BytesRequested, result.Length);
         }
 
@@ -142,7 +142,7 @@ namespace MurrayGrant.Terninger.Test
             var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
             var result = crng.GetRandomBytes(crng.MaxRequestBytes * 2);
 
-            Assert.AreEqual(crng.BytesGenerated, result.Length + (crng.BlockSizeBytes * 4));
+            Assert.AreEqual(crng.BytesGenerated, result.Length + 64);
             Assert.AreEqual(crng.BytesRequested, result.Length);
         }
     }

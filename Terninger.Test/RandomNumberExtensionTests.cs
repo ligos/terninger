@@ -22,13 +22,13 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(prng.GetRandomBoolean(), false);
             Assert.AreEqual(prng.GetRandomBoolean(), true);
             Assert.AreEqual(prng.GetRandomBoolean(), false);
+            Assert.AreEqual(prng.GetRandomBoolean(), true);
+            Assert.AreEqual(prng.GetRandomBoolean(), true);
+            Assert.AreEqual(prng.GetRandomBoolean(), true);
+            Assert.AreEqual(prng.GetRandomBoolean(), true);
             Assert.AreEqual(prng.GetRandomBoolean(), false);
             Assert.AreEqual(prng.GetRandomBoolean(), false);
             Assert.AreEqual(prng.GetRandomBoolean(), false);
-            Assert.AreEqual(prng.GetRandomBoolean(), true);
-            Assert.AreEqual(prng.GetRandomBoolean(), true);
-            Assert.AreEqual(prng.GetRandomBoolean(), true);
-            Assert.AreEqual(prng.GetRandomBoolean(), true);
         }
 
         [TestMethod]
@@ -61,15 +61,15 @@ namespace MurrayGrant.Terninger.Test
             var prng = new BlockCypherCprngGenerator(new byte[32]);
             // First 10 int32s pre-computed based on null seed and default generator.
             Assert.AreEqual(prng.GetRandomInt32(), 1379390326);
-            Assert.AreEqual(prng.GetRandomInt32(), 676360365);
-            Assert.AreEqual(prng.GetRandomInt32(), 1023835137);
-            Assert.AreEqual(prng.GetRandomInt32(), 749283119);
-            Assert.AreEqual(prng.GetRandomInt32(), 2065228089);
-            Assert.AreEqual(prng.GetRandomInt32(), 1214441829);
-            Assert.AreEqual(prng.GetRandomInt32(), 1388754928);
-            Assert.AreEqual(prng.GetRandomInt32(), 1759670182);
-            Assert.AreEqual(prng.GetRandomInt32(), 1053759929);
-            Assert.AreEqual(prng.GetRandomInt32(), 2102486681);
+            Assert.AreEqual(prng.GetRandomInt32(), 808803495);
+            Assert.AreEqual(prng.GetRandomInt32(), 1400012872);
+            Assert.AreEqual(prng.GetRandomInt32(), 1880550281);
+            Assert.AreEqual(prng.GetRandomInt32(), 440619936);
+            Assert.AreEqual(prng.GetRandomInt32(), 1546239972);
+            Assert.AreEqual(prng.GetRandomInt32(), 922402963);
+            Assert.AreEqual(prng.GetRandomInt32(), 1060928796);
+            Assert.AreEqual(prng.GetRandomInt32(), 1399216208);
+            Assert.AreEqual(prng.GetRandomInt32(), 573248555);
         }
 
         [TestMethod]
@@ -138,15 +138,15 @@ namespace MurrayGrant.Terninger.Test
             var prng = new BlockCypherCprngGenerator(new byte[32]);
             // First 10 int64s pre-computed based on null seed and default generator.
             Assert.AreEqual(prng.GetRandomInt64(), 8654770453312164726L);
-            Assert.AreEqual(prng.GetRandomInt64(), 2788216454113161389L);
-            Assert.AreEqual(prng.GetRandomInt64(), 6417094100205861889L);
-            Assert.AreEqual(prng.GetRandomInt64(), 8597945428310828847L);
-            Assert.AreEqual(prng.GetRandomInt64(), 3788444191187067193L);
-            Assert.AreEqual(prng.GetRandomInt64(), 6070709392463030629L);
-            Assert.AreEqual(prng.GetRandomInt64(), 3628414389813950448L);
-            Assert.AreEqual(prng.GetRandomInt64(), 199927630569566118L);
-            Assert.AreEqual(prng.GetRandomInt64(), 8480828181623806393L);
-            Assert.AreEqual(prng.GetRandomInt64(), 4996107029703648921L);
+            Assert.AreEqual(prng.GetRandomInt64(), 7469550012384763047L);
+            Assert.AreEqual(prng.GetRandomInt64(), 6346881188555292744L);
+            Assert.AreEqual(prng.GetRandomInt64(), 8722054058557762441L);
+            Assert.AreEqual(prng.GetRandomInt64(), 4252649559198749600L);
+            Assert.AreEqual(prng.GetRandomInt64(), 8494673073619451876L);
+            Assert.AreEqual(prng.GetRandomInt64(), 2284073845989752979L);
+            Assert.AreEqual(prng.GetRandomInt64(), 6991606773492514076L);
+            Assert.AreEqual(prng.GetRandomInt64(), 3192783877842557008L);
+            Assert.AreEqual(prng.GetRandomInt64(), 2456647708210566187L);
         }
 
         [TestMethod]
@@ -216,15 +216,15 @@ namespace MurrayGrant.Terninger.Test
             // First 10 singles pre-computed based on null seed and default generator.
             // ToString() to avoid tiny floating point variences.
             Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.3211643f.ToString());
-            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.6574774f.ToString());
-            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.7383802f.ToString());
-            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.1744561f.ToString());
-            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.4808484f.ToString());
-            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.2827593f.ToString());
-            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.8233447f.ToString());
-            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.9097052f.ToString());
-            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.2453476f.ToString());
-            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.4895233f.ToString());
+            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.1883142f.ToString());
+            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.3259659f.ToString());
+            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.4378497f.ToString());
+            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.1025898f.ToString());
+            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.3600121f.ToString());
+            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.7147637f.ToString());
+            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.2470167f.ToString());
+            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.3257804f.ToString());
+            Assert.AreEqual(prng.GetRandomSingle().ToString(), 0.1334698f.ToString());
         }
         #endregion
 
@@ -236,15 +236,15 @@ namespace MurrayGrant.Terninger.Test
             // First 10 doubles pre-computed based on null seed and default generator.
             // ToString() to avoid tiny floating point variences.
             Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.46917604639222.ToString());
-            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.151149516845466.ToString());
-            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.847871368224355.ToString());
-            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.966095555614321.ToString());
-            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.205371971121255.ToString());
-            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.829093815591829.ToString());
-            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.196696738205698.ToString());
-            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.0108380985701701.ToString());
-            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.959746616949641.ToString());
-            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.27083950477874.ToString());
+            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.404925117545834.ToString());
+            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.344065118656951.ToString());
+            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.972823497941217.ToString());
+            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.73053659454514.ToString());
+            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.960497150048616.ToString());
+            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.123819891296971.ToString());
+            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.879015762649248.ToString());
+            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.17308116083168.ToString());
+            Assert.AreEqual(prng.GetRandomDouble().ToString(), 0.633175139113672.ToString());
         }
         #endregion
 
@@ -255,15 +255,15 @@ namespace MurrayGrant.Terninger.Test
             var prng = new BlockCypherCprngGenerator(new byte[32]);
             // First 10 decimals pre-computed based on null seed and default generator.
             Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.0081022815596536704233620207m.ToString());
-            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.1480592500720429064388445555m.ToString());
-            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.1489736693675262188569017973m.ToString());
-            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.0485231652742247921345617727m.ToString());
-            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.6416446104436163547437517015m.ToString());
-            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.5836767421679579593851251028m.ToString());
-            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.7789878883901745069531929859m.ToString());
-            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.9034659559424787395351562491m.ToString());
-            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.7322017876011287533343642467m.ToString());
-            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.0751568266059615199055138280m.ToString());
+            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.1728983696172048659374440412m.ToString());
+            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.2318661609120054862373727728m.ToString());
+            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.9710220444652337970656770995m.ToString());
+            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.3223273427046060035578193842m.ToString());
+            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.7837991975655597542955880597m.ToString());
+            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.2825695350283624777156784656m.ToString());
+            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.0355142980858084371777122560m.ToString());
+            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.4660458244087857635056655073m.ToString());
+            Assert.AreEqual(prng.GetRandomDecimal().ToString(), 0.5297113959815468733341487865m.ToString());
         }
         #endregion
 
@@ -274,15 +274,15 @@ namespace MurrayGrant.Terninger.Test
             var prng = new BlockCypherCprngGenerator(new byte[32]);
             // First 10 guids pre-computed based on null seed and default generator.
             Assert.AreEqual(prng.GetRandomGuid().ToString(), "5237d376-ebdf-481b-b298-101006618da8");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "a85070ad-bc17-46b1-8b4c-2f319ecfce98");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "bd067c01-1915-490e-932b-3181f77d3b42");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "2ca9272f-09d0-4752-b566-63705c348c44");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "7b18e139-41eb-4493-b367-2225c7c86743");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "4862e965-7e07-443f-8ea8-abbcf732c9f3");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "d2c6b7f0-b7a9-425a-a4bf-3b96a2872763");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "e8e26fa6-491e-42c6-a4bd-3aff50e11db0");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "3ecf19b9-f44c-45b1-9ee8-db6d5095f87f");
-            Assert.AreEqual(prng.GetRandomGuid().ToString(), "7d516699-bcdf-4555-84f5-99d8eba05a0b");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "30355ca7-2c29-47a9-842e-62d94c8a38c3");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "53728048-a6d0-4814-88f9-dac1e2714518");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "7016eb89-f5f4-490a-b921-c5078c51a736");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "1a4353a0-723e-4b04-9c48-945ae8c76f27");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "5c29bfe4-2427-45e3-819b-45e6a629a236");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "b6fac093-a90f-4fb2-93d7-42027ade856b");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "3f3c7d1c-2d51-4107-aec0-48e84d676eff");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "53665850-0c05-4c4f-8cb0-bad37e5fdf29");
+            Assert.AreEqual(prng.GetRandomGuid().ToString(), "222b142b-c413-4217-a41b-3d7c2b95dce6");
         }
         #endregion
 
