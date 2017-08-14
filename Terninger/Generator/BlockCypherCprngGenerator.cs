@@ -7,16 +7,17 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 
 using MurrayGrant.Terninger.Helpers;
+using MurrayGrant.Terninger.CryptoPrimitives;
 
 namespace MurrayGrant.Terninger.Generator
 {
     public class BlockCypherCprngGenerator : IRandomNumberGenerator, IDisposable
     {
-        // AES with 256 bit key, as specified in 9.4
+        // A block cypher or keyed hash algorithm.
+        // Default: AES with 256 bit key, as specified in 9.4
         // K, as specified in 9.4.1, is stored in _Cypher.Key
-        // FUTURE: allow any SymmetricAlgorithm
-        // FUTURE: allow any of SymmetricAlgorithm, keyed hash algorithm, or stream cypher.
-        private readonly SymmetricAlgorithm _Cypher;
+        // FUTURE: allow stream cyphers
+        private readonly ICryptoPrimitive _Cypher;
 
         // C, as specified in 9.4.1
         // A 128, 256 or 512 bit integer, and a string of bytes to be encrypted.
@@ -49,25 +50,25 @@ namespace MurrayGrant.Terninger.Generator
         /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), and zero counter.
         /// </summary>
         public BlockCypherCprngGenerator(byte[] key) 
-            : this(key, Aes.Create(), SHA256.Create(), new CypherCounter(16), null) { }
+            : this(key, BlockCypherCryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), null) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, specified encryption algorithm and initial counter.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key, SymmetricAlgorithm encryptionAlgorithm, HashAlgorithm hashAlgorithm, CypherCounter initialCounter) 
+        public BlockCypherCprngGenerator(byte[] key, ICryptoPrimitive encryptionAlgorithm, HashAlgorithm hashAlgorithm, CypherCounter initialCounter) 
             : this(key, encryptionAlgorithm, hashAlgorithm, initialCounter, null) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, specified encryption algorithm, initial counter and additional entropy source.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key, SymmetricAlgorithm encryptionAlgorithm, HashAlgorithm hashAlgorithm, CypherCounter initialCounter, Func<byte[]> additionalEntropyGetter) 
+        public BlockCypherCprngGenerator(byte[] key, ICryptoPrimitive encryptionAlgorithm, HashAlgorithm hashAlgorithm, CypherCounter initialCounter, Func<byte[]> additionalEntropyGetter) 
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             if (encryptionAlgorithm == null) throw new ArgumentNullException(nameof(encryptionAlgorithm));
             if (hashAlgorithm == null) throw new ArgumentNullException(nameof(hashAlgorithm));
             if (initialCounter == null) throw new ArgumentNullException(nameof(initialCounter));
-            _KeySizeInBytes = encryptionAlgorithm.KeySize / 8;
-            _BlockSizeInBytes = encryptionAlgorithm.BlockSize / 8;
+            _KeySizeInBytes = encryptionAlgorithm.KeySizeBytes;
+            _BlockSizeInBytes = encryptionAlgorithm.BlockSizeBytes;
             if (!(_KeySizeInBytes == 16 || _KeySizeInBytes == 32)) throw new ArgumentOutOfRangeException(nameof(encryptionAlgorithm), $"Encryption Algorithm KeySize must be 16 or 32 bytes long.");
             if (!(_BlockSizeInBytes == 16 || _BlockSizeInBytes == 32 || _BlockSizeInBytes == 64)) throw new ArgumentOutOfRangeException(nameof(encryptionAlgorithm), $"Encryption Algorithm BlockSize must be 16, 32 or 64 bytes long.");
             if (key.Length != _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(key), $"Key must be {_KeySizeInBytes} bytes long, based on encryption algorithm used.");
@@ -79,7 +80,6 @@ namespace MurrayGrant.Terninger.Generator
             // Section 9.4.1 - Initialisation
             // Main difference from spec: we accept a key rather than waiting for a Reseed event.
             encryptionAlgorithm.Key = new byte[_KeySizeInBytes];
-            encryptionAlgorithm.IV = new byte[_BlockSizeInBytes];
             _Cypher = encryptionAlgorithm;
 
             _Counter = initialCounter;
@@ -105,7 +105,7 @@ namespace MurrayGrant.Terninger.Generator
                         Func<byte[]> additionalEntropyGetter = null)
         {
             return new BlockCypherCprngGenerator(key,
-                        encryptionAlgorithm ?? Aes.Create(),
+                        BlockCypherCryptoPrimitive.Aes256(),
                         hashAlgorithm ?? SHA256.Create(),
                         initialCounter ?? new CypherCounter(16),
                         additionalEntropyGetter);
@@ -116,10 +116,7 @@ namespace MurrayGrant.Terninger.Generator
             if (_Disposed) return;
             // Zero any key, IV and counter material.
             if (_Cypher != null)
-            {
-                Array.Clear(_Cypher.Key, 0, _Cypher.Key.Length);
-                Array.Clear(_Cypher.IV, 0, _Cypher.IV.Length);
-            }
+                _Cypher.Dispose();
             if (_Counter != null && !_Counter.Disposed)
                 _Counter.Dispose();
                 

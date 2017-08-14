@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using MurrayGrant.Terninger;
 using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.CryptoPrimitives;
 
 namespace MurrayGrant.Terninger.Test
 {
@@ -26,7 +27,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ConstructAesManagedCrng()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, new AesManaged(), SHA256.Create(), new CypherCounter(16));
+            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Managed(), SHA256.Create(), new CypherCounter(16));
             // Creating a generator should not actually generate any bytes.
             Assert.AreEqual(crng.BytesGenerated, 0L);
             Assert.AreEqual(crng.BytesRequested, 0L);
@@ -34,7 +35,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ConstructAesCspCrng()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, new AesCryptoServiceProvider(), SHA256.Create(), new CypherCounter(16));
+            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, new BlockCypherCryptoPrimitive(new AesCryptoServiceProvider()), SHA256.Create(), new CypherCounter(16));
             // Creating a generator should not actually generate any bytes.
             Assert.AreEqual(crng.BytesGenerated, 0L);
             Assert.AreEqual(crng.BytesRequested, 0L);

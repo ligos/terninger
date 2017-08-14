@@ -38,8 +38,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CryptoPrimitives\CryptoPrimitive.cs" />
+    <Compile Include="CryptoPrimitives\BlockCypherCryptoPrimitive.cs" />
     <Compile Include="EntropySources\CheapEntropy.cs" />
     <Compile Include="Generator\BlockCypherCprngGenerator.cs" />
+    <Compile Include="CryptoPrimitives\ICryptoPrimitive.cs" />
     <Compile Include="Generator\IRandomNumberGenerator.cs" />
     <Compile Include="Generator\CypherCounter.cs" />
     <Compile Include="Generator\RandomByteStream.cs" />
