@@ -29,8 +29,7 @@ namespace MurrayGrant.Terninger.Generator
         private readonly int _RekeyBlockCount;      // Number of blocks required to re-key. At least key size.
         private readonly int _RekeyByteCount;       // Number of bytes required to re-key. At least key size.
 
-        // Defaults to SHA256, as specified in 9.4
-        // REVIEW: should default hash function be SHA512?
+        // Defaults to SHA512; section 9.4 specifies SHA256 as default, but SHA512 should work in all cases and provide no worse entropy.
         private readonly HashAlgorithm _HashFunction;
 
         // Additional to Fortuna spec: an source of cheap entropy which can be injected during re-seeds.
@@ -50,13 +49,13 @@ namespace MurrayGrant.Terninger.Generator
         /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), and zero counter.
         /// </summary>
         public CypherBasedPrngGenerator(byte[] key) 
-            : this(key, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), null) { }
+            : this(key, CryptoPrimitive.Aes256(), SHA512.Create(), new CypherCounter(16), null) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), zero counter and supplied additional entropy source.
         /// </summary>
         public CypherBasedPrngGenerator(byte[] key, Func<byte[]> additionalEntropyGetter)
-            : this(key, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), additionalEntropyGetter) { }
+            : this(key, CryptoPrimitive.Aes256(), SHA512.Create(), new CypherCounter(16), additionalEntropyGetter) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, specified encryption algorithm and initial counter.
@@ -105,14 +104,14 @@ namespace MurrayGrant.Terninger.Generator
         /// Alternate constructor with named parameters.
         /// </summary>
         public static CypherBasedPrngGenerator Create(byte[] key, 
-                        SymmetricAlgorithm encryptionAlgorithm = null, 
+                        ICryptoPrimitive cryptoPrimitive = null, 
                         HashAlgorithm hashAlgorithm = null, 
                         CypherCounter initialCounter = null, 
                         Func<byte[]> additionalEntropyGetter = null)
         {
             return new CypherBasedPrngGenerator(key,
-                        CryptoPrimitive.Aes256(),
-                        hashAlgorithm ?? SHA256.Create(),
+                        cryptoPrimitive ?? CryptoPrimitive.Aes256(),
+                        hashAlgorithm ?? SHA512.Create(),
                         initialCounter ?? new CypherCounter(16),
                         additionalEntropyGetter);
         }

@@ -9,6 +9,8 @@ using System.Security.Cryptography;
 
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.CryptoPrimitives;
+using MurrayGrant.Terninger.EntropySources;
 
 using Con = System.Console;
 
@@ -23,11 +25,32 @@ namespace MurrayGrant.Terninger.Console
         static OutputStyle outputStyle = OutputStyle.Hex;
         static bool quiet = false;
 
-        
+        static bool nonDeterministic = false;       // Will inject additional entropy into the generator based on timing & memory.
+        static CryptoPrimitiveOption cryptoPrimitive = CryptoPrimitiveOption.Default;
+        static HashAlgorithmOption hashAlgorithm = HashAlgorithmOption.Default;
+        static bool useNativeCrypto = false;        // If true, will use CSP / CNG versions of the crypto primitives, if available.
+
         public enum OutputStyle
         {
             Hex = 1,
             Binary,
+        }
+
+        public enum CryptoPrimitiveOption
+        {
+            Default = 0,
+            Aes128,
+            Aes256,
+            Sha256,
+            Sha512,
+            HmacSha256,
+            HmacSha512,
+        }
+        public enum HashAlgorithmOption
+        {
+            Default = 0,
+            Sha256,
+            Sha512,
         }
 
         private static readonly int OutBufferSize = 32 * 1024;
@@ -79,9 +102,11 @@ namespace MurrayGrant.Terninger.Console
             var seedAndSource = DeriveSeed();
             var outStreamAndTarget = GetOutputStream();
             var outputWriter = GetOutputWriter();
+            var generatorAndSource = CreateRandomGenerator(seedAndSource.Item1);
             if (!quiet)
             {
                 Con.WriteLine("Generating {0:N0} random bytes as {1} output.", byteCount, outputStyle);
+                Con.WriteLine("Source: {0}", generatorAndSource.Item2);
                 Con.WriteLine("Seed source: {0}", seedAndSource.Item2);
                 Con.WriteLine("Output target: {0}", outStreamAndTarget.Item2);
                 if (outFile == "")
@@ -90,9 +115,9 @@ namespace MurrayGrant.Terninger.Console
             }
 
             long generatedBytes = 0L;
+            var rng = generatorAndSource.Item1;
             var sw = Stopwatch.StartNew();      // Start the clock for a basic measure of performance.
             using (var outStream = outStreamAndTarget.Item1)
-            using (var crng = new CypherBasedPrngGenerator(seedAndSource.Item1))
             {
                 long remaining = byteCount;
 
@@ -100,7 +125,7 @@ namespace MurrayGrant.Terninger.Console
                 byte[] buf = new byte[OutBufferSize];
                 while (remaining > buf.Length)
                 {
-                    crng.FillWithRandomBytes(buf);          // Fill one buffer with randomness.
+                    rng.FillWithRandomBytes(buf);          // Fill one buffer with randomness.
                     generatedBytes = generatedBytes + buf.Length;   // Increment counter.
                     outputWriter(outStream, buf);           // Write the buffer to out output stream.
                     remaining = remaining - buf.Length;     // Decrement remaining.
@@ -113,7 +138,7 @@ namespace MurrayGrant.Terninger.Console
                 if (!_CancelSignalled && remaining > 0L)
                 {
                     buf = new byte[(int)remaining];
-                    crng.FillWithRandomBytes(buf);
+                    rng.FillWithRandomBytes(buf);
                     generatedBytes = generatedBytes + buf.Length;
                     outputWriter(outStream, buf);
                 }
@@ -133,26 +158,27 @@ namespace MurrayGrant.Terninger.Console
 
         private static Tuple<byte[], string> DeriveSeed()
         {
+            var seedLength = GetKeysizeBytesForCryptoPrimitive();
             if (String.IsNullOrEmpty(seed))
                 // No seed: use null array.
-                return Tuple.Create(new byte[32], "Null seed - WARNING, INSECURE: the following random numbers are always the same.");
-            if (seed.IsHexString() && seed.Length == 64)
-                // A 32 byte seed as hex string.
-                return Tuple.Create(seed.ParseFromHexString(), "32 byte hex seed.");
+                return Tuple.Create(new byte[seedLength], "Null seed - WARNING, INSECURE: the following random numbers are always the same.");
+            if (seed.IsHexString() && seed.Length == seedLength * 2)
+                // A hex string of required bytes.
+                return Tuple.Create(seed.ParseFromHexString(), $"{seedLength} byte hex seed.");
             else if (File.Exists(seed))
             {
-                // A file reference: get the SHA256 hash of it as a seed.
+                // A file reference: get the SHA512 hash of it as a seed.
                 using (var stream = new FileStream(seed, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024))
                     return Tuple.Create(
-                            new SHA256Managed().ComputeHash(stream), 
-                            "SHA256 hash of file."
+                            new SHA512Managed().ComputeHash(stream).EnsureArraySize(seedLength), 
+                            "SHA512 hash of file."
                         );
             }
             else
                 // Assume a random set of characters: get the SHA256 hash of the UTF8 string as a seed.
                 return Tuple.Create(
-                        new SHA256Managed().ComputeHash(Encoding.UTF8.GetBytes(seed)),
-                        "SHA256 hash of random string / password / passphrase."
+                        new SHA512Managed().ComputeHash(Encoding.UTF8.GetBytes(seed)).EnsureArraySize(seedLength),
+                        "SHA512 hash of random string / password / passphrase."
                     );
         }
 
@@ -189,6 +215,71 @@ namespace MurrayGrant.Terninger.Console
                 throw new Exception("Unexpected outputStyle: " + outputStyle);
         }
 
+        private static Tuple<IRandomNumberGenerator, string> CreateRandomGenerator(byte[] key)
+        {
+            var primitive = GetCryptoPrimitive();
+            var hash = GetHashAlgorithm();
+            var counter = new CypherCounter(primitive.BlockSizeBytes);
+            var entropyGetter = GetEntropyGetter();
+            var result = (IRandomNumberGenerator)CypherBasedPrngGenerator.Create(key, primitive, hash, counter, entropyGetter);
+            return Tuple.Create(result, $"{(nonDeterministic ? "non-" : "")}deterministic PRNG, using crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}");
+        }
+
+        private static ICryptoPrimitive GetCryptoPrimitive()
+        {
+            if ((cryptoPrimitive == CryptoPrimitiveOption.Default || cryptoPrimitive == CryptoPrimitiveOption.Aes256) && useNativeCrypto)
+                return CryptoPrimitive.Aes256Native();
+            else if ((cryptoPrimitive == CryptoPrimitiveOption.Default || cryptoPrimitive == CryptoPrimitiveOption.Aes256) && !useNativeCrypto)
+                return CryptoPrimitive.Aes256Managed();
+            else if (cryptoPrimitive == CryptoPrimitiveOption.Aes128 && useNativeCrypto)
+                return CryptoPrimitive.Aes128Native();
+            else if (cryptoPrimitive == CryptoPrimitiveOption.Aes128 && !useNativeCrypto)
+                return CryptoPrimitive.Aes128Managed();
+
+            else if (cryptoPrimitive == CryptoPrimitiveOption.Sha256 && useNativeCrypto)
+                return CryptoPrimitive.Sha256Native();
+            else if (cryptoPrimitive == CryptoPrimitiveOption.Sha256 && !useNativeCrypto)
+                return CryptoPrimitive.Sha256Managed();
+            else if (cryptoPrimitive == CryptoPrimitiveOption.Sha512 && useNativeCrypto)
+                return CryptoPrimitive.Sha512Native();
+            else if (cryptoPrimitive == CryptoPrimitiveOption.Sha512 && !useNativeCrypto)
+                return CryptoPrimitive.Sha512Managed();
+
+            else if (cryptoPrimitive == CryptoPrimitiveOption.HmacSha256)
+                return CryptoPrimitive.HmacSha256();
+            else if (cryptoPrimitive == CryptoPrimitiveOption.HmacSha512)
+                return CryptoPrimitive.HmacSha512();
+
+            else
+                throw new Exception("Unknown crypto primitive: " + cryptoPrimitive);
+        }
+        private static HashAlgorithm GetHashAlgorithm()
+        {
+            if ((hashAlgorithm == HashAlgorithmOption.Default || hashAlgorithm == HashAlgorithmOption.Sha512) && useNativeCrypto)
+                return new SHA512Cng();
+            else if ((hashAlgorithm == HashAlgorithmOption.Default || hashAlgorithm == HashAlgorithmOption.Sha512) && !useNativeCrypto)
+                return new SHA512Managed();
+            else if (hashAlgorithm == HashAlgorithmOption.Sha256 && useNativeCrypto)
+                return new SHA256Cng();
+            else if (hashAlgorithm == HashAlgorithmOption.Sha256 && !useNativeCrypto)
+                return new SHA256Managed();
+
+            else
+                throw new Exception("Unknown hash algorithm: " + hashAlgorithm);
+        }
+        private static Func<byte[]> GetEntropyGetter()
+        {
+            if (nonDeterministic)
+                return CheapEntropy.Get16;
+            else
+                return CheapEntropy.GetNull;
+        }
+
+        private static int GetKeysizeBytesForCryptoPrimitive()
+        {
+            return GetCryptoPrimitive().KeySizeBytes;
+        }
+
         private static bool ParseCommandLine(string[] args)
         {
             for (int i = 0; i < args.Length; i++)
@@ -209,6 +300,11 @@ namespace MurrayGrant.Terninger.Console
                         Con.WriteLine("ByteCount option '{0}' must be at least 1.", args[i + 1]);
                         return false;
                     }
+                    i++;
+                }
+                else if (arg == "s" || arg == "seed")
+                {
+                    seed = args[i + 1];
                     i++;
                 }
                 else if (arg == "s" || arg == "seed")
@@ -244,6 +340,32 @@ namespace MurrayGrant.Terninger.Console
                 {
                     quiet = true;
                 }
+                else if (arg == "nd" || arg == "nondeterministic")
+                {
+                    nonDeterministic = true;
+                }
+                else if (arg == "n" || arg == "native")
+                {
+                    useNativeCrypto = true;
+                }
+                else if (arg == "cp" || arg == "cryptoprimitive")
+                {
+                    if (!Enum.TryParse<CryptoPrimitiveOption>(args[i + 1], true, out cryptoPrimitive))
+                    {
+                        Con.WriteLine("Unknown 'cryptoPrimitive' option '{0}'.", args[i + 1]);
+                        return false;
+                    }
+                    i++;
+                }
+                else if (arg == "ha" || arg == "hashAlgorithm")
+                {
+                    if (!Enum.TryParse<HashAlgorithmOption>(args[i + 1], true, out hashAlgorithm))
+                    {
+                        Con.WriteLine("Unknown 'hashAlgorithm' option '{0}'.", args[i + 1]);
+                        return false;
+                    }
+                    i++;
+                }
                 else if (arg == "h" || arg == "?" || arg == "help")
                 {
                     PrintUsage();
@@ -270,6 +392,9 @@ namespace MurrayGrant.Terninger.Console
             Con.WriteLine("  --outNull             Output is discarded");
             Con.WriteLine("  --outStyle xxx        Output style (default: {0})", outputStyle);
             Con.WriteLine("             xxx =        [hex|binary]");
+            Con.WriteLine("  -nd --nonDeterministic  Injects timing / memory based entropy");
+            Con.WriteLine("  -n --native           Uses native crypto modules, if available");
+            Con.WriteLine("  -cp --cryptoPrimitive Determines crypto primitive to use (default: AES256)");
             Con.WriteLine();
             Con.WriteLine("  -q --quiet            Does not display any status messages (default: {0})", quiet ? "hide" : "show");
             Con.WriteLine("  -h -? --help          Displays this message ");

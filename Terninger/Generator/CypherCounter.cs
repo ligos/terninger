@@ -85,6 +85,8 @@ namespace MurrayGrant.Terninger.Generator
         {
             if (Disposed) throw new ObjectDisposedException(nameof(CypherCounter));
             var encryptedCount = cypher.TransformBlock(_Counter, 0, _Counter.Length, buffer, BlockSizeBytes * blockNumber);
+            if (encryptedCount != _Counter.Length)
+                throw new Exception($"Assert failed: encrypted byte count ({encryptedCount}) != counter size ({_Counter.Length})");
             Increment();
         }
 

@@ -3,3 +3,4 @@ syntax: glob
 packages/*
 */bin/*
 */obj/*
+*.user

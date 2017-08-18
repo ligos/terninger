@@ -52,10 +52,12 @@ namespace MurrayGrant.Terninger.CryptoPrimitives
         {
             private readonly HashAlgorithm _Hash;
             private readonly byte[] _KeyAndData;
+            private readonly int _DataOffset;
             internal HashAndKeyTransform(HashAlgorithm hash, byte[] key)
             {
                 _Hash = hash;
                 _KeyAndData = new byte[key.Length * 2];
+                _DataOffset = key.Length;
                 Buffer.BlockCopy(key, 0, _KeyAndData, 0, key.Length);
             }
 
@@ -72,10 +74,10 @@ namespace MurrayGrant.Terninger.CryptoPrimitives
             public int TransformBlock(byte[] inputBuffer, int inputOffset, int inputCount, byte[] outputBuffer, int outputOffset)
             {
                 // Incorporate the key and input into a single buffer, then hash.
-                Buffer.BlockCopy(inputBuffer, inputOffset, _KeyAndData, inputOffset, inputCount);
+                Buffer.BlockCopy(inputBuffer, inputOffset, _KeyAndData, _DataOffset, inputCount);
                 var hashed = _Hash.ComputeHash(_KeyAndData);
-                Buffer.BlockCopy(hashed, 0, outputBuffer, 0, hashed.Length);
-                return outputBuffer.Length;
+                Buffer.BlockCopy(hashed, 0, outputBuffer, outputOffset, hashed.Length);
+                return inputCount;
             }
 
             public byte[] TransformFinalBlock(byte[] inputBuffer, int inputOffset, int inputCount)

@@ -85,8 +85,8 @@ namespace MurrayGrant.Terninger.CryptoPrimitives
             public int TransformBlock(byte[] inputBuffer, int inputOffset, int inputCount, byte[] outputBuffer, int outputOffset)
             {
                 var hashed = _Hash.ComputeHash(inputBuffer, inputOffset, inputCount);
-                Buffer.BlockCopy(hashed, 0, outputBuffer, 0, hashed.Length);
-                return outputBuffer.Length;
+                Buffer.BlockCopy(hashed, 0, outputBuffer, outputOffset, hashed.Length);
+                return inputCount;
             }
 
             public byte[] TransformFinalBlock(byte[] inputBuffer, int inputOffset, int inputCount)

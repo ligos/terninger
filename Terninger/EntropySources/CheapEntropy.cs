@@ -81,6 +81,14 @@ namespace MurrayGrant.Terninger.EntropySources
             return result;
         }
 
+        /// <summary>
+        /// Gets a null result.
+        /// </summary>
+        public static byte[] GetNull()
+        {
+            return null;
+        }
+
         private static void EnsureThreadStaticsInitialised()
         {
             if (_Stopwatch == null)
