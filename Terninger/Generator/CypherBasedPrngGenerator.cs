@@ -11,20 +11,21 @@ using MurrayGrant.Terninger.CryptoPrimitives;
 
 namespace MurrayGrant.Terninger.Generator
 {
-    public class BlockCypherCprngGenerator : IRandomNumberGenerator, IDisposable
+    public class CypherBasedPrngGenerator : IRandomNumberGenerator, IDisposable
     {
         // A block cypher or keyed hash algorithm.
         // Default: AES with 256 bit key, as specified in 9.4
         // K, as specified in 9.4.1, is stored in _Cypher.Key
+        // Hash and HMAC based primitives are also supported.
         // FUTURE: allow stream cyphers
-        private readonly ICryptoPrimitive _Cypher;
+        private readonly ICryptoPrimitive _CryptoPrimitive;
 
         // C, as specified in 9.4.1
         // A 128, 256 or 512 bit integer, and a string of bytes to be encrypted.
         private readonly CypherCounter _Counter;           
         
         private readonly int _BlockSizeInBytes;     // 16, 32 or 64 bytes. Most block cyphers are 16 bytes; Rijndael, HMACs and hashes can be longer.
-        private readonly int _KeySizeInBytes;       // 16 or 32 bytes. 16 is allowed for HMACs; but also allows for AES 128.
+        private readonly int _KeySizeInBytes;       // 16 or 32 bytes. 16 bytes allows for AES 128.
         private readonly int _RekeyBlockCount;      // Number of blocks required to re-key. At least key size.
         private readonly int _RekeyByteCount;       // Number of bytes required to re-key. At least key size.
 
@@ -41,7 +42,6 @@ namespace MurrayGrant.Terninger.Generator
         public int MaxRequestBytes => 2 << 20;      // As sepecified in 9.4.4.
         public int BlockSizeBytes => _BlockSizeInBytes;
 
-        // TODO: these should be bigger than longs; at least the same size as _CounterData
         public long BytesRequested { get; private set; }
         public long BytesGenerated { get; private set; }
 
@@ -49,25 +49,25 @@ namespace MurrayGrant.Terninger.Generator
         /// <summary>
         /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), and zero counter.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key) 
+        public CypherBasedPrngGenerator(byte[] key) 
             : this(key, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), null) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), zero counter and supplied additional entropy source.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key, Func<byte[]> additionalEntropyGetter)
+        public CypherBasedPrngGenerator(byte[] key, Func<byte[]> additionalEntropyGetter)
             : this(key, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), additionalEntropyGetter) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, specified encryption algorithm and initial counter.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key, ICryptoPrimitive cryptoPrimitive, HashAlgorithm hashAlgorithm, CypherCounter initialCounter) 
+        public CypherBasedPrngGenerator(byte[] key, ICryptoPrimitive cryptoPrimitive, HashAlgorithm hashAlgorithm, CypherCounter initialCounter) 
             : this(key, cryptoPrimitive, hashAlgorithm, initialCounter, null) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, specified encryption algorithm, initial counter and additional entropy source.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key, ICryptoPrimitive cryptoPrimitive, HashAlgorithm hashAlgorithm, CypherCounter initialCounter, Func<byte[]> additionalEntropyGetter) 
+        public CypherBasedPrngGenerator(byte[] key, ICryptoPrimitive cryptoPrimitive, HashAlgorithm hashAlgorithm, CypherCounter initialCounter, Func<byte[]> additionalEntropyGetter) 
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
             if (cryptoPrimitive == null) throw new ArgumentNullException(nameof(cryptoPrimitive));
@@ -86,7 +86,7 @@ namespace MurrayGrant.Terninger.Generator
             // Section 9.4.1 - Initialisation
             // Main difference from spec: we accept a key rather than waiting for a Reseed event.
             cryptoPrimitive.Key = new byte[_KeySizeInBytes];
-            _Cypher = cryptoPrimitive;
+            _CryptoPrimitive = cryptoPrimitive;
 
             _Counter = initialCounter;
             _HashFunction = hashAlgorithm;
@@ -104,13 +104,13 @@ namespace MurrayGrant.Terninger.Generator
         /// <summary>
         /// Alternate constructor with named parameters.
         /// </summary>
-        public static BlockCypherCprngGenerator Create(byte[] key, 
+        public static CypherBasedPrngGenerator Create(byte[] key, 
                         SymmetricAlgorithm encryptionAlgorithm = null, 
                         HashAlgorithm hashAlgorithm = null, 
                         CypherCounter initialCounter = null, 
                         Func<byte[]> additionalEntropyGetter = null)
         {
-            return new BlockCypherCprngGenerator(key,
+            return new CypherBasedPrngGenerator(key,
                         CryptoPrimitive.Aes256(),
                         hashAlgorithm ?? SHA256.Create(),
                         initialCounter ?? new CypherCounter(16),
@@ -121,13 +121,13 @@ namespace MurrayGrant.Terninger.Generator
         {
             if (_Disposed) return;
             // Zero any key, IV and counter material.
-            if (_Cypher != null)
-                _Cypher.Dispose();
+            if (_CryptoPrimitive != null)
+                _CryptoPrimitive.Dispose();
             if (_Counter != null && !_Counter.Disposed)
                 _Counter.Dispose();
                 
             // Dispose disposable .NET objects
-            try { _Cypher.Dispose(); } catch { }
+            try { _CryptoPrimitive.Dispose(); } catch { }
             try { _HashFunction.Dispose(); } catch { }
             _Disposed = true;
         }
@@ -172,11 +172,11 @@ namespace MurrayGrant.Terninger.Generator
         {
             // Section 9.4.2 - Reseed
             if (newSeed == null) throw new ArgumentNullException(nameof(newSeed));
-            if (newSeed.Length < _Cypher.Key.Length)
-                throw new InvalidOperationException($"New seed data must be at least {_Cypher.Key.Length} bytes.");
+            if (newSeed.Length < _CryptoPrimitive.Key.Length)
+                throw new InvalidOperationException($"New seed data must be at least {_CryptoPrimitive.Key.Length} bytes.");
 
             // As per spec: Compute new key by combining the current key and new seed material.
-            var combinedKeyMaterial = _Cypher.Key.Concat(newSeed);
+            var combinedKeyMaterial = _CryptoPrimitive.Key.Concat(newSeed);
             // Additional to spec: add the additional entropy, if any is supplied.
             var additionalEntropy = _AdditionalEntropyGetter();
             if (additionalEntropy != null && additionalEntropy.Length > 0)
@@ -184,7 +184,7 @@ namespace MurrayGrant.Terninger.Generator
             
             // Spec says SHA 256 should be used as a hash function. We allow any hash function which produces the cypher key length of bytes.
             // We ensure the cypher key is of the correct size (as the hash function may return more bytes than required).
-            _Cypher.Key = _HashFunction.ComputeHash(combinedKeyMaterial.ToArray()).EnsureArraySize(_KeySizeInBytes);
+            _CryptoPrimitive.Key = _HashFunction.ComputeHash(combinedKeyMaterial.ToArray()).EnsureArraySize(_KeySizeInBytes);
 
             // As per spec: Increment the counter data.
             _Counter.Increment();
@@ -200,7 +200,7 @@ namespace MurrayGrant.Terninger.Generator
             var result = new byte[blockCount * _BlockSizeInBytes];
 
             // PERF: there is non-trivial overhead in CreateEncryptor()
-            var encryptor = _Cypher.CreateEncryptor();
+            var encryptor = _CryptoPrimitive.CreateEncryptor();
             // Append the necessary blocks.
             for (int i = 0; i < blockCount; i++)
             {

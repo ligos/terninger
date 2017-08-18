@@ -19,7 +19,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ConstructDefaultCrng()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             // Creating a generator should not actually generate any bytes.
             Assert.AreEqual(crng.BytesGenerated, 0L);
             Assert.AreEqual(crng.BytesRequested, 0L);
@@ -27,7 +27,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ConstructAesManagedCrng()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Managed(), SHA256.Create(), new CypherCounter(16));
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Managed(), SHA256.Create(), new CypherCounter(16));
             // Creating a generator should not actually generate any bytes.
             Assert.AreEqual(crng.BytesGenerated, 0L);
             Assert.AreEqual(crng.BytesRequested, 0L);
@@ -35,7 +35,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ConstructAesCspCrng()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Native(), SHA256.Create(), new CypherCounter(16));
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Native(), SHA256.Create(), new CypherCounter(16));
             // Creating a generator should not actually generate any bytes.
             Assert.AreEqual(crng.BytesGenerated, 0L);
             Assert.AreEqual(crng.BytesRequested, 0L);
@@ -44,7 +44,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateSingleBlock()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             var buffer = new byte[crng.BlockSizeBytes];
             crng.FillWithRandomBytes(buffer);
 
@@ -56,7 +56,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateTwoBlocksInOneRequest()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             var buffer = new byte[crng.BlockSizeBytes * 2];
             crng.FillWithRandomBytes(buffer);
 
@@ -68,7 +68,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateTwoBlocksInTwoRequests()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             var buffer1 = new byte[crng.BlockSizeBytes * 2];
             var buffer2 = new byte[crng.BlockSizeBytes * 2];
             crng.FillWithRandomBytes(buffer1);
@@ -84,8 +84,8 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GeneratorsWithSameKeyYieldSameResult()
         {
-            var crng1 = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
-            var crng2 = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            var crng1 = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            var crng2 = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             var buffer1 = new byte[crng1.BlockSizeBytes];
             var buffer2 = new byte[crng2.BlockSizeBytes];
             crng1.FillWithRandomBytes(buffer1);
@@ -97,8 +97,8 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GeneratorsWithDifferentKeyYieldDifferentResult()
         {
-            var crng1 = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
-            var crng2 = new BlockCypherCprngGenerator(_IncrementedKey32Bytes);
+            var crng1 = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            var crng2 = new CypherBasedPrngGenerator(_IncrementedKey32Bytes);
             var buffer1 = new byte[crng1.BlockSizeBytes];
             var buffer2 = new byte[crng2.BlockSizeBytes];
             crng1.FillWithRandomBytes(buffer1);
@@ -110,7 +110,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateOneByte()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             var result = crng.GetRandomBytes(1);
 
             Assert.AreEqual(crng.BytesGenerated, crng.BlockSizeBytes + 32);
@@ -119,7 +119,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateFourBytes()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             var result = crng.GetRandomBytes(4);
 
             Assert.AreEqual(crng.BytesGenerated, crng.BlockSizeBytes + 32);
@@ -129,7 +129,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateMaximumSingleRequestBytes()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             var result = crng.GetRandomBytes(crng.MaxRequestBytes);
 
             Assert.AreEqual(crng.BytesGenerated, crng.MaxRequestBytes + 32);
@@ -140,7 +140,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateTwiceMaximumSingleRequestBytes()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             var result = crng.GetRandomBytes(crng.MaxRequestBytes * 2);
 
             Assert.AreEqual(crng.BytesGenerated, result.Length + 64);

@@ -92,7 +92,7 @@ namespace MurrayGrant.Terninger.Console
             long generatedBytes = 0L;
             var sw = Stopwatch.StartNew();      // Start the clock for a basic measure of performance.
             using (var outStream = outStreamAndTarget.Item1)
-            using (var crng = new BlockCypherCprngGenerator(seedAndSource.Item1))
+            using (var crng = new CypherBasedPrngGenerator(seedAndSource.Item1))
             {
                 long remaining = byteCount;
 

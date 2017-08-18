@@ -13,7 +13,7 @@ namespace MurrayGrant.Terninger.Perf.Benchmarks
     public class GenerateNumbers
     {
         private static readonly byte[] _ZeroKey32Bytes = new byte[32];
-        private static readonly BlockCypherCprngGenerator _Generator = new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+        private static readonly CypherBasedPrngGenerator _Generator = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
 
         [Benchmark]
         public bool Boolean()

@@ -17,7 +17,7 @@ namespace MurrayGrant.Terninger.Perf.Benchmarks
         [Benchmark]
         public IRandomNumberGenerator CreateDefault()
         {
-            return new BlockCypherCprngGenerator(_ZeroKey32Bytes);
+            return new CypherBasedPrngGenerator(_ZeroKey32Bytes);
         }
     }
 }
