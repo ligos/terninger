@@ -19,7 +19,12 @@ namespace MurrayGrant.Terninger.CryptoPrimitives
         }
         public static ICryptoPrimitive Aes256Managed() => new BlockCypherCryptoPrimitive(new AesManaged() { KeySize = 256 });
         public static ICryptoPrimitive Aes128Managed() => new BlockCypherCryptoPrimitive(new AesManaged() { KeySize = 128 });
+        public static ICryptoPrimitive Aes256Native() => new BlockCypherCryptoPrimitive(new AesCryptoServiceProvider() { KeySize = 256 });
+        public static ICryptoPrimitive Aes128Native() => new BlockCypherCryptoPrimitive(new AesCryptoServiceProvider() { KeySize = 128 });
 
         public static ICryptoPrimitive RijndaelManaged(int keyBits, int blockBits) => new BlockCypherCryptoPrimitive(new RijndaelManaged() { KeySize = keyBits, BlockSize = blockBits });
+
+        public static ICryptoPrimitive HmacSha256() => new HmacCryptoPrimitive(() => new HMACSHA256(new byte[32]));
+        public static ICryptoPrimitive HmacSha512() => new HmacCryptoPrimitive(() => new HMACSHA512(new byte[64]));
     }
 }

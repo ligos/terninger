@@ -53,34 +53,40 @@ namespace MurrayGrant.Terninger.Generator
             : this(key, BlockCypherCryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), null) { }
 
         /// <summary>
+        /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), zero counter and supplied additional entropy source.
+        /// </summary>
+        public BlockCypherCprngGenerator(byte[] key, Func<byte[]> additionalEntropyGetter)
+            : this(key, BlockCypherCryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), additionalEntropyGetter) { }
+
+        /// <summary>
         /// Initialise the CPRNG with the given key material, specified encryption algorithm and initial counter.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key, ICryptoPrimitive encryptionAlgorithm, HashAlgorithm hashAlgorithm, CypherCounter initialCounter) 
-            : this(key, encryptionAlgorithm, hashAlgorithm, initialCounter, null) { }
+        public BlockCypherCprngGenerator(byte[] key, ICryptoPrimitive cryptoPrimitive, HashAlgorithm hashAlgorithm, CypherCounter initialCounter) 
+            : this(key, cryptoPrimitive, hashAlgorithm, initialCounter, null) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, specified encryption algorithm, initial counter and additional entropy source.
         /// </summary>
-        public BlockCypherCprngGenerator(byte[] key, ICryptoPrimitive encryptionAlgorithm, HashAlgorithm hashAlgorithm, CypherCounter initialCounter, Func<byte[]> additionalEntropyGetter) 
+        public BlockCypherCprngGenerator(byte[] key, ICryptoPrimitive cryptoPrimitive, HashAlgorithm hashAlgorithm, CypherCounter initialCounter, Func<byte[]> additionalEntropyGetter) 
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            if (encryptionAlgorithm == null) throw new ArgumentNullException(nameof(encryptionAlgorithm));
+            if (cryptoPrimitive == null) throw new ArgumentNullException(nameof(cryptoPrimitive));
             if (hashAlgorithm == null) throw new ArgumentNullException(nameof(hashAlgorithm));
             if (initialCounter == null) throw new ArgumentNullException(nameof(initialCounter));
-            _KeySizeInBytes = encryptionAlgorithm.KeySizeBytes;
-            _BlockSizeInBytes = encryptionAlgorithm.BlockSizeBytes;
-            if (!(_KeySizeInBytes == 16 || _KeySizeInBytes == 32)) throw new ArgumentOutOfRangeException(nameof(encryptionAlgorithm), $"Encryption Algorithm KeySize must be 16 or 32 bytes long.");
-            if (!(_BlockSizeInBytes == 16 || _BlockSizeInBytes == 32 || _BlockSizeInBytes == 64)) throw new ArgumentOutOfRangeException(nameof(encryptionAlgorithm), $"Encryption Algorithm BlockSize must be 16, 32 or 64 bytes long.");
-            if (key.Length != _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(key), $"Key must be {_KeySizeInBytes} bytes long, based on encryption algorithm used.");
-            if (hashAlgorithm.HashSize / 8 < _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(hashAlgorithm), $"Hash Algorithm Size must be at least cypher Key Size (${_KeySizeInBytes} bytes).");
-            if (initialCounter.BlockSizeBytes != _BlockSizeInBytes) throw new ArgumentOutOfRangeException(nameof(initialCounter), $"Cypher block size must be equal to Encryption Algorithm BlockSize.");
+            _KeySizeInBytes = cryptoPrimitive.KeySizeBytes;
+            _BlockSizeInBytes = cryptoPrimitive.BlockSizeBytes;
+            if (!(_KeySizeInBytes == 16 || _KeySizeInBytes == 32 || _KeySizeInBytes == 64)) throw new ArgumentOutOfRangeException(nameof(cryptoPrimitive), _KeySizeInBytes, $"Encryption Algorithm KeySize must be 16, 32 or 64 bytes long.");
+            if (!(_BlockSizeInBytes == 16 || _BlockSizeInBytes == 32 || _BlockSizeInBytes == 64)) throw new ArgumentOutOfRangeException(nameof(cryptoPrimitive), _BlockSizeInBytes, $"Encryption Algorithm BlockSize must be 16, 32 or 64 bytes long.");
+            if (key.Length != _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(key), key.Length, $"Key must be {_KeySizeInBytes} bytes long, based on encryption algorithm used.");
+            if (hashAlgorithm.HashSize / 8 < _KeySizeInBytes) throw new ArgumentOutOfRangeException(nameof(hashAlgorithm), hashAlgorithm.HashSize / 8, $"Hash Algorithm Size must be at least cypher Key Size (${_KeySizeInBytes} bytes).");
+            if (initialCounter.BlockSizeBytes != _BlockSizeInBytes) throw new ArgumentOutOfRangeException(nameof(initialCounter), initialCounter.BlockSizeBytes, $"Counter block size must be equal to Crypto Primitive BlockSize.");
             _RekeyByteCount = _KeySizeInBytes;
             _RekeyBlockCount = (int)Math.Ceiling((double)_RekeyByteCount / (double)_BlockSizeInBytes);
 
             // Section 9.4.1 - Initialisation
             // Main difference from spec: we accept a key rather than waiting for a Reseed event.
-            encryptionAlgorithm.Key = new byte[_KeySizeInBytes];
-            _Cypher = encryptionAlgorithm;
+            cryptoPrimitive.Key = new byte[_KeySizeInBytes];
+            _Cypher = cryptoPrimitive;
 
             _Counter = initialCounter;
             _HashFunction = hashAlgorithm;

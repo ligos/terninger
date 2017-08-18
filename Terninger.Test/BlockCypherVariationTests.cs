@@ -15,6 +15,7 @@ namespace MurrayGrant.Terninger.Test
     {
         private static readonly byte[] _ZeroKey16Bytes = new byte[16];
         private static readonly byte[] _ZeroKey32Bytes = new byte[32];
+        private static readonly byte[] _ZeroKey64Bytes = new byte[64];
 
         [TestMethod]
         public void GenerateSingleBlockAesManaged()
@@ -30,7 +31,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateSingleBlockAesCsp()
         {
-            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CreateCryptoPrimitive(new AesCryptoServiceProvider()), SHA256.Create(), new CypherCounter(16));
+            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Native(), SHA256.Create(), new CypherCounter(16));
             var buffer = new byte[crng.BlockSizeBytes];
             crng.FillWithRandomBytes(buffer);
 
@@ -44,7 +45,7 @@ namespace MurrayGrant.Terninger.Test
         public void AesCyphersProduceSameRandomBlocks()
         {
             var crngManaged = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Managed(), SHA256.Create(), new CypherCounter(16));
-            var crngCsp = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CreateCryptoPrimitive(new AesCryptoServiceProvider()), SHA256.Create(), new CypherCounter(16));
+            var crngCsp = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Native(), SHA256.Create(), new CypherCounter(16));
             var bufferManaged = new byte[crngManaged.BlockSizeBytes * 2];
             var bufferCsp = new byte[crngManaged.BlockSizeBytes * 2];
             crngManaged.FillWithRandomBytes(bufferManaged);
@@ -183,6 +184,24 @@ namespace MurrayGrant.Terninger.Test
             CollectionAssert.AreNotEqual(buffer1, buffer2);
         }
 
+        [TestMethod]
+        public void Hmac256Works()
+        {
+            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CryptoPrimitive.HmacSha256(), SHA256.Create(), new CypherCounter(32));
+            var buffer = new byte[crng.BlockSizeBytes * 2];
+            crng.FillWithRandomBytes(buffer);
+
+            Assert.IsFalse(buffer.All(b => b == 0));
+        }
+        [TestMethod]
+        public void Hmac512Works()
+        {
+            var crng = new BlockCypherCprngGenerator(_ZeroKey64Bytes, CryptoPrimitive.HmacSha512(), SHA512.Create(), new CypherCounter(64));
+            var buffer = new byte[crng.BlockSizeBytes * 2];
+            crng.FillWithRandomBytes(buffer);
+
+            Assert.IsFalse(buffer.All(b => b == 0));
+        }
 
         [TestMethod]
         public void MismatchedKeyMaterialAndCypherKeySizeThrows()

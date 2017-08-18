@@ -24,6 +24,7 @@ namespace MurrayGrant.Terninger.CryptoPrimitives
         public void Dispose()
         {
             Array.Clear(_Cypher.Key, 0, _Cypher.Key.Length);
+            _Cypher.Dispose();
         }
 
         public static BlockCypherCryptoPrimitive Aes256() => new BlockCypherCryptoPrimitive(Aes.Create());

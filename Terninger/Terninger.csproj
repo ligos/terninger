@@ -38,6 +38,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CryptoPrimitives\HmacCryptoPrimitive.cs" />
     <Compile Include="CryptoPrimitives\CryptoPrimitive.cs" />
     <Compile Include="CryptoPrimitives\BlockCypherCryptoPrimitive.cs" />
     <Compile Include="EntropySources\CheapEntropy.cs" />
