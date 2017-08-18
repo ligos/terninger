@@ -23,7 +23,7 @@ namespace MurrayGrant.Terninger.Generator
         // A 128, 256 or 512 bit integer, and a string of bytes to be encrypted.
         private readonly CypherCounter _Counter;           
         
-        private readonly int _BlockSizeInBytes;     // 16, 32 or 64 bytes. Most block cyphers are 16 bytes; Rijndael and HMACs can be longer.
+        private readonly int _BlockSizeInBytes;     // 16, 32 or 64 bytes. Most block cyphers are 16 bytes; Rijndael, HMACs and hashes can be longer.
         private readonly int _KeySizeInBytes;       // 16 or 32 bytes. 16 is allowed for HMACs; but also allows for AES 128.
         private readonly int _RekeyBlockCount;      // Number of blocks required to re-key. At least key size.
         private readonly int _RekeyByteCount;       // Number of bytes required to re-key. At least key size.
@@ -50,13 +50,13 @@ namespace MurrayGrant.Terninger.Generator
         /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), and zero counter.
         /// </summary>
         public BlockCypherCprngGenerator(byte[] key) 
-            : this(key, BlockCypherCryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), null) { }
+            : this(key, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), null) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), zero counter and supplied additional entropy source.
         /// </summary>
         public BlockCypherCprngGenerator(byte[] key, Func<byte[]> additionalEntropyGetter)
-            : this(key, BlockCypherCryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), additionalEntropyGetter) { }
+            : this(key, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), additionalEntropyGetter) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given key material, specified encryption algorithm and initial counter.
@@ -104,14 +104,14 @@ namespace MurrayGrant.Terninger.Generator
         /// <summary>
         /// Alternate constructor with named parameters.
         /// </summary>
-        public BlockCypherCprngGenerator Create(byte[] key, 
+        public static BlockCypherCprngGenerator Create(byte[] key, 
                         SymmetricAlgorithm encryptionAlgorithm = null, 
                         HashAlgorithm hashAlgorithm = null, 
                         CypherCounter initialCounter = null, 
                         Func<byte[]> additionalEntropyGetter = null)
         {
             return new BlockCypherCprngGenerator(key,
-                        BlockCypherCryptoPrimitive.Aes256(),
+                        CryptoPrimitive.Aes256(),
                         hashAlgorithm ?? SHA256.Create(),
                         initialCounter ?? new CypherCounter(16),
                         additionalEntropyGetter);

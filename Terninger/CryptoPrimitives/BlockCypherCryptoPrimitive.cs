@@ -27,10 +27,6 @@ namespace MurrayGrant.Terninger.CryptoPrimitives
             _Cypher.Dispose();
         }
 
-        public static BlockCypherCryptoPrimitive Aes256() => new BlockCypherCryptoPrimitive(Aes.Create());
-        public static BlockCypherCryptoPrimitive Aes256Managed() => new BlockCypherCryptoPrimitive(new AesManaged() { KeySize = 256 });
-        public static BlockCypherCryptoPrimitive Aes128Managed() => new BlockCypherCryptoPrimitive(new AesManaged() { KeySize = 128 });
-
         public string Name => _Cypher.GetType().Name + " " + KeySizeBytes.ToString();
 
         public int KeySizeBytes => _Cypher.KeySize / 8;

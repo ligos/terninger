@@ -26,5 +26,12 @@ namespace MurrayGrant.Terninger.CryptoPrimitives
 
         public static ICryptoPrimitive HmacSha256() => new HmacCryptoPrimitive(() => new HMACSHA256(new byte[32]));
         public static ICryptoPrimitive HmacSha512() => new HmacCryptoPrimitive(() => new HMACSHA512(new byte[64]));
+
+        public static ICryptoPrimitive Sha256() => new HashCryptoPrimitive(SHA256.Create());
+        public static ICryptoPrimitive Sha512() => new HashCryptoPrimitive(SHA512.Create());
+        public static ICryptoPrimitive Sha256Managed() => new HashCryptoPrimitive(new SHA256Managed());
+        public static ICryptoPrimitive Sha512Managed() => new HashCryptoPrimitive(new SHA512Managed());
+        public static ICryptoPrimitive Sha256Native() => new HashCryptoPrimitive(new SHA256Cng());
+        public static ICryptoPrimitive Sha512Native() => new HashCryptoPrimitive(new SHA512Cng());
     }
 }

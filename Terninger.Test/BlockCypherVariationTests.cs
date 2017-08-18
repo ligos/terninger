@@ -95,7 +95,7 @@ namespace MurrayGrant.Terninger.Test
         }
 
         [TestMethod]
-        public void Sha384AgorithmsWorks()
+        public void Sha384AgorithmWorks()
         {
             var crngSha384 = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Managed(), SHA384.Create(), new CypherCounter(16));
             var buffer384 = new byte[crngSha384.BlockSizeBytes * 2];
@@ -185,7 +185,7 @@ namespace MurrayGrant.Terninger.Test
         }
 
         [TestMethod]
-        public void Hmac256Works()
+        public void Hmac256CryptoPrimitiveWorks()
         {
             var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CryptoPrimitive.HmacSha256(), SHA256.Create(), new CypherCounter(32));
             var buffer = new byte[crng.BlockSizeBytes * 2];
@@ -194,9 +194,27 @@ namespace MurrayGrant.Terninger.Test
             Assert.IsFalse(buffer.All(b => b == 0));
         }
         [TestMethod]
-        public void Hmac512Works()
+        public void Hmac512CryptoPrimitiveWorks()
         {
             var crng = new BlockCypherCprngGenerator(_ZeroKey64Bytes, CryptoPrimitive.HmacSha512(), SHA512.Create(), new CypherCounter(64));
+            var buffer = new byte[crng.BlockSizeBytes * 2];
+            crng.FillWithRandomBytes(buffer);
+
+            Assert.IsFalse(buffer.All(b => b == 0));
+        }
+        [TestMethod]
+        public void Sha256CryptoPrimitiveWorks()
+        {
+            var crng = new BlockCypherCprngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Sha256(), SHA256.Create(), new CypherCounter(32));
+            var buffer = new byte[crng.BlockSizeBytes * 2];
+            crng.FillWithRandomBytes(buffer);
+
+            Assert.IsFalse(buffer.All(b => b == 0));
+        }
+        [TestMethod]
+        public void Sha512CryptoPrimitiveWorks()
+        {
+            var crng = new BlockCypherCprngGenerator(_ZeroKey64Bytes, CryptoPrimitive.Sha512(), SHA512.Create(), new CypherCounter(64));
             var buffer = new byte[crng.BlockSizeBytes * 2];
             crng.FillWithRandomBytes(buffer);
 

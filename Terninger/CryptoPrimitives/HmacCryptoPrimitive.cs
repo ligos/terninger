@@ -43,7 +43,9 @@ namespace MurrayGrant.Terninger.CryptoPrimitives
 
         public string Name => _Hmac.GetType().Name;
 
-        public int KeySizeBytes => _Hmac.Key.Length;
+        // The default key size for HMACs are twice the hash size. 
+        // This doesn't play nicely with the counter and hash function requirements, so we reduce it to the hash size.
+        public int KeySizeBytes => _Hmac.HashSize / 8;
         public int BlockSizeBytes => _Hmac.HashSize / 8;
 
         public byte[] Key
@@ -61,6 +63,36 @@ namespace MurrayGrant.Terninger.CryptoPrimitives
             }
         }
         
-        public ICryptoTransform CreateEncryptor() => _Hmac;
+        public ICryptoTransform CreateEncryptor() => new HmacAndKeyTransform(_Hmac);
+
+        internal class HmacAndKeyTransform : ICryptoTransform
+        {
+            private readonly HMAC _Hash;
+            internal HmacAndKeyTransform(HMAC hash)
+            {
+                _Hash = hash;
+            }
+
+            public int InputBlockSize => _Hash.InputBlockSize;
+            public int OutputBlockSize => _Hash.OutputBlockSize;
+            public bool CanTransformMultipleBlocks => _Hash.CanTransformMultipleBlocks;
+            public bool CanReuseTransform => _Hash.CanReuseTransform;
+
+            public void Dispose()
+            {
+            }
+
+            public int TransformBlock(byte[] inputBuffer, int inputOffset, int inputCount, byte[] outputBuffer, int outputOffset)
+            {
+                var hashed = _Hash.ComputeHash(inputBuffer, inputOffset, inputCount);
+                Buffer.BlockCopy(hashed, 0, outputBuffer, 0, hashed.Length);
+                return outputBuffer.Length;
+            }
+
+            public byte[] TransformFinalBlock(byte[] inputBuffer, int inputOffset, int inputCount)
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 }
