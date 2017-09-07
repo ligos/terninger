@@ -137,6 +137,7 @@ namespace MurrayGrant.Terninger.Generator
             // Section 9.4.4 - Generate Random Data
             // Difference from spec: does not return byte[] but fills a byte[] argument to allow for less allocations.
 
+            if (_Disposed) throw new ObjectDisposedException(nameof(CypherBasedPrngGenerator));
             if (toFill == null) throw new ArgumentNullException(nameof(toFill));
             // Assert 0 <= n <= 2^20 - that is, you can't ask for 0 or less bytes, nor more than MaxRequestBytes (1MB)
             if (count <= 0) throw new ArgumentOutOfRangeException($"At least one byte of random data must be requested.");
@@ -170,6 +171,7 @@ namespace MurrayGrant.Terninger.Generator
         public void Reseed(byte[] newSeed)
         {
             // Section 9.4.2 - Reseed
+            if (_Disposed) throw new ObjectDisposedException(nameof(CypherBasedPrngGenerator));
             if (newSeed == null) throw new ArgumentNullException(nameof(newSeed));
             if (newSeed.Length < _CryptoPrimitive.Key.Length)
                 throw new InvalidOperationException($"New seed data must be at least {_CryptoPrimitive.Key.Length} bytes.");
