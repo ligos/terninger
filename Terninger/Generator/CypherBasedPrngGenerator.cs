@@ -9,6 +9,8 @@ using System.Security.Cryptography;
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.CryptoPrimitives;
 
+using BigMath;
+
 namespace MurrayGrant.Terninger.Generator
 {
     public class CypherBasedPrngGenerator : IRandomNumberGenerator, IDisposable
@@ -41,8 +43,8 @@ namespace MurrayGrant.Terninger.Generator
         public int MaxRequestBytes => 2 << 20;      // As sepecified in 9.4.4.
         public int BlockSizeBytes => _BlockSizeInBytes;
 
-        public long BytesRequested { get; private set; }
-        public long BytesGenerated { get; private set; }
+        public Int128 BytesRequested { get; private set; }
+        public Int128 BytesGenerated { get; private set; }
 
 
         /// <summary>
