@@ -38,16 +38,32 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Accumulator\EntropyAccumulator.cs" />
+    <Compile Include="Accumulator\EntropyPool.cs" />
+    <Compile Include="BigMath\ArrayUtils.cs" />
+    <Compile Include="BigMath\ExtendedBitConverter.cs" />
+    <Compile Include="BigMath\MathUtils.cs" />
     <Compile Include="CryptoPrimitives\HashCryptoPrimitive.cs" />
     <Compile Include="CryptoPrimitives\HmacCryptoPrimitive.cs" />
     <Compile Include="CryptoPrimitives\CryptoPrimitive.cs" />
     <Compile Include="CryptoPrimitives\BlockCypherCryptoPrimitive.cs" />
+    <Compile Include="BigMath\Int128.cs" />
     <Compile Include="EntropySources\CheapEntropy.cs" />
+    <Compile Include="EntropySources\CryptoRandomSource.cs" />
+    <Compile Include="EntropySources\TimerSource.cs" />
+    <Compile Include="EntropySources\CurrentTimeSource.cs" />
+    <Compile Include="EntropySources\EntropyEvent.cs" />
+    <Compile Include="EntropySources\IEntropySource.cs" />
+    <Compile Include="EntropySources\CounterSource.cs" />
+    <Compile Include="EntropySources\NullSource.cs" />
     <Compile Include="Generator\CypherBasedPrngGenerator.cs" />
     <Compile Include="CryptoPrimitives\ICryptoPrimitive.cs" />
     <Compile Include="Generator\IRandomNumberGenerator.cs" />
     <Compile Include="Generator\CypherCounter.cs" />
     <Compile Include="Generator\RandomByteStream.cs" />
+    <Compile Include="Generator\CryptoRandomWrapperGenerator.cs" />
+    <Compile Include="Generator\StandardRandomWrapperGenerator.cs" />
+    <Compile Include="Helpers\DisposeHelper.cs" />
     <Compile Include="Helpers\ByteArrayHelpers.cs" />
     <Compile Include="RandomNumberExtensions.cs" />
     <Compile Include="Terninger.cs" />
