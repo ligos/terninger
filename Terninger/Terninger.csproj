@@ -50,6 +50,7 @@
     <Compile Include="BigMath\Int128.cs" />
     <Compile Include="EntropySources\CheapEntropy.cs" />
     <Compile Include="EntropySources\CryptoRandomSource.cs" />
+    <Compile Include="EntropySources\GCMemorySource.cs" />
     <Compile Include="EntropySources\TimerSource.cs" />
     <Compile Include="EntropySources\CurrentTimeSource.cs" />
     <Compile Include="EntropySources\EntropyEvent.cs" />

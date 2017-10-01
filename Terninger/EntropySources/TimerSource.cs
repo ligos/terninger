@@ -21,6 +21,11 @@ namespace MurrayGrant.Terninger.EntropySources
             _Timer.Reset();
         }
 
+        public Task<EntropySourceInitialisationResult> Initialise()
+        {
+            return Task.FromResult(EntropySourceInitialisationResult.Successful);
+        }
+
         public Task<byte[]> GetEntropyAsync()
         {
             return Task.FromResult(BitConverter.GetBytes(_Timer.ElapsedTicks));

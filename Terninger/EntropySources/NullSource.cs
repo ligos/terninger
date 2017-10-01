@@ -18,6 +18,11 @@ namespace MurrayGrant.Terninger.EntropySources
             // Nothing required.
         }
 
+        public Task<EntropySourceInitialisationResult> Initialise()
+        {
+            return Task.FromResult(EntropySourceInitialisationResult.Successful);
+        }
+
         public Task<byte[]> GetEntropyAsync()
         {
             return Task.FromResult(new byte[8]);

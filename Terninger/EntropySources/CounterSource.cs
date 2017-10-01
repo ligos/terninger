@@ -29,6 +29,11 @@ namespace MurrayGrant.Terninger.EntropySources
             _Counter.TryDispose();
         }
 
+        public Task<EntropySourceInitialisationResult> Initialise()
+        {
+            return Task.FromResult(EntropySourceInitialisationResult.Successful);
+        }
+
         public Task<byte[]> GetEntropyAsync()
         {
             // Increment the counter and return its value.

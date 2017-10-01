@@ -17,9 +17,28 @@ namespace MurrayGrant.Terninger.EntropySources
         /// </summary>
         string Name { get; }
 
+
+        /// <summary>
+        /// Initialise the entropy source. Returns a task indicating if it was successful or not.
+        /// </summary>
+        Task<EntropySourceInitialisationResult> Initialise();
+
         /// <summary>
         /// Gets entropy from the source.
         /// </summary>
         Task<byte[]> GetEntropyAsync();
+    }
+
+    public enum EntropySourceInitialisationResult
+    {
+        Successful = 0,
+        Failure = 1,
+
+        NotSupported = 2,
+        MissingHardware = 3,
+        DisabledByConfig = 4,
+
+
+
     }
 }

@@ -36,7 +36,7 @@ namespace MurrayGrant.Terninger.EntropySources
             var gcCollections = ((long)GC.CollectionCount(0) << 32)
                                 & ((long)GC.CollectionCount(1) ^ (long)GC.CollectionCount(2));
             var gcTotalMemory = GC.GetTotalMemory(false);
-            var b = BitConverter.GetBytes(gcCollections ^ gcCollections);
+            var b = BitConverter.GetBytes(gcCollections ^ gcTotalMemory);
             Buffer.BlockCopy(b, 0, result, 8, b.Length);
 
             // High precision timer ticks.
