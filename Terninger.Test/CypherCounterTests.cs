@@ -97,6 +97,19 @@ namespace MurrayGrant.Terninger.Test
             cc.Increment();
             Assert.AreEqual("0000000000000000000000000000000000000000000000000000000000000000", cc.GetCounter().ToHexString());
         }
+        [TestMethod]
+        public void Overflow8ByteChunk1()
+        {
+            var cc = new CypherCounter(8, "ffffffffffffffff".ParseFromHexString());
+            cc.Increment();
+            Assert.AreEqual("0000000000000000", cc.GetCounter().ToHexString());
+        }
 
+        [TestMethod]
+        public void EightByteCounterSupported()
+        {
+            var cc = new CypherCounter(8);
+            Assert.AreEqual("0000000000000000", cc.GetCounter().ToHexString());
+        }
     }
 }

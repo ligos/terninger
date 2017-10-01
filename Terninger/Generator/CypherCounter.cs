@@ -10,7 +10,7 @@ using System.Diagnostics;
 namespace MurrayGrant.Terninger.Generator
 {
     /// <summary>
-    /// An object encapsulating a 128, 256 or 512 bit counter, which is incremented by an ICryptoTransform to produce random bytes.
+    /// An object encapsulating a large counter (minimum 64 bites), which is incremented by an ICryptoTransform to produce random bytes.
     /// This may be a single counter or an array of them.
     /// </summary>
     public class CypherCounter : IDisposable
@@ -29,7 +29,7 @@ namespace MurrayGrant.Terninger.Generator
         public CypherCounter(int blockSizeBytes, byte[] counter)
         {
             if (counter == null) throw new ArgumentNullException(nameof(counter));
-            if (!(blockSizeBytes == 16 || blockSizeBytes == 32 || blockSizeBytes == 64)) throw new ArgumentOutOfRangeException(nameof(blockSizeBytes), blockSizeBytes, "Block size must be 16, 32 or 64 bytes");
+            if (blockSizeBytes % 8 != 0) throw new ArgumentOutOfRangeException(nameof(blockSizeBytes), blockSizeBytes, "Block size must be multiple of 8 bytes");
             if (counter.Length != blockSizeBytes) throw new ArgumentOutOfRangeException(nameof(counter), counter.Length, $"Counter must be {blockSizeBytes} bytes");
 
             BlockSizeBytes = blockSizeBytes;
