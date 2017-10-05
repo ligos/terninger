@@ -25,6 +25,8 @@ namespace MurrayGrant.Terninger.EntropySources
 
         /// <summary>
         /// Gets entropy from the source.
+        /// A source may return null if there is no entropy available.
+        /// There is no limit to the amount of entropy which can be returned, but more than 64kB is overkill.
         /// </summary>
         Task<byte[]> GetEntropyAsync();
     }
@@ -34,11 +36,13 @@ namespace MurrayGrant.Terninger.EntropySources
         Successful = 0,
         Failure = 1,
 
-        NotSupported = 2,
-        MissingHardware = 3,
-        DisabledByConfig = 4,
+        NotSupported = 64,
+        MissingHardware = 65,
+        DisabledByConfig = 66,
+        NoPermission = 67,
+        InvalidConfig = 68,
 
-
-
+        PendingUserPermission = 128,
+        PendingUserConfig = 129,
     }
 }

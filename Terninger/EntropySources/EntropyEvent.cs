@@ -19,5 +19,34 @@ namespace MurrayGrant.Terninger.EntropySources
             this.Entropy = entropy;
             this.Source = source;
         }
+
+        internal IEnumerable<byte[]> ToChunks(int maxLength)
+        {
+            // For small amounts of entropy, we can return immediately.
+            if (Entropy.Length <= maxLength)
+            {
+                yield return Entropy;
+                yield break;
+            }
+
+            // Break up the entropy into chunks.
+            int c = 0;
+            var buf = new byte[maxLength];      // PERF: one allocation, assumes the result of this is consumed immediately.
+            while ((c+1) * maxLength <= Entropy.Length)
+            {
+                Buffer.BlockCopy(Entropy, c * maxLength, buf, 0, buf.Length);
+
+                c = c + 1;
+                yield return buf;
+            }
+
+            // And any final chunk.
+            buf = new byte[Entropy.Length - (c * maxLength)];
+            if (buf.Length > 0)
+            {
+                Buffer.BlockCopy(Entropy, c * maxLength, buf, 0, buf.Length);
+                yield return buf;
+            }
+        }
     }
 }

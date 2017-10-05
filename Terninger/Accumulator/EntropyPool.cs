@@ -38,16 +38,19 @@ namespace MurrayGrant.Terninger.Accumulator
             if (e == null) throw new ArgumentNullException(nameof(e));
             if (e.Entropy == null) throw new ArgumentNullException(nameof(e.Entropy));
             if (e.Source == null) throw new ArgumentNullException(nameof(e.Source));
-
+            Add(e.Entropy, e.Source);
+        }
+        internal void Add(byte[] entropy, Type source)
+        {
             // TODO: track the source to prevent any single source dominating this pool.
             //  Need to be careful when few sources in play or minimal entropy has been added.
 
             // Accumulate this event in the hash function.
-            _Hash.TransformBlock(e.Entropy, 0, e.Entropy.Length, null, 0);
+            _Hash.TransformBlock(entropy, 0, entropy.Length, null, 0);
 
             // Increment counters.
-            TotalEntropyBytes = TotalEntropyBytes + e.Entropy.Length;
-            EntropyBytesSinceLastDigest = EntropyBytesSinceLastDigest + e.Entropy.Length;
+            TotalEntropyBytes = TotalEntropyBytes + entropy.Length;
+            EntropyBytesSinceLastDigest = EntropyBytesSinceLastDigest + entropy.Length;
         }
 
         /// <summary>

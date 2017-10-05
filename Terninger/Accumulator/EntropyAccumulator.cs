@@ -29,10 +29,12 @@ namespace MurrayGrant.Terninger.Accumulator
         // This improves performance against an attacker injecting a constant rate of entropy known to them.
         private readonly EntropyPool[] _RandomPools;
         private readonly IRandomNumberGenerator _Rng;       // Used to derive which of the random pools will be used when generating a key.
-
+        private const int _RandomFactor = 2;                // Random selection chances is 1/2^(this+1)
         // To simplify adding, this is a flat array of all linear and random pools.
         private readonly EntropyPool[] _AllPools;
         private int _PoolIndex;
+        // Incoming entropy is broken into chunks at least this long, so that large entropy packets (eg: 1kB) are distributed more evenly.
+        private const int _ChunkSize = 16;      // TODO: allow this to be configurable.
 
         // Counters and totals to see how much entropy is in the accumulator.
 
@@ -118,7 +120,7 @@ namespace MurrayGrant.Terninger.Accumulator
             _AllPools = _LinearPools.Concat(_RandomPools).ToArray();
 
             TotalReseedEvents = Int128.Zero;
-            _ReseedCount = 0L;      // Start from the first pool!
+            _ReseedCount = 0UL;     // Start from the first pool!
             _PoolIndex = 0;         // Start adding entropy from the beginning!
             _Rng = rng;
         }
@@ -132,10 +134,16 @@ namespace MurrayGrant.Terninger.Accumulator
             // Based on Fortunata spec 9.5.6
 
             // Entropy is added in a round robin fashion.
-            if (_PoolIndex >= _AllPools.Length)
-                _PoolIndex = 0;
-            _AllPools[_PoolIndex].Add(entropy);
-            _PoolIndex = _PoolIndex + 1;
+            // Larger packets are broken up into smaller chunks to be distributed more evenly between pools.
+            var poolIndex = _PoolIndex;
+            foreach (var e in entropy.ToChunks(_ChunkSize))
+            {
+                if (poolIndex >= _AllPools.Length)
+                    poolIndex = 0;
+                _AllPools[poolIndex].Add(e, entropy.Source);
+                poolIndex = poolIndex + 1;
+            }
+            _PoolIndex = poolIndex;
         }
 
         /// <summary>
@@ -144,19 +152,17 @@ namespace MurrayGrant.Terninger.Accumulator
         /// </summary>
         public byte[] NextSeed()
         {
-            // Get the numbers used to determine which pools will be used.
-            ulong reseedCount = 0;
-            ulong linearPoolUsedMask = 0, randomPoolUsedMask = 0;
-            reseedCount = unchecked(_ReseedCount + 1);
+            // Get the number used to determine which pools will be used.
+            ulong reseedCount = unchecked(_ReseedCount + 1);
 
             // Get digests from all the pools to form the final seed.
             var digests = new List<byte[]>();
 
             // Linear pools.
-            linearPoolUsedMask = GetDigestsFromLinearPools(digests, reseedCount);
+            var linearPoolUsedMask = GetDigestsFromLinearPools(digests, reseedCount);
 
             // Random pools.
-            randomPoolUsedMask = GetDigestsFromRandomPools(digests);
+            var randomPoolUsedMask = GetDigestsFromRandomPools(digests);
 
             // Flatten the result.
             // PERF: a block copy function will likely be faster.
@@ -196,14 +202,19 @@ namespace MurrayGrant.Terninger.Accumulator
             ulong randomPoolUsedMask = 0;
             if (_RandomPools.Length > 0)
             {
-                // An average of 1/8 of random pools will be drawns from, based on using three Int64s and-ed together.
+                // Create a bit mask to determine which pools to draw from.
                 ulong randomPoolNumber = 0;
                 ulong randomPoolMask = (1UL << (_RandomPools.Length)) - 1;
+                var anyDigests = digests.Any();
                 do
                 {
-                    // If any random pools are defined, we must ensure at least one pool is drawn from.
-                    randomPoolNumber = _Rng.GetRandomUInt64() & _Rng.GetRandomUInt64() & _Rng.GetRandomUInt64();
-                } while ((randomPoolNumber & randomPoolMask) == 0);
+                    // Chance of random selection is at best 1/2, and may be less, depending on the value of _RandomFactor.
+                    randomPoolNumber = _Rng.GetRandomUInt64();
+                    for (int i = 0; i < _RandomFactor; i++)
+                        randomPoolNumber = randomPoolNumber & _Rng.GetRandomUInt64();
+
+                    // If any random pools are defined, and there isn't already a digest, we must ensure at least one pool is drawn from.
+                } while (!anyDigests && (randomPoolNumber & randomPoolMask) == 0);
 
                 // Read from pools.
                 for (int i = 0; i < _RandomPools.Length; i++)
@@ -231,7 +242,7 @@ namespace MurrayGrant.Terninger.Accumulator
         private static bool PoolIsUsedRandom(int i, ulong rand)
         {
             // So that random pools are very random, we simply see if the i-th bit of the random number is set.
-            // Note that we and three Int64s together for this, so there's a 1/8 chance of each pool being used.
+            // Usually multiple random UInt64s are and-ed together, so there's 1/2 chance for each pool at best.
             var maybeSetBit = rand & (1UL << i);
             return maybeSetBit > 0;
         }
