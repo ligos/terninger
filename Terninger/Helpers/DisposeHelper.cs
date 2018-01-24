@@ -15,7 +15,18 @@ namespace MurrayGrant.Terninger.Helpers
         /// <param name="obj"></param>
         public static void TryDispose(this IDisposable obj)
         {
-            try { obj.Dispose(); } catch(ObjectDisposedException) { }
+            if (obj != null)
+            {
+                try { obj.Dispose(); } catch (ObjectDisposedException) { }
+            }
+        }
+        public static void TryDisposeAndNull(ref IDisposable obj)
+        {
+            if (obj != null)
+            {
+                try { obj.Dispose(); } catch (ObjectDisposedException) { }
+                obj = null;
+            }
         }
     }
 }

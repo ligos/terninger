@@ -1,0 +1,1 @@
+http://www.randomnumbers.info/cgibin/wqrng.cgi?amount=512&limit=4095

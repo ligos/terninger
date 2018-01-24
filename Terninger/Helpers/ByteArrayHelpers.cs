@@ -75,5 +75,35 @@ namespace MurrayGrant.Terninger.Helpers
             Buffer.BlockCopy(bytes, bytes.Length - count, result, 0, count);
             return result;
         }
+
+        public static byte[] LongsToDigestBytes(this long[] longs) => LongsToDigestBytes(longs, longs.Length);
+        public static byte[] LongsToDigestBytes(this long[] longs, int itemsPerChunk)
+        {
+            // Produce hashes of chunks of results to return.
+            // We use an SHA256 hash of many individual stats to produce output.
+            
+            var hash = SHA256.Create();
+            var resultCount = longs.Length / itemsPerChunk;
+            var chunkSizeBytes = itemsPerChunk * sizeof(long);
+            if (resultCount == 0)
+            {
+                // Not enough stats based on ItemsPerResultChunk - so just hash everything.
+                resultCount = 1;
+                chunkSizeBytes = longs.Length * sizeof(long);
+            }
+            var hashSizeBytes = hash.HashSize / 8;
+            var result = new byte[resultCount * hashSizeBytes];
+            for (int i = 0; i < resultCount; i++)
+            {
+                // Copy to byte[] so we can hash.
+                var statsAsBytes = new byte[chunkSizeBytes];
+                Buffer.BlockCopy(longs, chunkSizeBytes * i, statsAsBytes, 0, statsAsBytes.Length);
+                // Hash and copy to result.
+                var h = hash.ComputeHash(statsAsBytes);
+                Buffer.BlockCopy(h, 0, result, hashSizeBytes * i, hashSizeBytes);
+            }
+            return result;
+        }
+
     }
 }

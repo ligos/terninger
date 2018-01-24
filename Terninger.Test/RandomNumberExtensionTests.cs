@@ -216,7 +216,7 @@ namespace MurrayGrant.Terninger.Test
 
         #region Fuzzing Tests
         [TestMethod]
-        [TestCategory("Random Fuzzing")]
+        [TestCategory("Fuzzing")]
         public void RandomInt32_Fuzzing()
         {
             // TODO: generate a random key and 10000 numbers and check they match required criteria.
@@ -234,7 +234,7 @@ namespace MurrayGrant.Terninger.Test
             }
         }
         [TestMethod]
-        [TestCategory("Random Fuzzing")]
+        [TestCategory("Fuzzing")]
         public void RandomInt64_Fuzzing()
         {
             // TODO: generate a random key and 10000 numbers and check they match required criteria.
@@ -252,7 +252,7 @@ namespace MurrayGrant.Terninger.Test
             }
         }
         [TestMethod]
-        [TestCategory("Random Fuzzing")]
+        [TestCategory("Fuzzing")]
         public void RandomSingle_Fuzzing()
         {
             // TODO: generate a random key and 10000 numbers and check they match required criteria.
@@ -270,7 +270,7 @@ namespace MurrayGrant.Terninger.Test
             }
         }
         [TestMethod]
-        [TestCategory("Random Fuzzing")]
+        [TestCategory("Fuzzing")]
         public void RandomDouble_Fuzzing()
         {
             // TODO: generate a random key and 10000 numbers and check they match required criteria.
@@ -288,7 +288,7 @@ namespace MurrayGrant.Terninger.Test
             }
         }
         [TestMethod]
-        [TestCategory("Random Fuzzing")]
+        [TestCategory("Fuzzing")]
         public void RandomDecimal_Fuzzing()
         {
             // TODO: generate a random key and 10000 numbers and check they match required criteria.
@@ -308,7 +308,7 @@ namespace MurrayGrant.Terninger.Test
 
 
         [TestMethod]
-        [TestCategory("Random Fuzzing")]
+        [TestCategory("Fuzzing")]
         public void RandomGuid_Fuzzing()
         {
             // TODO: generate a random key and 10000 numbers and check they match required criteria.

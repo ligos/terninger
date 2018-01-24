@@ -13,6 +13,7 @@ namespace MurrayGrant.Terninger.Generator
     {
         private readonly RandomNumberGenerator _Rng;
 
+        public CryptoRandomWrapperGenerator() : this(RandomNumberGenerator.Create()) { }
         public CryptoRandomWrapperGenerator(RandomNumberGenerator rng)
         {
             if (rng == null) throw new ArgumentNullException(nameof(rng));

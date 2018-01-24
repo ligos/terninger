@@ -48,7 +48,17 @@
     <Compile Include="CryptoPrimitives\CryptoPrimitive.cs" />
     <Compile Include="CryptoPrimitives\BlockCypherCryptoPrimitive.cs" />
     <Compile Include="BigMath\Int128.cs" />
+    <Compile Include="EntropySources\StaticLocalEntropy.cs" />
+    <Compile Include="EntropySources\EntropySourceConfigFromDictionary.cs" />
     <Compile Include="EntropySources\CheapEntropy.cs" />
+    <Compile Include="EntropySources\EntropySourceAttributes.cs" />
+    <Compile Include="EntropySources\ExternalWebContentSource.cs" />
+    <Compile Include="EntropySources\ExternalServerRandomSource.cs" />
+    <Compile Include="EntropySources\EntropySourceConfigExtensions.cs" />
+    <Compile Include="EntropySources\IEntropySourceConfig.cs" />
+    <Compile Include="EntropySources\PingStatsSource.cs" />
+    <Compile Include="EntropySources\ProcessStatsSource.cs" />
+    <Compile Include="EntropySources\NetworkStatsSource.cs" />
     <Compile Include="EntropySources\CryptoRandomSource.cs" />
     <Compile Include="EntropySources\GCMemorySource.cs" />
     <Compile Include="EntropySources\TimerSource.cs" />
@@ -64,11 +74,19 @@
     <Compile Include="Generator\RandomByteStream.cs" />
     <Compile Include="Generator\CryptoRandomWrapperGenerator.cs" />
     <Compile Include="Generator\StandardRandomWrapperGenerator.cs" />
+    <Compile Include="Helpers\ConvertersToInt64.cs" />
     <Compile Include="Helpers\DisposeHelper.cs" />
     <Compile Include="Helpers\ByteArrayHelpers.cs" />
+    <Compile Include="Helpers\ExceptionHelper.cs" />
     <Compile Include="RandomNumberExtensions.cs" />
     <Compile Include="Terninger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="EntropySources\PingServerList.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="EntropySources\ExternalWebServerList.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

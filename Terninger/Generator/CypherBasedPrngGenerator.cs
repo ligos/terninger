@@ -48,13 +48,13 @@ namespace MurrayGrant.Terninger.Generator
 
 
         /// <summary>
-        /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), and zero counter.
+        /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA512), and zero counter.
         /// </summary>
         public CypherBasedPrngGenerator(byte[] key) 
             : this(key, CryptoPrimitive.Aes256(), SHA512.Create(), new CypherCounter(16), null) { }
 
         /// <summary>
-        /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA256), zero counter and supplied additional entropy source.
+        /// Initialise the CPRNG with the given key material, and default cypher (AES 256) and hash algorithm (SHA512), zero counter and supplied additional entropy source.
         /// </summary>
         public CypherBasedPrngGenerator(byte[] key, Func<byte[]> additionalEntropyGetter)
             : this(key, CryptoPrimitive.Aes256(), SHA512.Create(), new CypherCounter(16), additionalEntropyGetter) { }

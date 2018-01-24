@@ -11,33 +11,44 @@ using MurrayGrant.Terninger.Helpers;
 namespace MurrayGrant.Terninger.EntropySources
 {
     /// <summary>
-    /// An entropy source which wraps RNGCryptoServiceProvider.
+    /// An entropy source which uses RandomNumberGenerator.Create().
     /// </summary>
     public class CryptoRandomSource : IEntropySource
     {
-        private readonly RNGCryptoServiceProvider _rng;
+        private RandomNumberGenerator _Rng;
+        private int _ResultLength;
+
         public string Name => typeof(CryptoRandomSource).FullName;
 
-
-        public CryptoRandomSource()
+        public CryptoRandomSource() : this(16) { }
+        public CryptoRandomSource(int resultLength)
         {
-            _rng = new RNGCryptoServiceProvider();
+            this._ResultLength = resultLength;
         }
 
         public void Dispose()
         {
-            _rng.TryDispose();
+            _Rng.TryDispose();
         }
 
-        public Task<EntropySourceInitialisationResult> Initialise()
+        public Task<EntropySourceInitialisationResult> Initialise(IEntropySourceConfig config, Func<IRandomNumberGenerator> prngFactory)
         {
-            return Task.FromResult(EntropySourceInitialisationResult.Successful);
+            if (config.IsTruthy("CryptoRandomSource.Enabled") == false)
+                return Task.FromResult(EntropySourceInitialisationResult.Failed(EntropySourceInitialisationReason.DisabledByConfig, "CryptoRandomSource has been disabled in entropy source configuration."));
+
+            config.TryParseAndSetInt32("CryptoRandomSource.ResultLength", ref _ResultLength);
+            if (_ResultLength < 4 || _ResultLength > 1024)
+                return Task.FromResult(EntropySourceInitialisationResult.Failed(EntropySourceInitialisationReason.InvalidConfig, new ArgumentOutOfRangeException("CryptoRandomSource.ResultLength", _ResultLength, "Config item CryptoRandomSource.ResultLength must be between 4 and 1024")));
+
+            _Rng = RandomNumberGenerator.Create();
+
+            return Task.FromResult(EntropySourceInitialisationResult.Successful());
         }
 
         public Task<byte[]> GetEntropyAsync()
         {
-            var result = new byte[16];
-            _rng.GetBytes(result);
+            var result = new byte[_ResultLength];
+            _Rng.GetBytes(result);
             return Task.FromResult(result);
         }
     }

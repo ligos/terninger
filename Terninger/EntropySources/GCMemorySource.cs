@@ -19,9 +19,12 @@ namespace MurrayGrant.Terninger.EntropySources
         {
         }
 
-        public Task<EntropySourceInitialisationResult> Initialise()
+        public Task<EntropySourceInitialisationResult> Initialise(IEntropySourceConfig config, Func<IRandomNumberGenerator> prngFactory)
         {
-            return Task.FromResult(EntropySourceInitialisationResult.Successful);
+            if (config.IsTruthy("GCMemorySource.Enabled") == false)
+                return Task.FromResult(EntropySourceInitialisationResult.Failed(EntropySourceInitialisationReason.DisabledByConfig, "GCMemorySource has been disabled in entropy source configuration."));
+            else
+                return Task.FromResult(EntropySourceInitialisationResult.Successful());
         }
 
         public Task<byte[]> GetEntropyAsync()

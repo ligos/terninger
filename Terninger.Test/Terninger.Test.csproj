@@ -48,6 +48,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EntropySourceTests.cs" />
     <Compile Include="AccumulatorTests.cs" />
     <Compile Include="EntropyTests.cs" />
     <Compile Include="CypherCounterTests.cs" />

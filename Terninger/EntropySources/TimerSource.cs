@@ -21,14 +21,19 @@ namespace MurrayGrant.Terninger.EntropySources
             _Timer.Reset();
         }
 
-        public Task<EntropySourceInitialisationResult> Initialise()
+        public Task<EntropySourceInitialisationResult> Initialise(IEntropySourceConfig config, Func<IRandomNumberGenerator> prngFactory)
         {
-            return Task.FromResult(EntropySourceInitialisationResult.Successful);
+            if (config.IsTruthy("TimerSource.Enabled") == false)
+                return Task.FromResult(EntropySourceInitialisationResult.Failed(EntropySourceInitialisationReason.DisabledByConfig, "TimerSource has been disabled in entropy source configuration."));
+            else
+                return Task.FromResult(EntropySourceInitialisationResult.Successful());
         }
 
         public Task<byte[]> GetEntropyAsync()
         {
-            return Task.FromResult(BitConverter.GetBytes(_Timer.ElapsedTicks));
+            // Only returning the lower 32 bits of the timer, as the upper 32 bits will be pretty static.
+            var result = BitConverter.GetBytes(unchecked((int)_Timer.ElapsedTicks));
+            return Task.FromResult(result);
         }
     }
 }

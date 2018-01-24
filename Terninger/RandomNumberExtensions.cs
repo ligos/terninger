@@ -174,5 +174,34 @@ namespace MurrayGrant.Terninger
         {
             return new RandomByteStream(generator);
         }
+
+        public static void ShuffleInPlace<T>(this IList<T> list, IRandomNumberGenerator generator)
+        {
+            if (list == null) throw new ArgumentNullException(nameof(list));
+            if (generator == null) throw new ArgumentNullException(nameof(generator));
+
+            for (int i = list.Count - 1; i > 0; i--)
+            {
+                // Swap element "i" with a random earlier element it (or itself)
+                int swapIndex = generator.GetRandomInt32(i + 1);
+                T tmp = list[i];
+                list[i] = list[swapIndex];
+                list[swapIndex] = tmp;
+            }
+        }
+        public static void ShuffleInPlace<T>(this T[] array, IRandomNumberGenerator generator)
+        {
+            if (array == null) throw new ArgumentNullException(nameof(array));
+            if (generator == null) throw new ArgumentNullException(nameof(generator));
+
+            for (int i = array.Length - 1; i > 0; i--)
+            {
+                // Swap element "i" with a random earlier element it (or itself)
+                int swapIndex = generator.GetRandomInt32(i + 1);
+                T tmp = array[i];
+                array[i] = array[swapIndex];
+                array[swapIndex] = tmp;
+            }
+        }
     }
 }
