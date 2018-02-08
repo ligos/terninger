@@ -46,6 +46,7 @@ namespace MurrayGrant.Terninger.EntropySources
         }
         public readonly EntropySourceInitialisationReason Reason;
         public readonly Exception Exception;
+        public bool IsSuccessful => this.Reason == EntropySourceInitialisationReason.Successful;
     }
 
     public enum EntropySourceInitialisationReason

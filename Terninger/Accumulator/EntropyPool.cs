@@ -40,10 +40,11 @@ namespace MurrayGrant.Terninger.Accumulator
             if (e.Source == null) throw new ArgumentNullException(nameof(e.Source));
             Add(e.Entropy, e.Source);
         }
-        internal void Add(byte[] entropy, Type source)
+        internal void Add(byte[] entropy, IEntropySource source)
         {
             // TODO: track the source to prevent any single source dominating this pool.
             //  Need to be careful when few sources in play or minimal entropy has been added.
+            //  Suggest limit of 50% from any one instance and 80% from any one type??
 
             // Accumulate this event in the hash function.
             _Hash.TransformBlock(entropy, 0, entropy.Length, null, 0);

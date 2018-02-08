@@ -20,7 +20,7 @@ namespace MurrayGrant.Terninger.Generator
             _Rng = rng;
         }
 
-        // TODO: would be nice to have a light-weight PRNG which accepts a 64 or 128 bit seed.
+        // TODO: would be nice to have a light-weight PRNG which accepts a 128 bit seed.
 
         public static IRandomNumberGenerator StockRandom() => new StandardRandomWrapperGenerator(new Random());
         public static IRandomNumberGenerator StockRandom(int seed) => new StandardRandomWrapperGenerator(new Random(seed));

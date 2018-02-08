@@ -110,15 +110,15 @@ namespace MurrayGrant.Terninger.EntropySources
 
             if (randomOrgApiKey != Guid.Empty && config.IsTruthy("ExternalServerRandomSource.RandomOrgApiEnabled") != false)
                 _ServerSources.Add(new RandomOrgApiGetter(randomOrgApiKey));
-            else if (config.IsTruthy("ExternalServerRandomSource.RandomOrgApiEnabled") != false)
+            else if (config.IsTruthy("ExternalServerRandomSource.RandomOrgEnabled") != false)
                 _ServerSources.Add(new RandomOrgPublicGetter());
 
             // We also need an API key for the HotBits true random source.
             // As there is benefit in both of these, they can both be enabled.
             var hotBitsApiKey = config.Get("ExternalServerRandomSource.HotBitsApiKey");
-            if (!String.IsNullOrWhiteSpace(hotBitsApiKey) && config.IsTruthy("ExternalServerRandomSource.HotBitsPseudoRandomEnabled") != false)
+            if (!String.IsNullOrWhiteSpace(hotBitsApiKey) && config.IsTruthy("ExternalServerRandomSource.HotBitsTrueRandomEnabled") != false)
                 _ServerSources.Add(new HotbitsGetter(hotBitsApiKey));
-            if (config.IsTruthy("ExternalServerRandomSource.HotBitsTrueRandomEnabled") != false)
+            if (config.IsTruthy("ExternalServerRandomSource.HotBitsPseudoRandomEnabled") != false)
                 _ServerSources.Add(new HotbitsGetter());
 
 
@@ -189,7 +189,7 @@ namespace MurrayGrant.Terninger.EntropySources
                 {
                     var apiUri = new Uri("https://www.random.org/cgi-bin/randbyte?nbytes=" + numberOfBytes + "&format=h");
                     var wc = new WebClient();
-                    wc.Headers.Add(parent._UserAgent);
+                    wc.Headers.Add("User-Agent:" + parent._UserAgent);
                     response = await wc.DownloadStringTaskAsync(apiUri);
                 }
                 else
@@ -326,7 +326,7 @@ namespace MurrayGrant.Terninger.EntropySources
                 {
                     var apiUri = new Uri("https://qrng.anu.edu.au/RawHex.php");
                     var wc = new WebClient();
-                    wc.Headers.Add(parent._UserAgent);
+                    wc.Headers.Add("User-Agent:" + parent._UserAgent);
                     response = await wc.DownloadStringTaskAsync(apiUri);
                 }
                 else
@@ -382,7 +382,7 @@ namespace MurrayGrant.Terninger.EntropySources
                 {
                     var apiUri = new Uri("http://www.randomserver.dyndns.org/client/random.php?type=BIN&a=1&b=10&n=" + numberOfBytes + "&file=0");
                     var wc = new WebClient();
-                    wc.Headers.Add(parent._UserAgent);
+                    wc.Headers.Add("User-Agent:" + parent._UserAgent);
                     response = await wc.DownloadDataTaskAsync(apiUri);
                 }
                 else
@@ -451,7 +451,7 @@ namespace MurrayGrant.Terninger.EntropySources
                 {
                     var apiUri = new Uri("https://www.fourmilab.ch/cgi-bin/Hotbits.api?nbytes=" + numberOfBytes + "&fmt=hex&npass=1&lpass=8&pwtype=3" + apiKey + pseudoSource);
                     var wc = new WebClient();
-                    wc.Headers.Add(parent._UserAgent);
+                    wc.Headers.Add("User-Agent:" + parent._UserAgent);
                     response = await wc.DownloadStringTaskAsync(apiUri);
                 }
                 else
@@ -506,7 +506,7 @@ namespace MurrayGrant.Terninger.EntropySources
                 {
                     var apiUri = new Uri("https://beacon.nist.gov/rest/record/last");
                     var wc = new WebClient();
-                    wc.Headers.Add(parent._UserAgent);
+                    wc.Headers.Add("User-Agent:" + parent._UserAgent);
                     response = await wc.DownloadStringTaskAsync(apiUri);
                 }
                 else
@@ -577,7 +577,7 @@ namespace MurrayGrant.Terninger.EntropySources
                 {
                     var apiUri = new Uri("http://www.randomnumbers.info/cgibin/wqrng.cgi?amount=" + numberOfNumbers.ToString() + "&limit=" + rangeOfNumbers.ToString());
                     var wc = new WebClient();
-                    wc.Headers.Add(parent._UserAgent);
+                    wc.Headers.Add("User-Agent:" + parent._UserAgent);
                     response = await wc.DownloadStringTaskAsync(apiUri);
                 }
                 else
@@ -604,7 +604,7 @@ namespace MurrayGrant.Terninger.EntropySources
                                 .Where(x => x.All(Char.IsDigit))        // Remove non-numeric junk.
                                 .Select(x => Int16.Parse(x))            // Parse to an int16.
                                 .ToList();
-                var result = new byte[numberOfBytes];
+                var result = new byte[numbers.Count() * 2];
                 for (int i = 0; i < numbers.Count; i++)
                 {
                     // Take the Int16s in the range 0..4095 (4096 possibilities) and write them into the result array.

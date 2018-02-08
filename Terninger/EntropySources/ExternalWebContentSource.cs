@@ -189,6 +189,8 @@ namespace MurrayGrant.Terninger.EntropySources
             public ServerFetcher(Uri url, string userAgent, byte[] staticEntropy)
             {
                 this.Url = url;
+                this.UserAgent = userAgent;
+                this.StaticEntropy = staticEntropy;
             }
             public readonly Uri Url;
             public readonly string UserAgent;
@@ -200,7 +202,7 @@ namespace MurrayGrant.Terninger.EntropySources
                 // TODO: timeout.
                 var hash = SHA256.Create();
                 var wc = new WebClient();
-                wc.Headers.Add(UserAgent);
+                wc.Headers.Add("User-Agent:" + UserAgent);
                 var sw = Stopwatch.StartNew();
                 return wc.DownloadDataTaskAsync(Url)
                             .ContinueWith(x => {

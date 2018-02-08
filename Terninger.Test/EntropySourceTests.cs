@@ -389,7 +389,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ExternalServerRandomSource_RandomOrgApiEnabled()
         {
-            FuzzEntropySource(1, new ExternalServerRandomSource(), "Entropy_" + nameof(ExternalServerRandomSource) + "_RandomOrgApi", DefaultExternalServerConfig("ExternalServerRandomSource.RandomOrgEnabled", "True", "ExternalServerRandomSource.RandomOrgApiKey", "a7fad70c-5b04-4124-b9a2-d802f4a7689f"), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new ExternalServerRandomSource(), "Entropy_" + nameof(ExternalServerRandomSource) + "_RandomOrgApi", DefaultExternalServerConfig("ExternalServerRandomSource.RandomOrgApiEnabled", "True", "ExternalServerRandomSource.RandomOrgApiKey", "a7fad70c-5b04-4124-b9a2-d802f4a7689f"), DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_RandomServerEnabled()

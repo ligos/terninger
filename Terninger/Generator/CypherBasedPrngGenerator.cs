@@ -13,7 +13,7 @@ using BigMath;
 
 namespace MurrayGrant.Terninger.Generator
 {
-    public class CypherBasedPrngGenerator : IRandomNumberGenerator, IDisposable
+    public class CypherBasedPrngGenerator : IReseedableRandomNumberGenerator, IDisposable
     {
         // A block cypher or keyed hash algorithm.
         // Default: AES with 256 bit key, as specified in 9.4

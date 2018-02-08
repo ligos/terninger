@@ -12,9 +12,9 @@ namespace MurrayGrant.Terninger.EntropySources
     public sealed class EntropyEvent
     {
         public byte[] Entropy { get; private set; }
-        public Type Source { get; private set; }
+        public IEntropySource Source { get; private set; }
 
-        public EntropyEvent(byte[] entropy, Type source)
+        public EntropyEvent(byte[] entropy, IEntropySource source)
         {
             this.Entropy = entropy;
             this.Source = source;

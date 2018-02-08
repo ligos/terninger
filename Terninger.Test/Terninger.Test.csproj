@@ -48,11 +48,13 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PooledGeneratorTests.cs" />
     <Compile Include="EntropySourceTests.cs" />
     <Compile Include="AccumulatorTests.cs" />
     <Compile Include="EntropyTests.cs" />
     <Compile Include="CypherCounterTests.cs" />
     <Compile Include="BlockCypherVariationTests.cs" />
+    <Compile Include="Int128Tests.cs" />
     <Compile Include="RandomNumberExtensionTests.cs" />
     <Compile Include="BlockCypherTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

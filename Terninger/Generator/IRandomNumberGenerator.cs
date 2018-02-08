@@ -30,4 +30,21 @@ namespace MurrayGrant.Terninger.Generator
         /// <param name="count">Number of bytes to write, between 0 and MaxRequestBytes in size.</param>
         void FillWithRandomBytes(byte[] toFill, int offset, int count);
     }
+
+    /// <summary>
+    /// Interface which adds Dispose() to IRandomNumberGenerator.
+    /// </summary>
+    public interface IDisposableRandomNumberGenerator : IRandomNumberGenerator, IDisposable { }
+
+    /// <summary>
+    /// Interface which builds on the standard source of random numbers by allowed additional seed material to be added.
+    /// </summary>
+    public interface IReseedableRandomNumberGenerator : IDisposableRandomNumberGenerator, IDisposable
+    {
+        /// <summary>
+        /// Adds additional seed material to the random number generator.
+        /// Existing material may be discarded or added to.
+        /// </summary>
+        void Reseed(byte[] newSeed);
+    }
 }

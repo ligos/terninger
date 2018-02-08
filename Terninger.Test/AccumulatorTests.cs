@@ -506,7 +506,7 @@ namespace MurrayGrant.Terninger.Test
         private static IRandomNumberGenerator CreateRandomGenerator() => new StandardRandomWrapperGenerator(new Random(1));
         private static EntropyEvent EventFromBytes(byte[] bytes)
         {
-            return new EntropyEvent(bytes, typeof(AccumulatorTests));
+            return new EntropyEvent(bytes, new NullSource());
         }
     }
 }
