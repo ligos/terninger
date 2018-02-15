@@ -122,6 +122,33 @@ namespace MurrayGrant.Terninger.Test
         }
 
         [TestMethod]
+        public async Task GetRandomBytes()
+        {
+            var sources = new IEntropySource[] { new CryptoRandomSource(), new CurrentTimeSource(), new GCMemorySource(), new NetworkStatsSource(), new ProcessStatsSource(), new TimerSource() };
+            var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
+            var rng = new PooledEntropyCprngGenerator(sources, acc);
+            // Creating a generator should not actually generate any bytes or even start the generator.
+            Assert.AreEqual(rng.BytesRequested, 0);
+            Assert.AreEqual(rng.ReseedCount, 0);
+            Assert.AreEqual(rng.IsRunning, false);
+            Assert.AreEqual(rng.EntropyPriority, EntropyPriority.High);
+            Assert.AreEqual(rng.SourceCount, 6);
+            Assert.AreEqual(rng.LiveSourceCount, 0);
+
+            await rng.StartAndWaitForFirstSeed();
+            Assert.AreEqual(rng.SourceCount, 6);
+            Assert.AreEqual(rng.LiveSourceCount, 6);
+            Assert.IsTrue(rng.ReseedCount >= 1);
+            Assert.IsTrue(acc.TotalEntropyBytes > 0);
+            Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
+
+            var bytes = rng.GetRandomBytes(16);
+            Assert.IsFalse(bytes.All(b => b == 0));
+
+            await rng.Stop();
+        }
+
+        [TestMethod]
         public async Task ForceReseed()
         {
             var sources = new IEntropySource[] { new CryptoRandomSource(), new CurrentTimeSource(), new GCMemorySource(), new NetworkStatsSource(), new ProcessStatsSource(), new TimerSource() };

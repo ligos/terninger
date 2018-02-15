@@ -165,7 +165,7 @@ namespace MurrayGrant.Terninger.Generator
         {
             _ShouldStop.Cancel();
             await Task.Delay(1);
-            // TODO: work out how to do this without polling.
+            // TODO: work out how to do this without polling. Thread.Join() perhaps.
             while (this._SchedulerThread.IsAlive)
                 await Task.Delay(100);
         }
@@ -177,7 +177,6 @@ namespace MurrayGrant.Terninger.Generator
         public Task Reseed() {
             this.EntropyPriority = EntropyPriority.High;
             this._WakeSignal.Set();
-            // TODO: wake the event loop.
             return WaitForNthSeed(this.ReseedCount + 1);
         }
 
@@ -250,6 +249,7 @@ namespace MurrayGrant.Terninger.Generator
 
         private bool ShouldReseed()
         {
+            // TODO: Fortuna requires minimum of 100ms between reseed events.
             if (this._ShouldStop.IsCancellationRequested)
                 return false;
             else if (this.EntropyPriority == EntropyPriority.High)
@@ -264,6 +264,7 @@ namespace MurrayGrant.Terninger.Generator
         }
 
         // TODO: work out how often to poll based on minimum and rate entropy is being consumed.
+        // TODO: use a PRNG to introduce a random bias into this??
         private TimeSpan WaitTimeBetweenPolls() => EntropyPriority == EntropyPriority.High ? TimeSpan.Zero
                                                  : EntropyPriority == EntropyPriority.Normal ? TimeSpan.FromSeconds(5)
                                                  : EntropyPriority == EntropyPriority.Low ? TimeSpan.FromSeconds(30)

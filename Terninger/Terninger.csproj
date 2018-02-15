@@ -81,6 +81,8 @@
     <Compile Include="Helpers\DisposeHelper.cs" />
     <Compile Include="Helpers\ByteArrayHelpers.cs" />
     <Compile Include="Helpers\ExceptionHelper.cs" />
+    <Compile Include="LibLog\ColoredConsoleLogProvider.cs" />
+    <Compile Include="LibLog\LibLog.cs" />
     <Compile Include="RandomNumberExtensions.cs" />
     <Compile Include="Terninger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

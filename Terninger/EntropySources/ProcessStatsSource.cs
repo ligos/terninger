@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 
 using MurrayGrant.Terninger.Generator;
 using MurrayGrant.Terninger.Helpers;
+using MurrayGrant.Terninger.LibLog;
 
 namespace MurrayGrant.Terninger.EntropySources
 {
@@ -19,6 +20,7 @@ namespace MurrayGrant.Terninger.EntropySources
         public string Name => typeof(ProcessStatsSource).FullName;
 
         private const int _ItemsPerProcess = 17;            // This many properties are read from each process. Based on available properties.
+        private readonly ILog Log = LogProvider.For<ProcessStatsSource>();
 
         private IRandomNumberGenerator _Rng;
 
@@ -75,11 +77,16 @@ namespace MurrayGrant.Terninger.EntropySources
 
             // Return early until we're past the next sample time.
             if (_NextSampleTimestamp > DateTime.UtcNow)
+            {
+                Log.Trace("Not running yet.");
                 return Task.FromResult<byte[]>(null);
+            }
 
             return Task.Run(() =>
             {
+                Log.Trace("Beginning to gather entropy.");
                 var ps = Process.GetProcesses();        // TODO: assert we can do this during initialisation.
+                Log.Trace("Found {0:N0} processes.", ps.Length);
 
                 var processStats = new long[ps.Length * _ItemsPerProcess];
 
@@ -109,15 +116,18 @@ namespace MurrayGrant.Terninger.EntropySources
 
                 // Remove all zero items (to prevent silly things like a mostly, or all, zero hash result).
                 var processStatsNoZero = processStats.Where(x => x != 0L).ToArray();
+                Log.Debug("Read {0:N0} non-zero stat items.", processStats.Length);
 
                 // Shuffle the details, so there isn't a repetition of similar stats.
                 processStatsNoZero.ShuffleInPlace(_Rng);
 
                 // Get digests of the stats to return.
                 var result = ByteArrayHelpers.LongsToDigestBytes(processStatsNoZero, _ItemsPerResultChunk);
+                Log.Debug("Converted stats to {0:N0} bytes of entropy.", result.Length);
 
                 // Set the next run time.
                 _NextSampleTimestamp = DateTime.UtcNow.AddMinutes(_PeriodMinutes);
+                Log.Debug("Next run at {0} UTC.", _NextSampleTimestamp);
 
                 return result;
             });
