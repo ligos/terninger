@@ -117,6 +117,14 @@ namespace MurrayGrant.Terninger.Generator
                         initialCounter ?? new CypherCounter(16),
                         additionalEntropyGetter);
         }
+        public static CypherBasedPrngGenerator CreateWithNullKey(
+                ICryptoPrimitive cryptoPrimitive = null,
+                HashAlgorithm hashAlgorithm = null,
+                CypherCounter initialCounter = null,
+                Func<byte[]> additionalEntropyGetter = null)
+        {
+            return Create(new byte[32], cryptoPrimitive, hashAlgorithm, initialCounter, additionalEntropyGetter);
+        }
 
         public void Dispose()
         {
