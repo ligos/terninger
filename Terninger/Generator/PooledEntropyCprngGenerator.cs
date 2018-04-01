@@ -40,6 +40,8 @@ namespace MurrayGrant.Terninger.Generator
 
         public int MaxRequestBytes => _Prng.MaxRequestBytes;
  
+        public Guid UniqueId { get; private set; }
+
         public Int128 BytesRequested { get; private set; }
         public Int128 ReseedCount => this._Accumulator.TotalReseedEvents;
 
@@ -64,9 +66,9 @@ namespace MurrayGrant.Terninger.Generator
 
 
         public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> sources) 
-            : this(sources, new EntropyAccumulator(), new CypherBasedPrngGenerator(new byte[32])) { }
+            : this(sources, new EntropyAccumulator(), CypherBasedPrngGenerator.CreateWithNullKey()) { }
         public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> sources, EntropyAccumulator accumulator)
-            : this(sources, accumulator, new CypherBasedPrngGenerator(new byte[32])) { }
+            : this(sources, accumulator, CypherBasedPrngGenerator.CreateWithNullKey()) { }
         public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> sources, IReseedableRandomNumberGenerator prng)
             : this(sources, new EntropyAccumulator(), prng) { }
 
@@ -80,12 +82,13 @@ namespace MurrayGrant.Terninger.Generator
             if (accumulator == null) throw new ArgumentNullException(nameof(accumulator));
             if (prng == null) throw new ArgumentNullException(nameof(prng));
 
+            this.UniqueId = Guid.NewGuid();
             this._Prng = prng;      // Note that this is unkeyed at this point (or keyed with an all null key).
             this._Accumulator = accumulator;
             this._EntropySources = new List<IEntropySource>(sources);
             this._InitalisedEntropySources = new List<IEntropySource>(_EntropySources.Count);
             this._SchedulerThread = new Thread(ThreadLoop, 256 * 1024);
-            _SchedulerThread.Name = "Terninger Worker Thread";      // TODO: add some kind of way to tell different instances apart.
+            _SchedulerThread.Name = "Terninger Worker Thread - " + UniqueId.ToString("X");
             _SchedulerThread.IsBackground = true;
             this.EntropyPriority = EntropyPriority.High;        // A new generator must reseed as quickly as possible.
             _AllSignals = new[] { _WakeSignal, _ShouldStop.Token.WaitHandle };
