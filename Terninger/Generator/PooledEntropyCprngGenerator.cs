@@ -29,8 +29,6 @@ namespace MurrayGrant.Terninger.Generator
         // Multiple entropy sources, as specified in section 9.5.1.
         private readonly List<IEntropySource> _EntropySources;
         public int SourceCount => this._EntropySources.Count;
-        private readonly List<IEntropySource> _InitalisedEntropySources;
-        public int LiveSourceCount => this._InitalisedEntropySources.Count;
 
         // A thread used to schedule reading from entropy sources.
         // TODO: make an interface so we don't need to own a real thread (eg: instead use WinForms timers).
@@ -57,7 +55,6 @@ namespace MurrayGrant.Terninger.Generator
         private readonly CancellationTokenSource _ShouldStop = new CancellationTokenSource();
         private readonly EventWaitHandle _WakeSignal = new EventWaitHandle(false, EventResetMode.AutoReset);
         private readonly WaitHandle[] _AllSignals;
-        private bool _RunningCoreLoop = false;
 
         /// <summary>
         /// Event is raised after each time the generator is reseeded.
@@ -65,38 +62,33 @@ namespace MurrayGrant.Terninger.Generator
         public event EventHandler<PooledEntropyCprngGenerator> OnReseed;
 
 
-        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> sources) 
-            : this(sources, new EntropyAccumulator(), CypherBasedPrngGenerator.CreateWithNullKey()) { }
-        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> sources, EntropyAccumulator accumulator)
-            : this(sources, accumulator, CypherBasedPrngGenerator.CreateWithNullKey()) { }
-        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> sources, IReseedableRandomNumberGenerator prng)
-            : this(sources, new EntropyAccumulator(), prng) { }
+        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources) 
+            : this(initialisedSources, new EntropyAccumulator(), CypherBasedPrngGenerator.CreateWithNullKey()) { }
+        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, EntropyAccumulator accumulator)
+            : this(initialisedSources, accumulator, CypherBasedPrngGenerator.CreateWithCheapKey()) { }
+        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, IReseedableRandomNumberGenerator prng)
+            : this(initialisedSources, new EntropyAccumulator(), prng) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given PRNG, accumulator, entropy sources and thread.
         /// This does not start the generator.
         /// </summary>
-        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> sources, EntropyAccumulator accumulator, IReseedableRandomNumberGenerator prng) 
+        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, EntropyAccumulator accumulator, IReseedableRandomNumberGenerator prng)
         {
-            if (sources == null) throw new ArgumentNullException(nameof(sources));
+            if (initialisedSources == null) throw new ArgumentNullException(nameof(initialisedSources));
             if (accumulator == null) throw new ArgumentNullException(nameof(accumulator));
             if (prng == null) throw new ArgumentNullException(nameof(prng));
 
             this.UniqueId = Guid.NewGuid();
-            this._Prng = prng;      // Note that this is unkeyed at this point (or keyed with an all null key).
+            this._Prng = prng;      // Note that this is keyed with a low entropy key.
             this._Accumulator = accumulator;
-            this._EntropySources = new List<IEntropySource>(sources);
-            this._InitalisedEntropySources = new List<IEntropySource>(_EntropySources.Count);
+            this._EntropySources = new List<IEntropySource>(initialisedSources);
             this._SchedulerThread = new Thread(ThreadLoop, 256 * 1024);
             _SchedulerThread.Name = "Terninger Worker Thread - " + UniqueId.ToString("X");
             _SchedulerThread.IsBackground = true;
             this.EntropyPriority = EntropyPriority.High;        // A new generator must reseed as quickly as possible.
             _AllSignals = new[] { _WakeSignal, _ShouldStop.Token.WaitHandle };
-
-            if (_EntropySources.Count < 2)
-                throw new ArgumentException($"At least 2 entropy sources are required. Only {_EntropySources.Count} were provided.", nameof(sources));
         }
-
 
         public void Dispose()
         {
@@ -137,13 +129,6 @@ namespace MurrayGrant.Terninger.Generator
             this._SchedulerThread.Start();
         }
 
-        public async Task StartAndWaitForInitialisation()
-        {
-            // TODO: work out how to do this without polling.
-            this.Start();
-            while (!_RunningCoreLoop)
-                await Task.Delay(100);
-        }
         public Task StartAndWaitForFirstSeed() => StartAndWaitForNthSeed(1);
         public Task StartAndWaitForNthSeed(Int128 seedNumber)
         {
@@ -183,33 +168,55 @@ namespace MurrayGrant.Terninger.Generator
             return WaitForNthSeed(this.ReseedCount + 1);
         }
 
+        public void AddInitialisedSource(IEntropySource source)
+        {
+            lock(_EntropySources)
+            {
+                _EntropySources.Add(source);
+            }
+        }
+
 
         private void ThreadLoop()
         {
-            // TODO: I don't want no config gumph in here!
-            var emptyConfig = new EntropySourceConfigFromDictionary(Enumerable.Empty<string>());
-            
-            // Start initialising sources.
-            // TODO: initialise N in parallel.
-            foreach (var source in _EntropySources)
-            {
-                var initResult = source.Initialise(emptyConfig, EntropySourcePrngFactory).GetAwaiter().GetResult();
-                if (initResult.IsSuccessful)
-                    _InitalisedEntropySources.Add(source);
-                // TODO: log unsuccessful initialisations.
-            }
-
-
             while (!_ShouldStop.IsCancellationRequested)
             {
-                _RunningCoreLoop = true;
-
-                // TODO: start reading as soon as the first source is initialised.
-                // Poll all initialised sources.
-                foreach (var source in _InitalisedEntropySources)
+                // Read and randomise sources.
+                IEntropySource[] sources;
+                lock(_EntropySources)
                 {
-                    // TODO: read up to N in parallel.
-                    var maybeEntropy = source.GetEntropyAsync().GetAwaiter().GetResult();
+                    sources = _EntropySources.ToArray();
+                }
+                // There may not be any sources until some time after the generator is started.
+                if (sources.Length == 0)
+                {
+                    // The thread should be woken on cancellation or external signal.
+                    int wakeIdx = WaitHandle.WaitAny(_AllSignals, 100);
+                    var wasTimeout = wakeIdx == WaitHandle.WaitTimeout;
+                    continue;
+                }
+                lock (_PrngLock)
+                {
+                    // Sources are shuffled so the last source isn't easily determined (the last source can bias the accumulator, particularly if malicious).
+                    sources.ShuffleInPlace(_Prng);
+                }
+
+                // Poll all sources.
+                // TODO: read up to N in parallel.
+                foreach (var source in _EntropySources)
+                {
+                    byte[] maybeEntropy;
+                    try
+                    {
+                        // These may come from 3rd parties, use external hardware or do IO: anything could go wrong!
+                        maybeEntropy = source.GetEntropyAsync(this.EntropyPriority).GetAwaiter().GetResult();
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO: log exception
+                        // TODO: if a particular source keeps throwing, should we ignore it??
+                        maybeEntropy = null;
+                    }
                     if (maybeEntropy != null)
                     {
                         lock (_AccumulatorLock)
@@ -217,7 +224,6 @@ namespace MurrayGrant.Terninger.Generator
                             _Accumulator.Add(new EntropyEvent(maybeEntropy, source));
                         }
                     }
-                    // TODO: randomise the order of entropy sources to prevent one always being first or last (which can potentially bias the accumulator).
                     if (_ShouldStop.IsCancellationRequested)
                         break;
                 }
@@ -268,12 +274,9 @@ namespace MurrayGrant.Terninger.Generator
 
         // TODO: work out how often to poll based on minimum and rate entropy is being consumed.
         // TODO: use a PRNG to introduce a random bias into this??
-        private TimeSpan WaitTimeBetweenPolls() => EntropyPriority == EntropyPriority.High ? TimeSpan.Zero
+        private TimeSpan WaitTimeBetweenPolls() => EntropyPriority == EntropyPriority.High ? TimeSpan.FromMilliseconds(1)
                                                  : EntropyPriority == EntropyPriority.Normal ? TimeSpan.FromSeconds(5)
                                                  : EntropyPriority == EntropyPriority.Low ? TimeSpan.FromSeconds(30)
                                                  : TimeSpan.FromSeconds(1);     // Impossible case.
-
-        // TODO: use a PRNG with 128bit seed.
-        private IRandomNumberGenerator EntropySourcePrngFactory() => new StandardRandomWrapperGenerator();
     }
 }

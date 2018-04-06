@@ -1,0 +1,2 @@
+POST to https://api.random.org/json-rpc/1/invoke
+{"jsonrpc":"2.0","method":"generateBlobs","params":{"apiKey":"743faf04-bbdf-43d6-98c4-bb68e5c1d103","n":1,"size":128,"format":"base64"},"id":1}

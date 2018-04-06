@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Linq;
+using System.IO;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using MurrayGrant.Terninger.Generator;
 using MurrayGrant.Terninger.EntropySources;
+using MurrayGrant.Terninger.EntropySources.Test;
 using MurrayGrant.Terninger.Accumulator;
-using System.IO;
-using System.Text;
 
 namespace MurrayGrant.Terninger.Test
 {

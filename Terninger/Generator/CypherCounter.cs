@@ -10,7 +10,7 @@ using System.Diagnostics;
 namespace MurrayGrant.Terninger.Generator
 {
     /// <summary>
-    /// An object encapsulating a large counter (minimum 64 bites), which is incremented by an ICryptoTransform to produce random bytes.
+    /// An object encapsulating a large counter (minimum 64 bits), which is incremented by an ICryptoTransform to produce random bytes.
     /// This may be a single counter or an array of them.
     /// </summary>
     public class CypherCounter : IDisposable

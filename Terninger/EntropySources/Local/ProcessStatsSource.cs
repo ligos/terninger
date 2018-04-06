@@ -10,38 +10,40 @@ using MurrayGrant.Terninger.Generator;
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.LibLog;
 
-namespace MurrayGrant.Terninger.EntropySources
+namespace MurrayGrant.Terninger.EntropySources.Local
 {
     /// <summary>
     /// An entropy source which uses system processes statistics as input.
+    /// Polling defaults: 10 minutes at normal priority, 30 seconds at high priority, 50 minutes at low priority (5 x normal).
     /// </summary>
-    public class ProcessStatsSource : IEntropySource
+    public class ProcessStatsSource : EntropySourceWithPeriod
     {
-        public string Name => typeof(ProcessStatsSource).FullName;
+        public override string Name => typeof(ProcessStatsSource).FullName;
 
         private const int _ItemsPerProcess = 17;            // This many properties are read from each process. Based on available properties.
-        private readonly ILog Log = LogProvider.For<ProcessStatsSource>();
 
         private IRandomNumberGenerator _Rng;
 
         // Config properties.
-        private DateTime _NextSampleTimestamp;
         private int _ItemsPerResultChunk = 70;              // This many Int64 stats are combined into one final hash. 70 should span a bit over 4 processes each.
         public int StatsPerChunk => _ItemsPerResultChunk;
-        private double _PeriodMinutes = 10.0;               // 10 minutes between runs, by default.
-        public double PeriodMinutes => _PeriodMinutes;
 
-        public ProcessStatsSource() : this(10.0, 70, null) { }
-        public ProcessStatsSource(double periodMinutes) : this(periodMinutes, 70, null) { }
-        public ProcessStatsSource(double periodMinutes, int itemsPerResultChunk) : this(periodMinutes, itemsPerResultChunk, null) { }
-        public ProcessStatsSource(double periodMinutes, int itemsPerResultChunk, IRandomNumberGenerator rng)
+        // Polling defaults: 10 minutes at normal priority, 30 seconds at high priority, 40 minutes at low priority (4 x normal).
+
+        public ProcessStatsSource() : this(TimeSpan.FromMinutes(10.0), 70) { }
+        public ProcessStatsSource(TimeSpan periodNormalPriority) : this(periodNormalPriority, 70) { }
+        public ProcessStatsSource(TimeSpan periodNormalPriority, int itemsPerResultChunk) : this(periodNormalPriority, TimeSpan.FromSeconds(30), new TimeSpan(periodNormalPriority.Ticks * 5), itemsPerResultChunk, null) { }
+        public ProcessStatsSource(TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority, int itemsPerResultChunk, IRandomNumberGenerator rng)
+            : base (periodNormalPriority, periodHighPriority, periodLowPriority)
         {
-            this._PeriodMinutes = periodMinutes >= 0.0 ? periodMinutes : 10.0;
+            if (itemsPerResultChunk < 1 || itemsPerResultChunk > 10000)
+                throw new ArgumentOutOfRangeException(nameof(itemsPerResultChunk), itemsPerResultChunk, "Items per chunck must be between 1 and 10000");
+
             this._ItemsPerResultChunk = itemsPerResultChunk > 0 ? itemsPerResultChunk : 70;
             this._Rng = rng ?? StandardRandomWrapperGenerator.StockRandom();
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             var disposable = _Rng as IDisposable;
             if (disposable != null)
@@ -49,43 +51,16 @@ namespace MurrayGrant.Terninger.EntropySources
             disposable = null;
         }
 
-        public Task<EntropySourceInitialisationResult> Initialise(IEntropySourceConfig config, Func<IRandomNumberGenerator> prngFactory)
-        {
-            if (config.IsTruthy("ProcessStatsSource.Enabled") == false)
-                return Task.FromResult(EntropySourceInitialisationResult.Failed(EntropySourceInitialisationReason.DisabledByConfig, "ProcessStatsSource has been disabled in entropy source configuration."));
-
-            config.TryParseAndSetDouble("ProcessStatsSource.PeriodMinutes", ref _PeriodMinutes);
-            if (_PeriodMinutes < 0.0 || _PeriodMinutes > 1440.0)
-                return Task.FromResult(EntropySourceInitialisationResult.Failed(EntropySourceInitialisationReason.InvalidConfig, new ArgumentOutOfRangeException("ProcessStatsSource.PeriodMinutes", _PeriodMinutes, "Config item ProcessStatsSource.PeriodMinutes must be between 0 and 1440 (one day)")));
-
-            config.TryParseAndSetInt32("ProcessStatsSource.StatsPerChunk", ref _ItemsPerResultChunk);
-            if (_ItemsPerResultChunk <= 0 || _ItemsPerResultChunk > 10000)
-                return Task.FromResult(EntropySourceInitialisationResult.Failed(EntropySourceInitialisationReason.InvalidConfig, new ArgumentOutOfRangeException("ProcessStatsSource.StatsPerChunk", _ItemsPerResultChunk, "Config item ProcessStatsSource.StatsPerChunk must be between 1 and 10000")));
-
-            _Rng = prngFactory() ?? StandardRandomWrapperGenerator.StockRandom();
-            _NextSampleTimestamp = DateTime.UtcNow;
-
-            return Task.FromResult(EntropySourceInitialisationResult.Successful());
-        }
-
-        public Task<byte[]> GetEntropyAsync()
+        protected override Task<byte[]> GetInternalEntropyAsync(EntropyPriority priority)
         {
             // This reads details of all processes running on the system, and uses them as inputs to a hash for final result.
             // Often, different properties or processes will throw exceptions.
             // Given this isn't trivial work, we run in a separate threadpool task.
-            // There's also a period where we won't sample.
-
-            // Return early until we're past the next sample time.
-            if (_NextSampleTimestamp > DateTime.UtcNow)
-            {
-                Log.Trace("Not running yet.");
-                return Task.FromResult<byte[]>(null);
-            }
 
             return Task.Run(() =>
             {
                 Log.Trace("Beginning to gather entropy.");
-                var ps = Process.GetProcesses();        // TODO: assert we can do this during initialisation.
+                var ps = Process.GetProcesses();        // TODO: assert we can do this during initialisation?
                 Log.Trace("Found {0:N0} processes.", ps.Length);
 
                 var processStats = new long[ps.Length * _ItemsPerProcess];
@@ -116,18 +91,14 @@ namespace MurrayGrant.Terninger.EntropySources
 
                 // Remove all zero items (to prevent silly things like a mostly, or all, zero hash result).
                 var processStatsNoZero = processStats.Where(x => x != 0L).ToArray();
-                Log.Debug("Read {0:N0} non-zero stat items.", processStats.Length);
+                Log.Trace("Read {0:N0} non-zero stat items.", processStatsNoZero.Length);
 
                 // Shuffle the details, so there isn't a repetition of similar stats.
                 processStatsNoZero.ShuffleInPlace(_Rng);
 
                 // Get digests of the stats to return.
                 var result = ByteArrayHelpers.LongsToDigestBytes(processStatsNoZero, _ItemsPerResultChunk);
-                Log.Debug("Converted stats to {0:N0} bytes of entropy.", result.Length);
-
-                // Set the next run time.
-                _NextSampleTimestamp = DateTime.UtcNow.AddMinutes(_PeriodMinutes);
-                Log.Debug("Next run at {0} UTC.", _NextSampleTimestamp);
+                Log.Trace("Converted stats to {0:N0} bytes of entropy.", result.Length);
 
                 return result;
             });

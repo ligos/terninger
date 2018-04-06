@@ -11,7 +11,6 @@ namespace MurrayGrant.Terninger.EntropySources
     /// <summary>
     /// A source of entropy, supplied from an external source.
     /// </summary>
-    [SourceDisabledByDefault]
     public class UserSuppliedSource : IEntropySource
     {
         public string Name => typeof(UserSuppliedSource).FullName;
@@ -29,11 +28,6 @@ namespace MurrayGrant.Terninger.EntropySources
             // Nothing required.
         }
 
-        public Task<EntropySourceInitialisationResult> Initialise(IEntropySourceConfig config, Func<IRandomNumberGenerator> prngFactory)
-        {
-            return Task.FromResult(EntropySourceInitialisationResult.Successful());
-        }
-
 
         // Theading: SetEntropy() and GetEntropyAsync() may be accessed from different threads.
         // I'm not too concerned because its a single reference field being accessed, so the worst that can happen is a race (in a polling loop).
@@ -44,7 +38,7 @@ namespace MurrayGrant.Terninger.EntropySources
             this._Entropy = entropy;
         }
 
-        public Task<byte[]> GetEntropyAsync()
+        public Task<byte[]> GetEntropyAsync(EntropyPriority priority)
         {
             var result = _Entropy;
             _Entropy = null;

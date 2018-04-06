@@ -33,7 +33,7 @@ namespace MurrayGrant.Terninger.EntropySources
                 var flatEnvironmentVars = String.Join(";", Environment.GetEnvironmentVariables().Cast<DictionaryEntry>().Select(x => x.Key.ToString() + ":" + x.Value.ToString()));
                 result.AddRange(flatEnvironmentVars.ToLongs());
 
-                result.AddRange(NetworkStatsSource.GetNetworkInterfaceStaticProperties());
+                result.AddRange(Local.NetworkStatsSource.GetNetworkInterfaceStaticProperties());
 
                 var digest = ByteArrayHelpers.LongsToDigestBytes(result.ToArray());
                 return digest;

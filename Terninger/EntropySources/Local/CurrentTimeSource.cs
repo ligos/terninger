@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using MurrayGrant.Terninger.Generator;
 
-namespace MurrayGrant.Terninger.EntropySources
+namespace MurrayGrant.Terninger.EntropySources.Local
 {
     /// <summary>
     /// An entropy source based on the current system date and time.
@@ -22,15 +22,7 @@ namespace MurrayGrant.Terninger.EntropySources
             // Nothing required.
         }
 
-        public Task<EntropySourceInitialisationResult> Initialise(IEntropySourceConfig config, Func<IRandomNumberGenerator> prngFactory)
-        {
-            if (config.IsTruthy("CurrentTimeSource.Enabled") == false)
-                return Task.FromResult(EntropySourceInitialisationResult.Failed(EntropySourceInitialisationReason.DisabledByConfig, "CurrentTimeSource has been disabled in entropy source configuration."));
-            else
-                return Task.FromResult(EntropySourceInitialisationResult.Successful());
-        }
-
-        public Task<byte[]> GetEntropyAsync()
+        public Task<byte[]> GetEntropyAsync(EntropyPriority priority)
         {
             byte[] result;
             if (!_HasRunOnce)
@@ -42,7 +34,7 @@ namespace MurrayGrant.Terninger.EntropySources
             else
             {
                 // All subsequent runs only include the lower 32 bits.
-                result = BitConverter.GetBytes(unchecked((int)DateTime.UtcNow.Ticks));
+                result = BitConverter.GetBytes(unchecked((uint)DateTime.UtcNow.Ticks));
             }
             
             return Task.FromResult(result);

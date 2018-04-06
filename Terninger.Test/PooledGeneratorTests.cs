@@ -7,6 +7,8 @@ using MurrayGrant.Terninger;
 using MurrayGrant.Terninger.Accumulator;
 using MurrayGrant.Terninger.Generator;
 using MurrayGrant.Terninger.EntropySources;
+using MurrayGrant.Terninger.EntropySources.Test;
+using MurrayGrant.Terninger.EntropySources.Local;
 using System.Threading.Tasks;
 
 namespace MurrayGrant.Terninger.Test
@@ -74,7 +76,6 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(rng.IsRunning, false);
             Assert.AreEqual(rng.EntropyPriority, EntropyPriority.High);
             Assert.AreEqual(rng.SourceCount, 6);
-            Assert.AreEqual(rng.LiveSourceCount, 0);
         }
 
         [TestMethod]
@@ -88,11 +89,6 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(rng.IsRunning, false);
             Assert.AreEqual(rng.EntropyPriority, EntropyPriority.High);
             Assert.AreEqual(rng.SourceCount, 6);
-            Assert.AreEqual(rng.LiveSourceCount, 0);
-
-            await rng.StartAndWaitForInitialisation();
-            Assert.AreEqual(rng.SourceCount, 6);
-            Assert.AreEqual(rng.LiveSourceCount, 6);
 
             await rng.Stop();
         }
@@ -109,11 +105,8 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(rng.IsRunning, false);
             Assert.AreEqual(rng.EntropyPriority, EntropyPriority.High);
             Assert.AreEqual(rng.SourceCount, 6);
-            Assert.AreEqual(rng.LiveSourceCount, 0);
-
+            
             await rng.StartAndWaitForFirstSeed();
-            Assert.AreEqual(rng.SourceCount, 6);
-            Assert.AreEqual(rng.LiveSourceCount, 6);
             Assert.IsTrue(rng.ReseedCount >= 1);
             Assert.IsTrue(acc.TotalEntropyBytes > 0);
             Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
@@ -133,11 +126,8 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(rng.IsRunning, false);
             Assert.AreEqual(rng.EntropyPriority, EntropyPriority.High);
             Assert.AreEqual(rng.SourceCount, 6);
-            Assert.AreEqual(rng.LiveSourceCount, 0);
-
+            
             await rng.StartAndWaitForFirstSeed();
-            Assert.AreEqual(rng.SourceCount, 6);
-            Assert.AreEqual(rng.LiveSourceCount, 6);
             Assert.IsTrue(rng.ReseedCount >= 1);
             Assert.IsTrue(acc.TotalEntropyBytes > 0);
             Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
@@ -160,11 +150,8 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(rng.IsRunning, false);
             Assert.AreEqual(rng.EntropyPriority, EntropyPriority.High);
             Assert.AreEqual(rng.SourceCount, 6);
-            Assert.AreEqual(rng.LiveSourceCount, 0);
-
+            
             await rng.StartAndWaitForFirstSeed();
-            Assert.AreEqual(rng.SourceCount, 6);
-            Assert.AreEqual(rng.LiveSourceCount, 6);
             Assert.IsTrue(rng.ReseedCount >= 1);
             Assert.IsTrue(acc.TotalEntropyBytes > 0);
             Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
@@ -192,8 +179,7 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(rng.IsRunning, false);
             Assert.AreEqual(rng.EntropyPriority, EntropyPriority.High);
             Assert.AreEqual(rng.SourceCount, 6);
-            Assert.AreEqual(rng.LiveSourceCount, 0);
-
+            
             await rng.StartAndWaitForFirstSeed();
             Assert.AreEqual(reseedCountOnEvent, rng.ReseedCount);
 

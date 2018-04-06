@@ -125,6 +125,14 @@ namespace MurrayGrant.Terninger.Generator
         {
             return Create(new byte[32], cryptoPrimitive, hashAlgorithm, initialCounter, additionalEntropyGetter);
         }
+        public static CypherBasedPrngGenerator CreateWithCheapKey(
+            ICryptoPrimitive cryptoPrimitive = null,
+            HashAlgorithm hashAlgorithm = null,
+            CypherCounter initialCounter = null,
+            Func<byte[]> additionalEntropyGetter = null)
+        {
+            return Create(EntropySources.CheapEntropy.Get32(), cryptoPrimitive, hashAlgorithm, initialCounter, additionalEntropyGetter);
+        }
 
         public void Dispose()
         {

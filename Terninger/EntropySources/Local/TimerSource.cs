@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using MurrayGrant.Terninger.Generator;
 
-namespace MurrayGrant.Terninger.EntropySources
+namespace MurrayGrant.Terninger.EntropySources.Local
 {
     /// <summary>
     /// Am entropy source based on a high precision timer.
@@ -21,18 +21,10 @@ namespace MurrayGrant.Terninger.EntropySources
             _Timer.Reset();
         }
 
-        public Task<EntropySourceInitialisationResult> Initialise(IEntropySourceConfig config, Func<IRandomNumberGenerator> prngFactory)
-        {
-            if (config.IsTruthy("TimerSource.Enabled") == false)
-                return Task.FromResult(EntropySourceInitialisationResult.Failed(EntropySourceInitialisationReason.DisabledByConfig, "TimerSource has been disabled in entropy source configuration."));
-            else
-                return Task.FromResult(EntropySourceInitialisationResult.Successful());
-        }
-
-        public Task<byte[]> GetEntropyAsync()
+        public Task<byte[]> GetEntropyAsync(EntropyPriority priority)
         {
             // Only returning the lower 32 bits of the timer, as the upper 32 bits will be pretty static.
-            var result = BitConverter.GetBytes(unchecked((int)_Timer.ElapsedTicks));
+            var result = BitConverter.GetBytes(unchecked((uint)_Timer.ElapsedTicks));
             return Task.FromResult(result);
         }
     }

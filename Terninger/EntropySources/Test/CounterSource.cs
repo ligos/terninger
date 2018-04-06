@@ -7,12 +7,11 @@ using System.Threading.Tasks;
 using MurrayGrant.Terninger.Generator;
 using MurrayGrant.Terninger.Helpers;
 
-namespace MurrayGrant.Terninger.EntropySources
+namespace MurrayGrant.Terninger.EntropySources.Test
 {
     /// <summary>
     /// An entropy source which returns an incrementing counter.
     /// </summary>
-    [SourceDisabledByDefault]
     public class CounterSource : IEntropySource
     {
         private readonly CypherCounter _Counter;
@@ -30,15 +29,7 @@ namespace MurrayGrant.Terninger.EntropySources
             _Counter.TryDispose();
         }
 
-        public Task<EntropySourceInitialisationResult> Initialise(IEntropySourceConfig config, Func<IRandomNumberGenerator> prngFactory)
-        {
-            if (config.IsTruthy("CounterSource.Enabled") == true)
-                return Task.FromResult(EntropySourceInitialisationResult.Successful());
-            else
-                return Task.FromResult(EntropySourceInitialisationResult.Failed(EntropySourceInitialisationReason.DisabledByConfig, "CounterSource is disabled by default. Set CounterSource.Enabled in configuration to enable."));
-        }
-
-        public Task<byte[]> GetEntropyAsync()
+        public Task<byte[]> GetEntropyAsync(EntropyPriority priority)
         {
             // Increment the counter and return its value.
             _Counter.Increment();

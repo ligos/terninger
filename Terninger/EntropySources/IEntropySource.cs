@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 
+using MurrayGrant.Terninger.Generator;
+
 namespace MurrayGrant.Terninger.EntropySources
 {
     /// <summary>
@@ -17,50 +19,12 @@ namespace MurrayGrant.Terninger.EntropySources
         /// </summary>
         string Name { get; }
 
-
-        /// <summary>
-        /// Initialise the entropy source. Returns a task indicating if it was successful or not.
-        /// Configuration and a PRNG are available if the source requires them.
-        /// </summary>
-        Task<EntropySourceInitialisationResult> Initialise(IEntropySourceConfig config, Func<Terninger.Generator.IRandomNumberGenerator> prngFactory);
-
         /// <summary>
         /// Gets entropy from the source.
         /// A source may return null if there is no entropy available.
-        /// There is no limit to the amount of entropy which can be returned, but more than 16kB is overkill.
+        /// There is no limit to the amount of entropy which can be returned, but more than 4kB is overkill.
+        /// Entropy Priority indicates how aggressively the source should read entropy.
         /// </summary>
-        Task<byte[]> GetEntropyAsync();
-    }
-
-    public class EntropySourceInitialisationResult
-    {
-        public static EntropySourceInitialisationResult Successful() => new EntropySourceInitialisationResult(EntropySourceInitialisationReason.Successful, null);
-        public static EntropySourceInitialisationResult Failed(EntropySourceInitialisationReason r) => new EntropySourceInitialisationResult(r, null);
-        public static EntropySourceInitialisationResult Failed(EntropySourceInitialisationReason r, string s) => new EntropySourceInitialisationResult(r, new Exception(s));
-        public static EntropySourceInitialisationResult Failed(EntropySourceInitialisationReason r, Exception e) => new EntropySourceInitialisationResult(r, e);
-
-        private EntropySourceInitialisationResult(EntropySourceInitialisationReason r, Exception e)
-        {
-            this.Reason = r;
-            this.Exception = e;
-        }
-        public readonly EntropySourceInitialisationReason Reason;
-        public readonly Exception Exception;
-        public bool IsSuccessful => this.Reason == EntropySourceInitialisationReason.Successful;
-    }
-
-    public enum EntropySourceInitialisationReason
-    {
-        Successful = 0,
-        Failure = 1,
-
-        NotSupported = 64,
-        MissingHardware = 65,
-        DisabledByConfig = 66,
-        NoPermission = 67,
-        InvalidConfig = 68,
-
-        PendingUserPermission = 128,
-        PendingUserConfig = 129,
+        Task<byte[]> GetEntropyAsync(EntropyPriority priority);
     }
 }

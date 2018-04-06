@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 
-namespace MurrayGrant.Terninger.EntropySources
+namespace MurrayGrant.Terninger.Config
 {
     /// <summary>
     /// Interface for entropy sources to access configuration variables.

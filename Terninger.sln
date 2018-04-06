@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Realtime", "Terni
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Perf", "Terninger.Perf\Terninger.Perf.csproj", "{D2F06E7B-E840-4693-B991-536A2C4D1A6A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Config", "Terninger.Config\Terninger.Config.csproj", "{A951DB15-27AC-4560-B224-2AA9B0742EE6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Test.Network", "Terninger.Test.Network\Terninger.Test.Network.csproj", "{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,8 +43,19 @@ Global
 		{D2F06E7B-E840-4693-B991-536A2C4D1A6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2F06E7B-E840-4693-B991-536A2C4D1A6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2F06E7B-E840-4693-B991-536A2C4D1A6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A951DB15-27AC-4560-B224-2AA9B0742EE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A951DB15-27AC-4560-B224-2AA9B0742EE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A951DB15-27AC-4560-B224-2AA9B0742EE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A951DB15-27AC-4560-B224-2AA9B0742EE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3DE0105D-14DD-4429-836C-45F36363382A}
 	EndGlobalSection
 EndGlobal

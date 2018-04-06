@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;LIBLOG_PUBLIC</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
@@ -26,7 +26,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;LIBLOG_PUBLIC</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
@@ -48,26 +48,28 @@
     <Compile Include="CryptoPrimitives\CryptoPrimitive.cs" />
     <Compile Include="CryptoPrimitives\BlockCypherCryptoPrimitive.cs" />
     <Compile Include="BigMath\Int128.cs" />
-    <Compile Include="EntropySources\UserSuppliedSource.cs" />
+    <Compile Include="EntropySources\EntropySourceWithPeriod.cs" />
+    <Compile Include="EntropySources\Local\UserSuppliedSource.cs" />
+    <Compile Include="EntropySources\Network\BeaconNistExternalRandomSource.cs" />
+    <Compile Include="EntropySources\Network\HotbitsExternalRandomSource.cs" />
+    <Compile Include="EntropySources\Network\RandomServerExternalRandomSource.cs" />
+    <Compile Include="EntropySources\Network\RandomNumbersInfoExternalRandomSource.cs" />
+    <Compile Include="EntropySources\Network\RandomOrgExternalRandomSource.cs" />
+    <Compile Include="EntropySources\Network\AnuExternalRandomSource.cs" />
     <Compile Include="EntropySources\StaticLocalEntropy.cs" />
-    <Compile Include="EntropySources\EntropySourceConfigFromDictionary.cs" />
     <Compile Include="EntropySources\CheapEntropy.cs" />
-    <Compile Include="EntropySources\EntropySourceAttributes.cs" />
-    <Compile Include="EntropySources\ExternalWebContentSource.cs" />
-    <Compile Include="EntropySources\ExternalServerRandomSource.cs" />
-    <Compile Include="EntropySources\EntropySourceConfigExtensions.cs" />
-    <Compile Include="EntropySources\IEntropySourceConfig.cs" />
-    <Compile Include="EntropySources\PingStatsSource.cs" />
-    <Compile Include="EntropySources\ProcessStatsSource.cs" />
-    <Compile Include="EntropySources\NetworkStatsSource.cs" />
-    <Compile Include="EntropySources\CryptoRandomSource.cs" />
-    <Compile Include="EntropySources\GCMemorySource.cs" />
-    <Compile Include="EntropySources\TimerSource.cs" />
-    <Compile Include="EntropySources\CurrentTimeSource.cs" />
+    <Compile Include="EntropySources\Network\ExternalWebContentSource.cs" />
+    <Compile Include="EntropySources\Network\PingStatsSource.cs" />
+    <Compile Include="EntropySources\Local\ProcessStatsSource.cs" />
+    <Compile Include="EntropySources\Local\NetworkStatsSource.cs" />
+    <Compile Include="EntropySources\Local\CryptoRandomSource.cs" />
+    <Compile Include="EntropySources\Local\GCMemorySource.cs" />
+    <Compile Include="EntropySources\Local\TimerSource.cs" />
+    <Compile Include="EntropySources\Local\CurrentTimeSource.cs" />
     <Compile Include="EntropySources\EntropyEvent.cs" />
     <Compile Include="EntropySources\IEntropySource.cs" />
-    <Compile Include="EntropySources\CounterSource.cs" />
-    <Compile Include="EntropySources\NullSource.cs" />
+    <Compile Include="EntropySources\Test\CounterSource.cs" />
+    <Compile Include="EntropySources\Test\NullSource.cs" />
     <Compile Include="Generator\EntropyPriority.cs" />
     <Compile Include="Generator\PooledEntropyCprngGenerator.cs" />
     <Compile Include="Generator\CypherBasedPrngGenerator.cs" />
@@ -88,10 +90,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="EntropySources\PingServerList.txt" />
+    <EmbeddedResource Include="EntropySources\Network\PingServerList.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="EntropySources\ExternalWebServerList.txt" />
+    <EmbeddedResource Include="EntropySources\Network\ExternalWebServerList.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
