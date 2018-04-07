@@ -27,7 +27,7 @@ namespace MurrayGrant.Terninger.EntropySources
 
         protected DateTime _LastPollDatestamp;
 
-        protected readonly ILog Log = LogProvider.GetCurrentClassLogger();
+        protected static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
 
         protected EntropySourceWithPeriod(TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)

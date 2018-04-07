@@ -27,6 +27,9 @@ namespace MurrayGrant.Terninger.EntropySources.Local
         private int _ItemsPerResultChunk = 17;              // This many Int64 stats are combined into one final hash.
         public int StatsPerChunk => _ItemsPerResultChunk;
 
+        // This logs the raw stat long array to Trace. Only for testing.
+        internal bool LogRawStats { get; set; }
+
         public NetworkStatsSource() : this(TimeSpan.FromMinutes(1.0), 17) { }
         public NetworkStatsSource(TimeSpan periodNormalPriority) : this(periodNormalPriority, 17) { }
         public NetworkStatsSource(TimeSpan periodNormalPriority, int itemsPerResultChunk) : this(periodNormalPriority, TimeSpan.FromSeconds(5), new TimeSpan(periodNormalPriority.Ticks * 5), itemsPerResultChunk, null) { }
@@ -132,6 +135,8 @@ namespace MurrayGrant.Terninger.EntropySources.Local
                 // Remove zeros and shuffle to prevent obvious correlations.
                 var statsNoZero = allStats.Where(x => x != 0L).ToArray();
                 Log.Trace("Read {0:N0} non-zero stat items.", statsNoZero.Length);
+                if (LogRawStats)
+                    Log.Trace("Raw stats: ", statsNoZero.LongsToHexString());
 
                 // Shuffle the details, so there isn't a repetition of similar stats.
                 statsNoZero.ShuffleInPlace(_Rng);

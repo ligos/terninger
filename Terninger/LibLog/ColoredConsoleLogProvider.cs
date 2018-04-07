@@ -6,6 +6,13 @@
 
     public class ColoredConsoleLogProvider : ILogProvider
     {
+        private readonly bool _LogToTraceOut;
+        public ColoredConsoleLogProvider() : this(false) { }
+        public ColoredConsoleLogProvider(bool logToTrace)
+        {
+            _LogToTraceOut = logToTrace;
+        }
+
         private static readonly Dictionary<LogLevel, ConsoleColor> Colors = new Dictionary<LogLevel, ConsoleColor>
             {
                 {LogLevel.Fatal, ConsoleColor.Red},
@@ -48,7 +55,7 @@
             };
         }
 
-        private static void WriteMessage(
+        private void WriteMessage(
             LogLevel logLevel,
             string name,
             Func<string> messageFunc,
@@ -60,7 +67,10 @@
             {
                 message = message + "|" + exception;
             }
-            Console.WriteLine("{0} | {1} | {2} | {3}", DateTime.UtcNow, logLevel, name, message);
+            var line = String.Format("{0} | {1} | {2} | {3}", DateTime.UtcNow, logLevel, name, message);
+            Console.WriteLine(line);
+            if (_LogToTraceOut)
+                System.Diagnostics.Trace.WriteLine(line);
         }
 
         public IDisposable OpenNestedContext(string message)

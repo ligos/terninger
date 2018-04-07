@@ -123,8 +123,8 @@ namespace MurrayGrant.Terninger.Test
         public void Accumulator_DefaultCreator()
         {
             var a = new EntropyAccumulator();
-            Assert.AreEqual(a.LinearPoolCount, 32);
-            Assert.AreEqual(a.RandomPoolCount, 0);
+            Assert.AreEqual(a.LinearPoolCount, 16);
+            Assert.AreEqual(a.RandomPoolCount, 16);
             Assert.AreEqual(a.TotalPoolCount, 32);
             Assert.AreEqual(a.TotalEntropyBytes, 0);
             Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
@@ -374,67 +374,6 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
             Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
             Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
-        }
-
-        [TestMethod]
-        public void Accumulator_ListLinearPoolsUsedIn1000SeedEvents()
-        {
-            var a = new EntropyAccumulator(32, 0, _Rng);
-            using (var sw = new StreamWriter("accumulator_linearUsage.txt", false, Encoding.UTF8))
-            {
-                sw.WriteLine($"Seed:Ent'py:# :Pools Used (linear)             :Pools Used (random)        ");
-                for (int i = 0; i < 1000; i++)
-                {
-                    for (int j = 0; j < a.TotalPoolCount; j++)
-                        a.Add(EventFromBytes(_Incrementing16Bytes));
-                    var availableEntropy = (long)a.AvailableEntropyBytesSinceLastSeed;
-                    var seed = a.NextSeed();
-                    sw.WriteLine($"{i+1:0000}:{availableEntropy:000000}:{a.PoolCountUsedInLastSeedGeneration:00}:{Convert.ToString((long)a.LinearPoolsUsedInLastSeedGeneration, 2),32}:{Convert.ToString((long)a.RandomPoolsUsedInLastSeedGeneration, 2),32}");
-                    Assert.IsTrue(availableEntropy >= a.TotalPoolCount * _Incrementing16Bytes.Length);      // Not every pool is used, so we may have extra bytes here. 
-                    Assert.IsTrue(seed.Length > 0);
-                }
-            }
-            Assert.AreEqual(a.TotalReseedEvents, 1000);
-        }
-        [TestMethod]
-        public void Accumulator_ListRandomPoolsUsedIn1000SeedEvents()
-        {
-            var a = new EntropyAccumulator(0, 32, _Rng);
-            using (var sw = new StreamWriter("accumulator_randomUsage.txt", false, Encoding.UTF8))
-            {
-                sw.WriteLine($"Seed:Ent'py:# :Pools Used (linear)             :Pools Used (random)        ");
-                for (int i = 0; i < 1000; i++)
-                {
-                    for (int j = 0; j < a.TotalPoolCount; j++)
-                        a.Add(EventFromBytes(_Incrementing16Bytes));
-                    var availableEntropy = (long)a.AvailableEntropyBytesSinceLastSeed;
-                    var seed = a.NextSeed();
-                    sw.WriteLine($"{i + 1:0000}:{availableEntropy:000000}:{a.PoolCountUsedInLastSeedGeneration:00}:{Convert.ToString((long)a.LinearPoolsUsedInLastSeedGeneration, 2),32}:{Convert.ToString((long)a.RandomPoolsUsedInLastSeedGeneration, 2),32}");
-                    Assert.IsTrue(availableEntropy >= a.TotalPoolCount * _Incrementing16Bytes.Length);      // Not every pool is used, so we may have extra bytes here. 
-                    Assert.IsTrue(seed.Length > 0);
-                }
-            }
-            Assert.AreEqual(a.TotalReseedEvents, 1000);
-        }
-        [TestMethod]
-        public void Accumulator_ListLinearAndRandomPoolsUsedIn1000SeedEvents()
-        {
-            var a = new EntropyAccumulator(16, 16, _Rng);
-            using (var sw = new StreamWriter("accumulator_linearAndRandomUsage.txt", false, Encoding.UTF8))
-            {
-                sw.WriteLine($"Seed:Ent'py:# :Pools (linear)  :Pools (random)   ");
-                for (int i = 0; i < 1000; i++)
-                {
-                    for (int j = 0; j < a.TotalPoolCount; j++)
-                        a.Add(EventFromBytes(_Incrementing16Bytes));
-                    var availableEntropy = (long)a.AvailableEntropyBytesSinceLastSeed;
-                    var seed = a.NextSeed();
-                    sw.WriteLine($"{i + 1:0000}:{availableEntropy:000000}:{a.PoolCountUsedInLastSeedGeneration:00}:{Convert.ToString((long)a.LinearPoolsUsedInLastSeedGeneration, 2),16}:{Convert.ToString((long)a.RandomPoolsUsedInLastSeedGeneration, 2),16}");
-                    Assert.IsTrue(availableEntropy >= a.TotalPoolCount * _Incrementing16Bytes.Length);      // Not every pool is used, so we may have extra bytes here. 
-                    Assert.IsTrue(seed.Length > 0);
-                }
-            }
-            Assert.AreEqual(a.TotalReseedEvents, 1000);
         }
 
         [TestMethod]

@@ -76,7 +76,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
         }
 
-        private async Task<List<IPAddress>> LoadInternalServerListAsync()
+        public static async Task<List<IPAddress>> LoadInternalServerListAsync()
         {
             Log.Debug("Loading internal server list...");
             var servers = new List<IPAddress>();
@@ -106,7 +106,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             Log.Debug("Loaded {0:N0} server IP addresses from internal list.", servers.Count);
             return servers;
         }
-        private List<IPAddress> LoadInternalServerList()
+        public static List<IPAddress> LoadInternalServerList()
         {
             return LoadInternalServerListAsync().GetAwaiter().GetResult();
         }
@@ -117,7 +117,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             // Time each of them, use the high precision part as the result.
             // TODO: perhaps do real DNS queries rather than ICMP pings, as many have disabled ping. Note that this will need a 3rd party library.
 
-            // TODO: check to see if there is a network available before trying this.
+            // TODO: check to see if there is a network available before trying this. Eg: https://stackoverflow.com/a/8345173/117070
 
             // Select the servers we will ping.
             var serversToSample = new List<PingAndStopwatch>(_ServersPerSample);
@@ -137,9 +137,9 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 {
                     await Task.WhenAll(serversToSample.Select(x => x.ResetAndRun()).ToArray());
 
-                    foreach (var s in serversToSample.Where(x => x.Stopwatch.ElapsedMilliseconds > 0 && x.Stopwatch.ElapsedMilliseconds < _Timeout))
+                    foreach (var s in serversToSample.Where(x => x.Timing.TotalMilliseconds > 0 && x.Timing.TotalMilliseconds < _Timeout))
                     {
-                        var timingBytes = BitConverter.GetBytes(unchecked((ushort)s.Stopwatch.Elapsed.Ticks));
+                        var timingBytes = BitConverter.GetBytes(unchecked((ushort)s.Timing.Ticks));
                         result.Add(timingBytes[0]);
                         result.Add(timingBytes[1]);
                     }
@@ -150,6 +150,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                     result.AddRange(_Rng.GetRandomBytes(2));
                 }
             }
+
+            // Check for IPs where every attempt was a failure: something is likely wrong.
+            foreach (var server in serversToSample.Where(x => x.Failures == _PingsPerSample))
+                Log.Warn("Every attempt to ping IP {0} failed. Server is likely offline or filewalled.", server.IP);
 
             return result.ToArray();
         }
@@ -162,19 +166,34 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
             public readonly IPAddress IP;
             public readonly Ping Ping = new Ping();
-            public readonly Stopwatch Stopwatch = new Stopwatch();
+            public TimeSpan Timing { get; private set; }
+            public int Failures { get; private set; }
 
-            public Task ResetAndRun()
+            public async Task ResetAndRun()
             {
-                // TODO: exception handling??
-                Stopwatch.Restart();
-                return Ping.SendPingAsync(IP, PingStatsSource._Timeout)
-                            .ContinueWith((x) => {
-                                Stopwatch.Stop();
-                                return x;
-                            }, TaskContinuationOptions.ExecuteSynchronously);
+                var sw = Stopwatch.StartNew();
+                try
+                {
+                    var result = await Ping.SendPingAsync(IP, PingStatsSource._Timeout);
+                    sw.Stop();
+                    Log.Trace("Ping to '{0}' in {1:N2}ms, result: {2}", IP, sw.Elapsed.TotalMilliseconds, result.Status);
+                    if (result.Status == IPStatus.Success)
+                        Timing = sw.Elapsed;
+                    else
+                    {
+                        Timing = TimeSpan.Zero;
+                        Failures = Failures + 1;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.WarnException("Exception when trying to ping {0}", ex, IP);
+                    sw.Stop();
+                    Timing = TimeSpan.Zero;
+                    Failures = Failures + 1;
+                }
             }
-           
+          
         }
     }
 }

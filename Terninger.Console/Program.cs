@@ -71,6 +71,9 @@ namespace MurrayGrant.Terninger.Console
                     Environment.Exit(1);
                 }
 
+                // Initialise logging. In real world, your wouldn't need this as LibLog supports most major logging frameworks auto-magically.
+                Terninger.LibLog.LogProvider.SetCurrentLogProvider(new LibLog.ColoredConsoleLogProvider());
+
                 RunMain();
                 Environment.Exit(0);
             }
@@ -94,6 +97,8 @@ namespace MurrayGrant.Terninger.Console
 
         private static void RunMain()
         {
+            // TODO: integrate with logging.
+
             // Hello world!
             if (!quiet)
                 Con.WriteLine("Terninger CPRNG   © Murray Grant");
@@ -383,6 +388,13 @@ namespace MurrayGrant.Terninger.Console
 
         static void PrintUsage()
         {
+            // TODO: --randomSeed -> use static local entropy
+            // TODO: --generator -> pooled | cypher | cypto random | standard
+            // TODO: --byteCount -1 = infinite
+            // TODO: --networkSources -> include network sources
+            // TODO: --poolRandom -> random pool count (default = 16)
+            // TODO: --poolLinear -> linear pool count (default = 16)
+
             Con.WriteLine("Usage: Terninger.exe [options]");
             Con.WriteLine("  -c --byteCount nnn    Generates nnn random bytes (default: {0})", byteCount);
             Con.WriteLine("  -s --seed xxx         Initial seed material (default: null)");

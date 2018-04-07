@@ -31,8 +31,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         public int ServersPerSample => _ServersPerSample;
 
         private bool _UseRandomSourceForUnitTest;
-
-        internal const string DefaultUserAgent = "Microsoft.NET; bitbucket.org/ligos/Terninger; unconfigured";
+        internal const string DefaultUserAgent = "Mozilla/5.0; Microsoft.NET; bitbucket.org/ligos/Terninger; unconfigured";
         private string _UserAgent;
 
 
@@ -75,7 +74,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         }
 
 
-        private async Task<List<Uri>> LoadInternalServerListAsync()
+        public static async Task<List<Uri>> LoadInternalServerListAsync()
         {
             Log.Debug("Loading internal source URL list...");
             var sources = new List<Uri>();
@@ -107,9 +106,20 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             Log.Debug("Loaded {0:N0} source URLs from internal list.", sources.Count);
             return sources;
         }
-        private List<Uri> LoadInternalServerList()
+        public static List<Uri> LoadInternalServerList()
         {
             return LoadInternalServerListAsync().GetAwaiter().GetResult();
+        }
+
+        public static WebClient CreateWebClient() => CreateWebClient(DefaultUserAgent);
+        public static WebClient CreateWebClient(string userAgent)
+        {
+            var wc = new WebClient();
+            wc.Headers.Add("Accept", "text/html, application/xhtml+xml, */*");
+            wc.Headers.Add("Accept-Encoding", "gzip, deflate");
+            wc.Headers.Add("Accept-Language", "en");
+            wc.Headers.Add("User-Agent", userAgent);
+            return wc;
         }
 
         protected override async Task<byte[]> GetInternalEntropyAsync(EntropyPriority priority)
@@ -159,32 +169,35 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             public readonly Uri Url;
             public readonly string UserAgent;
             public readonly byte[] StaticEntropy;
+            public int Failures { get; private set; }
 
-            public Task<byte[]> ResetAndRun()
+            public async Task<byte[]> ResetAndRun()
             {
-                // TODO: exception handling??
                 // TODO: timeout.
                 var hash = SHA256.Create();
-                var wc = new WebClient();
+                var wc = CreateWebClient(UserAgent);
                 wc.Headers.Add("User-Agent:" + UserAgent);
                 var sw = Stopwatch.StartNew();
-                return wc.DownloadDataTaskAsync(Url)
-                            .ContinueWith(x => {
-                                sw.Stop();
-                                // TODO: logging of response size and time?
-                                var result = hash.ComputeHash(
-                                                x.Result
-                                                .Concat(BitConverter.GetBytes(sw.ElapsedTicks))
-                                                .Concat(StaticEntropy)
-                                                .ToArray()
-                                            );
-                                return result;
-                            }
-                            , TaskContinuationOptions.ExecuteSynchronously);
+                try
+                {
+                    var responseBytes = await wc.DownloadDataTaskAsync(Url);
+                    sw.Stop();
+                    // TODO: logging of response size and time?
+                    var result = hash.ComputeHash(
+                                    responseBytes
+                                    .Concat(BitConverter.GetBytes(sw.ElapsedTicks))
+                                    .Concat(StaticEntropy)
+                                    .ToArray()
+                                );
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    Log.WarnException("Exception when trying to GET from {0}", ex, Url);
+                    return null;
+                }
             }
-
         }
-
     }
 }
 

@@ -76,6 +76,16 @@ namespace MurrayGrant.Terninger.Helpers
             return result;
         }
 
+        public static string LongsToHexString(this long[] longs)
+        {
+            var result = new StringBuilder(longs.Length * 16);
+            for (int i = 0; i < longs.Length; i++)
+            {
+                result.Append(i.ToString("x8"));
+            }
+            return result.ToString();
+        }
+
         public static byte[] LongsToDigestBytes(this long[] longs) => LongsToDigestBytes(longs, longs.Length);
         public static byte[] LongsToDigestBytes(this long[] longs, int itemsPerChunk)
         {

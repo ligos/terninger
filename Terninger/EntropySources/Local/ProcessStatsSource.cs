@@ -28,6 +28,9 @@ namespace MurrayGrant.Terninger.EntropySources.Local
         private int _ItemsPerResultChunk = 70;              // This many Int64 stats are combined into one final hash. 70 should span a bit over 4 processes each.
         public int StatsPerChunk => _ItemsPerResultChunk;
 
+        // This logs the raw stat long array to Trace. Only for testing.
+        internal bool LogRawStats { get; set; }
+
         // Polling defaults: 10 minutes at normal priority, 30 seconds at high priority, 40 minutes at low priority (4 x normal).
 
         public ProcessStatsSource() : this(TimeSpan.FromMinutes(10.0), 70) { }
@@ -92,6 +95,8 @@ namespace MurrayGrant.Terninger.EntropySources.Local
                 // Remove all zero items (to prevent silly things like a mostly, or all, zero hash result).
                 var processStatsNoZero = processStats.Where(x => x != 0L).ToArray();
                 Log.Trace("Read {0:N0} non-zero stat items.", processStatsNoZero.Length);
+                if (LogRawStats)
+                    Log.Trace("Raw stats: ", processStatsNoZero.LongsToHexString());
 
                 // Shuffle the details, so there isn't a repetition of similar stats.
                 processStatsNoZero.ShuffleInPlace(_Rng);

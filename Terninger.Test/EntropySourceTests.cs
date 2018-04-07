@@ -20,74 +20,98 @@ namespace MurrayGrant.Terninger.Test
     public class EntropySourceTests
     {
         [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void Cheap16Bytes_Fuzzing()
+        public void NullSource_IsNull()
         {
-            FuzzCheapEntropy(1000, CheapEntropy.Get16, "Entropy_Cheap16", WaitAndGenerateGarbage).GetAwaiter().GetResult();
-        }
-        [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void Cheap32Bytes_Fuzzing()
-        {
-            FuzzCheapEntropy(1000, CheapEntropy.Get32, "Entropy_Cheap32", WaitAndGenerateGarbage).GetAwaiter().GetResult();
+            var source = new NullSource();
+            var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            Assert.IsTrue(result.All(b => b == 0));
         }
 
         [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void NullSource_Fuzzing()
+        public void CounterSource_Increments()
         {
-            FuzzEntropySource(100, new NullSource(), "Entropy_" + nameof(NullSource), DoNothing).GetAwaiter().GetResult();
+            var source = new CounterSource();
+            var result1 = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            var result2 = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            Assert.IsFalse(result1.All(b => b == 0));
+            Assert.IsFalse(result2.All(b => b == 0));
+            Assert.AreEqual(result1.ToHexString(), "0100000000000000");
+            Assert.AreEqual(result2.ToHexString(), "0200000000000000");
         }
 
         [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void CounterSource_Fuzzing()
+        public void UserSuppliedSource_IsWhatIsSupplied()
         {
-            FuzzEntropySource(100, new CounterSource(), "Entropy_" + nameof(CounterSource), DoNothing).GetAwaiter().GetResult();
+            var initial = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+            var source = new UserSuppliedSource(initial);
+            var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            CollectionAssert.AreEqual(result, initial);
+            // Second call should have cleared the stored entropy.
+            var result2 = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            Assert.IsNull(result2);
+        }
+        [TestMethod]
+        public void UserSuppliedSource_SetEntropy()
+        {
+            var initial = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+            var source = new UserSuppliedSource(initial);
+            var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            CollectionAssert.AreEqual(result, initial);
+
+            var updated = new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 };
+            source.SetEntropy(updated);
+            var result2 = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            CollectionAssert.AreEqual(result2, updated);
+
+            // After a call the entropy should be cleared.
+            var result3 = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            Assert.IsNull(result3);
         }
 
         [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void CurrentTimeSource_Fuzzing()
+        public void CurrentTimeSource_IsNotNull()
         {
-            FuzzEntropySource(10000, new CurrentTimeSource(), "Entropy_" + nameof(CurrentTimeSource), DoNothing).GetAwaiter().GetResult();
+            var source = new CurrentTimeSource();
+            var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            Assert.IsFalse(result.All(b => b == 0));
         }
 
         [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void TimerSource_Fuzzing()
+        public void TimerSource_IsNotNull()
         {
-            FuzzEntropySource(10000, new TimerSource(), "Entropy_" + nameof(TimerSource), DoNothing).GetAwaiter().GetResult();
+            var source = new TimerSource();
+            System.Threading.Thread.Sleep(1);
+            var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            Assert.IsFalse(result.All(b => b == 0));
         }
 
         [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void GCMemorySource_Fuzzing()
+        public void GCMemorySource_IsNotNull()
         {
-            FuzzEntropySource(1000, new GCMemorySource(), "Entropy_" + nameof(GCMemorySource), GenerateGarbage).GetAwaiter().GetResult();
+            var source = new GCMemorySource();
+            var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            Assert.IsFalse(result.All(b => b == 0));
         }
 
         [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void CryptoRandomSource_Fuzzing()
+        public void CryptoRandomSource_IsNotNull()
         {
-            FuzzEntropySource(100, new CryptoRandomSource(), "Entropy_" + nameof(CryptoRandomSource), DoNothing).GetAwaiter().GetResult();
+            var source = new CryptoRandomSource();
+            var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
+            Assert.AreEqual(result.Length, 16);
+            Assert.IsFalse(result.All(b => b == 0));
         }
+
         [TestMethod]
         public void CryptoRandomSource_32ByteResults()
         {
             var source = new CryptoRandomSource(32);
             var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
             Assert.AreEqual(result.Length, 32);
+            Assert.IsFalse(result.All(b => b == 0));
         }
 
-        [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void ProcessStatsSource_Fuzzing()
-        {
-            FuzzEntropySource(10, new ProcessStatsSource(), "Entropy_" + nameof(ProcessStatsSource), DoNothing).GetAwaiter().GetResult();
-            FuzzEntropySource(10, new ProcessStatsSource(TimeSpan.FromSeconds(5)), "Entropy_" + nameof(ProcessStatsSource) + "2", Sleep500).GetAwaiter().GetResult();
-        }
+
         [TestMethod]
         public void ProcessStatsSource_ConfigPeriod()
         {
@@ -103,13 +127,6 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(result.Length, 32);
         }
 
-        [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void NetworkStatsSource_Fuzzing()
-        {
-            FuzzEntropySource(10, new NetworkStatsSource(), "Entropy_" + nameof(NetworkStatsSource), DoNothing).GetAwaiter().GetResult();
-            FuzzEntropySource(10, new NetworkStatsSource(TimeSpan.FromSeconds(5)), "Entropy_" + nameof(NetworkStatsSource) + "2", Sleep500).GetAwaiter().GetResult();
-        }
         [TestMethod]
         public void NetworkStatsSource_ConfigPeriod()
         {
@@ -127,24 +144,10 @@ namespace MurrayGrant.Terninger.Test
 
 
         [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void PingStatsSource_Fuzzing()
+        public void PingStatsSource_Fake()
         {
-            FuzzEntropySource(10, new PingStatsSource(), "Entropy_" + nameof(PingStatsSource) + "Fake", DoNothing).GetAwaiter().GetResult();
-            FuzzEntropySource(4, new PingStatsSource(true), "Entropy_" + nameof(PingStatsSource) + "Fake2", Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(10, new PingStatsSource(true), "Entropy_" + nameof(PingStatsSource) + "Fake", DoNothing).GetAwaiter().GetResult();
         }
-        [TestMethod]
-        [TestCategory("Network")]
-        public void PingStatsSource_Network()
-        {
-            FuzzEntropySource(20, new PingStatsSource(TimeSpan.FromSeconds(5)), "Entropy_" + nameof(PingStatsSource), Sleep500).GetAwaiter().GetResult();
-        }
-        [TestCategory("Network")]
-        public void PingStatsSource_EnsureAllServers()
-        {
-            throw new NotImplementedException("ping all servers");
-        }
-
         [TestMethod]
         public void PingStatsSource_ConfigPeriod()
         {
@@ -165,13 +168,10 @@ namespace MurrayGrant.Terninger.Test
         }
 
         [TestMethod]
-        [TestCategory("Fuzzing")]
-        public void ExternalWebContentSource_Fuzzing()
+        public void ExternalWebContentSource_Fake()
         {
             FuzzEntropySource(10, new ExternalWebContentSource(true), "Entropy_" + nameof(ExternalWebContentSource) + "Fake", DoNothing).GetAwaiter().GetResult();
         }
-
-
         [TestMethod]
         public void ExternalWebContentSource_ConfigPeriod()
         {
@@ -189,40 +189,38 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ExternalServerRandomSource_RandomNumbersInfo()
         {
-            FuzzEntropySource(1, new RandomNumbersInfoExternalRandomSource(true), "Entropy_" + nameof(RandomNumbersInfoExternalRandomSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new RandomNumbersInfoExternalRandomSource(true), "Entropy_" + nameof(RandomNumbersInfoExternalRandomSource) + "_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_BeaconNist()
         {
-            FuzzEntropySource(1, new BeaconNistExternalRandomSource(true), "Entropy_" + nameof(BeaconNistExternalRandomSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new BeaconNistExternalRandomSource(true), "Entropy_" + nameof(BeaconNistExternalRandomSource) + "_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_Anu()
         {
-            FuzzEntropySource(1, new AnuExternalRandomSource(true), "Entropy_" + nameof(AnuExternalRandomSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new AnuExternalRandomSource(true), "Entropy_" + nameof(AnuExternalRandomSource) + "_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_HotBits()
         {
-            FuzzEntropySource(1, new HotbitsExternalRandomSource(true), "Entropy_" + nameof(HotbitsExternalRandomSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new HotbitsExternalRandomSource(true), "Entropy_" + nameof(HotbitsExternalRandomSource) + "_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_RandomOrgPublic()
         {
-            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, Guid.Empty), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public", DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, Guid.Empty), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_RandomOrgApi()
         {
-            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, Guid.NewGuid()), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public", DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, Guid.NewGuid()), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_RandomServer()
         {
-            FuzzEntropySource(1, new RandomServerExternalRandomSource(true), "Entropy_" + nameof(RandomServerExternalRandomSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new RandomServerExternalRandomSource(true), "Entropy_" + nameof(RandomServerExternalRandomSource) + "_FromFile", DoNothing).GetAwaiter().GetResult();
         }
-
-        // TODO: live network tests for all these sources.
 
 
 
@@ -260,6 +258,7 @@ namespace MurrayGrant.Terninger.Test
                 }
             }
         }
+
 
         private static IRandomNumberGenerator GetGenerator()
         {

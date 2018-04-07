@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Perf", "Terninger
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Config", "Terninger.Config\Terninger.Config.csproj", "{A951DB15-27AC-4560-B224-2AA9B0742EE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Test.Network", "Terninger.Test.Network\Terninger.Test.Network.csproj", "{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Test.Slow", "Terninger.Test.Slow\Terninger.Test.Slow.csproj", "{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

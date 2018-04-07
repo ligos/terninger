@@ -16,6 +16,7 @@ namespace MurrayGrant.Terninger.Test
         public void CheapEntropyIsDifferentOnSubsequentCalls_16Bytes()
         {
             var e1 = CheapEntropy.Get16();
+            System.Threading.Thread.Sleep(1);
             var e2 = CheapEntropy.Get16();
             CollectionAssert.AreNotEqual(e1, e2);
         }
@@ -23,8 +24,16 @@ namespace MurrayGrant.Terninger.Test
         public void CheapEntropyIsDifferentOnSubsequentCalls_32Bytes()
         {
             var e1 = CheapEntropy.Get32();
+            System.Threading.Thread.Sleep(1);
             var e2 = CheapEntropy.Get32();
             CollectionAssert.AreNotEqual(e1, e2);
+        }
+        [TestMethod]
+        public void StaticLocalIsSameOnSubsequentCalls()
+        {
+            var e1 = StaticLocalEntropy.Get32().GetAwaiter().GetResult();
+            var e2 = StaticLocalEntropy.Get32().GetAwaiter().GetResult();
+            CollectionAssert.AreEqual(e1, e2);
         }
     }
 }
