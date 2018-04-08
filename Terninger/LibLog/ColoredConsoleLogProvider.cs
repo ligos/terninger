@@ -62,7 +62,9 @@
             object[] formatParameters,
             Exception exception)
         {
-            var message = string.Format(CultureInfo.InvariantCulture, messageFunc(), formatParameters);
+            var message = messageFunc();
+            if (formatParameters != null && formatParameters.Length > 0)
+                message = string.Format(CultureInfo.InvariantCulture, message, formatParameters);
             if (exception != null)
             {
                 message = message + "|" + exception;

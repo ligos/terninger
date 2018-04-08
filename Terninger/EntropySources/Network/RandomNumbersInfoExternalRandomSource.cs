@@ -16,27 +16,35 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 {
     /// <summary>
     /// An entropy source which uses http://www.randomnumbers.info/ as input.
-    /// This has no publicised rate limit so we use 8 hours as the normal polling period, and get large chunks.
+    /// This has no publicised rate limit so we use 8 hours as the normal polling period, and get chunks of 256 numbers (386 bytes of entropy).
+    /// Each number requested is between 0 and 4095, and is equivelent to 12 bits or 1.5 bytes of entropy.
     /// </summary>
     public class RandomNumbersInfoExternalRandomSource : EntropySourceWithPeriod
     {
         public override string Name => typeof(RandomNumbersInfoExternalRandomSource).FullName;
 
+        private readonly int _NumberOfNumbers;
         private readonly string _UserAgent;
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public RandomNumbersInfoExternalRandomSource() : this(ExternalWebContentSource.DefaultUserAgent, TimeSpan.FromHours(8)) { }
-        public RandomNumbersInfoExternalRandomSource(string userAgent) : this (userAgent, TimeSpan.FromHours(8)) { }
-        public RandomNumbersInfoExternalRandomSource(string userAgent, TimeSpan periodNormalPriority) : this(userAgent, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
-        public RandomNumbersInfoExternalRandomSource(string userAgent, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
+        public RandomNumbersInfoExternalRandomSource() : this(WebClientHelpers.DefaultUserAgent, 256, TimeSpan.FromHours(8)) { }
+        public RandomNumbersInfoExternalRandomSource(string userAgent) : this (userAgent, 256, TimeSpan.FromHours(8)) { }
+        public RandomNumbersInfoExternalRandomSource(string userAgent, int numberOfNumbers) : this(userAgent, numberOfNumbers, TimeSpan.FromHours(8)) { }
+        public RandomNumbersInfoExternalRandomSource(string userAgent, TimeSpan periodNormalPriority) : this(userAgent, 256, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
+        public RandomNumbersInfoExternalRandomSource(string userAgent, int numberOfNumbers, TimeSpan periodNormalPriority) : this(userAgent, numberOfNumbers, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
+        public RandomNumbersInfoExternalRandomSource(string userAgent, int numberOfNumbers, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
             : base(periodNormalPriority, periodHighPriority, periodLowPriority)
         {
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? ExternalWebContentSource.DefaultUserAgent : userAgent;
+            if (numberOfNumbers < 0 || numberOfNumbers > 1000)
+                throw new ArgumentOutOfRangeException(nameof(numberOfNumbers), numberOfNumbers, "Between 1 and 1000 numbers are allowed");
+
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? WebClientHelpers.DefaultUserAgent : userAgent;
+            this._NumberOfNumbers = numberOfNumbers;
         }
         internal RandomNumbersInfoExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = ExternalWebContentSource.DefaultUserAgent;
+            this._UserAgent = WebClientHelpers.DefaultUserAgent;
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 
@@ -48,18 +56,23 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             // http://www.randomnumbers.info/content/Download.htm
             // This returns HTML, which means I'm doing some hacky parsing here.
             const int rangeOfNumbers = 4096 - 1;      // 12 bits per number (1.5 bytes).
-            const int numberOfNumbers = 256;
 
             // Fetch data.
             var response = "";
             var sw = Stopwatch.StartNew();
             if (!_UseDiskSourceForUnitTests)
             {
-                var apiUri = new Uri("http://www.randomnumbers.info/cgibin/wqrng.cgi?amount=" + numberOfNumbers.ToString() + "&limit=" + rangeOfNumbers.ToString());
-                var wc = new WebClient();
-                wc.Headers.Add("User-Agent:" + _UserAgent);
-                // TODO: Exception handling.
-                response = await wc.DownloadStringTaskAsync(apiUri);
+                var apiUri = new Uri("http://www.randomnumbers.info/cgibin/wqrng.cgi?amount=" + _NumberOfNumbers.ToString() + "&limit=" + rangeOfNumbers.ToString());
+                var wc = WebClientHelpers.Create(userAgent: _UserAgent);
+                try
+                {
+                    response = await wc.DownloadStringTaskAsync(apiUri);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(ex, "Unable to GET from {0}", apiUri);
+                    return null;
+                }
                 Log.Trace("Read {0:N0} characters of html in {1:N2}ms.", response.Length, sw.Elapsed.TotalMilliseconds);
             }
             else

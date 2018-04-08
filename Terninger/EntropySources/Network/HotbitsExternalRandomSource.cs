@@ -28,7 +28,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public HotbitsExternalRandomSource() : this(ExternalWebContentSource.DefaultUserAgent, 128, TimeSpan.FromHours(8)) { }
+        public HotbitsExternalRandomSource() : this(WebClientHelpers.DefaultUserAgent, 128, TimeSpan.FromHours(8)) { }
         public HotbitsExternalRandomSource(string userAgent, int bytesPerRequest) : this (userAgent, bytesPerRequest, TimeSpan.FromHours(8)) { }
         public HotbitsExternalRandomSource(string userAgent, int bytesPerRequest, string apiKey) : this(userAgent, bytesPerRequest, apiKey, TimeSpan.FromHours(8)) { }
         public HotbitsExternalRandomSource(string userAgent, int bytesPerRequest, TimeSpan periodNormalPriority) : this(userAgent, bytesPerRequest, null, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
@@ -39,14 +39,14 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (bytesPerRequest < 4 || bytesPerRequest > 2048)      // Max of 2048 bytes based on Web UI.
                 throw new ArgumentOutOfRangeException(nameof(bytesPerRequest), bytesPerRequest, "Bytes per request must be between 4 and 2048");
 
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? ExternalWebContentSource.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? WebClientHelpers.DefaultUserAgent : userAgent;
             this._BytesPerRequest = bytesPerRequest;
             this._ApiKey = string.IsNullOrWhiteSpace(apiKey) ? null : apiKey;
         }
         internal HotbitsExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = ExternalWebContentSource.DefaultUserAgent;
+            this._UserAgent = WebClientHelpers.DefaultUserAgent;
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 
@@ -73,10 +73,16 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!_UseDiskSourceForUnitTests)
             {
                 var apiUri = new Uri("https://www.fourmilab.ch/cgi-bin/Hotbits.api?nbytes=" + _BytesPerRequest + "&fmt=hex&npass=1&lpass=8&pwtype=3" + apiKey + pseudoSource);
-                var wc = new WebClient();
-                wc.Headers.Add("User-Agent:" + _UserAgent);
-                // TODO: exception handling.
-                response = await wc.DownloadStringTaskAsync(apiUri);
+                var wc = WebClientHelpers.Create(userAgent: _UserAgent);
+                try
+                {
+                    response = await wc.DownloadStringTaskAsync(apiUri);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(ex, "Unable to GET from {0}", apiUri);
+                    return null;
+                }
                 Log.Trace("Read {0:N0} characters of html in {1:N2}ms.", response.Length, sw.Elapsed.TotalMilliseconds);
             }
             else

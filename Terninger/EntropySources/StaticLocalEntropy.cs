@@ -32,6 +32,7 @@ namespace MurrayGrant.Terninger.EntropySources
             var flatEnvironmentVars = String.Join(";", Environment.GetEnvironmentVariables().Cast<DictionaryEntry>().Select(x => x.Key.ToString() + ":" + x.Value.ToString()));
             result.AddRange(flatEnvironmentVars.ToLongs());
 
+            // The DHCP lifetime listed in here ticks down slowly, making this change slowly over time.
             result.AddRange(Local.NetworkStatsSource.GetNetworkInterfaceStaticProperties());
 
             return result.ToArray();

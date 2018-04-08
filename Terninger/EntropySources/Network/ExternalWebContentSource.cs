@@ -31,11 +31,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         public int ServersPerSample => _ServersPerSample;
 
         private bool _UseRandomSourceForUnitTest;
-        internal const string DefaultUserAgent = "Mozilla/5.0; Microsoft.NET; bitbucket.org/ligos/Terninger; unconfigured";
         private string _UserAgent;
 
 
-        public ExternalWebContentSource() : this(DefaultUserAgent, null, TimeSpan.FromMinutes(15.0), 5) { }
+        public ExternalWebContentSource() : this(WebClientHelpers.DefaultUserAgent, null, TimeSpan.FromMinutes(15.0), 5) { }
         public ExternalWebContentSource(string userAgent) : this(userAgent, null, TimeSpan.FromMinutes(15.0), 5) { }
         public ExternalWebContentSource(string userAgent, IEnumerable<Uri> sources) : this(userAgent, sources, TimeSpan.FromMinutes(5.0), 5) { }
         public ExternalWebContentSource(string userAgent, IEnumerable<Uri> sources, TimeSpan periodNormalPriority) : this(userAgent, sources, periodNormalPriority, 4) { }
@@ -46,7 +45,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (serversPerSample <= 0)
                 throw new ArgumentOutOfRangeException(nameof(serversPerSample), serversPerSample, "Servers per sample must be at least one.");
 
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? WebClientHelpers.DefaultUserAgent : userAgent;
             this._Sources = (sources ?? LoadInternalServerList()).ToList();
             if (_Sources.Count <= 0)
                 throw new ArgumentOutOfRangeException(nameof(sources), sources, "At least one source URL must be provided.");
@@ -57,9 +56,8 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             _Sources.ShuffleInPlace(_Rng);
         }
         internal ExternalWebContentSource(bool useDiskSourceForUnitTests)
-            : this(DefaultUserAgent, null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null)
+            : this(WebClientHelpers.DefaultUserAgent, null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null)
         {
-            this._UserAgent = ExternalWebContentSource.DefaultUserAgent;
             this._UseRandomSourceForUnitTest = useDiskSourceForUnitTests;
         }
 
@@ -111,17 +109,6 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             return LoadInternalServerListAsync().GetAwaiter().GetResult();
         }
 
-        public static WebClient CreateWebClient() => CreateWebClient(DefaultUserAgent);
-        public static WebClient CreateWebClient(string userAgent)
-        {
-            var wc = new WebClient();
-            wc.Headers.Add("Accept", "text/html, application/xhtml+xml, */*");
-            wc.Headers.Add("Accept-Encoding", "gzip, deflate");
-            wc.Headers.Add("Accept-Language", "en");
-            wc.Headers.Add("User-Agent", userAgent);
-            return wc;
-        }
-
         protected override async Task<byte[]> GetInternalEntropyAsync(EntropyPriority priority)
         {
             // Note that many of these servers will have similar content and it is publicly accessible.
@@ -147,7 +134,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             {
                 // Now fetch from the servers and use the contents, and time to derive entropy.
                 var responses = await Task.WhenAll(serversToSample.Select(x => x.ResetAndRun()));
-                response = responses.SelectMany(x => x).ToArray();
+                response = responses.SelectMany(x => x ?? new byte[0]).ToArray();
             }
             else
             {
@@ -175,8 +162,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             {
                 // TODO: timeout.
                 var hash = SHA256.Create();
-                var wc = CreateWebClient(UserAgent);
-                wc.Headers.Add("User-Agent:" + UserAgent);
+                var wc = WebClientHelpers.Create(userAgent: UserAgent);
                 var sw = Stopwatch.StartNew();
                 try
                 {

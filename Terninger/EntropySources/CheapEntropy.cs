@@ -12,6 +12,8 @@ namespace MurrayGrant.Terninger.EntropySources
         private static Stopwatch _Stopwatch;
         [ThreadStatic]
         private static Process _CurrentProcess;
+        [ThreadStatic]
+        private static ulong _Counter;
 
         /// <summary>
         /// Gets 32 bytes of entropy.
@@ -32,11 +34,12 @@ namespace MurrayGrant.Terninger.EntropySources
             var a = BitConverter.GetBytes(DateTime.UtcNow.Ticks);
             Buffer.BlockCopy(a, 0, result, 0, a.Length);
 
-            // CLR / GC memory stats.
-            var gcCollections = ((long)GC.CollectionCount(0) << 32)
-                                & ((long)GC.CollectionCount(1) ^ (long)GC.CollectionCount(2));
-            var gcTotalMemory = GC.GetTotalMemory(false);
-            var b = BitConverter.GetBytes(gcCollections ^ gcTotalMemory);
+            // CLR / GC memory stats + counter.
+            _Counter = unchecked(_Counter + 1);
+            var gcCollections = ((ulong)GC.CollectionCount(0) << 32)
+                                & ((ulong)GC.CollectionCount(1) ^ (ulong)GC.CollectionCount(2));
+            var gcTotalMemory = (ulong)GC.GetTotalMemory(false);
+            var b = BitConverter.GetBytes(gcCollections ^ gcTotalMemory ^ _Counter);
             Buffer.BlockCopy(b, 0, result, 8, b.Length);
 
             // High precision timer ticks.
@@ -67,11 +70,12 @@ namespace MurrayGrant.Terninger.EntropySources
             // PERF: all these are doing an extra copy, which isn't needed.
 
             // Current date and time + CLR / GC memory stats.
-            var ticks = DateTime.UtcNow.Ticks;
-            var gcCollections = ((long)GC.CollectionCount(0) << 32)
-                                & ((long)GC.CollectionCount(1) ^ (long)GC.CollectionCount(2));
-            var gcTotalMemory = GC.GetTotalMemory(false);
-            var a = BitConverter.GetBytes(ticks ^ gcCollections ^ gcTotalMemory);
+            var ticks = (ulong)DateTime.UtcNow.Ticks;
+            _Counter = unchecked(_Counter + 1);
+            var gcCollections = ((ulong)GC.CollectionCount(0) << 32)
+                                & ((ulong)GC.CollectionCount(1) ^ (ulong)GC.CollectionCount(2));
+            var gcTotalMemory = (ulong)GC.GetTotalMemory(false);
+            var a = BitConverter.GetBytes(ticks ^ gcCollections ^ gcTotalMemory ^ _Counter);
             Buffer.BlockCopy(a, 0, result, 0, a.Length);
 
             // High precision timer ticks + Process working set & system uptime.

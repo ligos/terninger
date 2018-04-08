@@ -26,7 +26,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public RandomServerExternalRandomSource() : this(ExternalWebContentSource.DefaultUserAgent, 64, TimeSpan.FromHours(12)) { }
+        public RandomServerExternalRandomSource() : this(WebClientHelpers.DefaultUserAgent, 64, TimeSpan.FromHours(12)) { }
         public RandomServerExternalRandomSource(string userAgent) : this (userAgent, 64, TimeSpan.FromHours(12)) { }
         public RandomServerExternalRandomSource(string userAgent, int bytesPerRequest) : this(userAgent, bytesPerRequest, TimeSpan.FromHours(12)) { }
         public RandomServerExternalRandomSource(string userAgent, int bytesPerRequest, TimeSpan periodNormalPriority) : this(userAgent, bytesPerRequest, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
@@ -37,13 +37,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (bytesPerRequest < 4 || bytesPerRequest > 4096)
                 throw new ArgumentOutOfRangeException(nameof(bytesPerRequest), bytesPerRequest, "Bytes per request must be between 4 and 4096");
 
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? ExternalWebContentSource.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? WebClientHelpers.DefaultUserAgent : userAgent;
             this._BytesPerRequest = bytesPerRequest;
         }
         internal RandomServerExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = ExternalWebContentSource.DefaultUserAgent;
+            this._UserAgent = WebClientHelpers.DefaultUserAgent;
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 
@@ -59,10 +59,16 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!_UseDiskSourceForUnitTests)
             {
                 var apiUri = new Uri("http://www.randomserver.dyndns.org/client/random.php?type=BIN&a=1&b=10&n=" + _BytesPerRequest + "&file=0");
-                var wc = new WebClient();
-                wc.Headers.Add("User-Agent:" + _UserAgent);
-                // TODO: exception handling.
-                response = await wc.DownloadDataTaskAsync(apiUri);
+                var wc = WebClientHelpers.Create(userAgent: _UserAgent);
+                try
+                {
+                    response = await wc.DownloadDataTaskAsync(apiUri);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(ex, "Unable to GET from {0}", apiUri);
+                    return null;
+                }
                 Log.Trace("Read {0:N0} bytes in {1:N2}ms.", response.Length, sw.Elapsed.TotalMilliseconds);
             }
             else

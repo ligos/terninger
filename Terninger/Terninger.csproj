@@ -80,6 +80,7 @@
     <Compile Include="Generator\CryptoRandomWrapperGenerator.cs" />
     <Compile Include="Generator\StandardRandomWrapperGenerator.cs" />
     <Compile Include="Helpers\ConvertersToInt64.cs" />
+    <Compile Include="Helpers\WebClientHelpers.cs" />
     <Compile Include="Helpers\DisposeHelper.cs" />
     <Compile Include="Helpers\ByteArrayHelpers.cs" />
     <Compile Include="Helpers\ExceptionHelper.cs" />

@@ -81,7 +81,7 @@ namespace MurrayGrant.Terninger.Helpers
             var result = new StringBuilder(longs.Length * 16);
             for (int i = 0; i < longs.Length; i++)
             {
-                result.Append(i.ToString("x8"));
+                result.Append(longs[i].ToString("x8"));
             }
             return result.ToString();
         }

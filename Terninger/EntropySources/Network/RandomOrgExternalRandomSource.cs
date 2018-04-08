@@ -28,7 +28,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public RandomOrgExternalRandomSource() : this(ExternalWebContentSource.DefaultUserAgent, 128, TimeSpan.FromHours(8)) { }
+        public RandomOrgExternalRandomSource() : this(WebClientHelpers.DefaultUserAgent, 128, TimeSpan.FromHours(8)) { }
         public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest) : this (userAgent, bytesPerRequest, TimeSpan.FromHours(8)) { }
         public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest, Guid apiKey) : this(userAgent, bytesPerRequest, apiKey, TimeSpan.FromHours(8)) { }
         public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest, TimeSpan periodNormalPriority) : this(userAgent, bytesPerRequest, Guid.Empty, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
@@ -39,14 +39,14 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (bytesPerRequest < 4 || bytesPerRequest > 4096)
                 throw new ArgumentOutOfRangeException(nameof(bytesPerRequest), bytesPerRequest, "Bytes per request must be between 4 and 4096");
 
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? ExternalWebContentSource.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? WebClientHelpers.DefaultUserAgent : userAgent;
             this._BytesPerRequest = bytesPerRequest;
             this._ApiKey = apiKey;
         }
         internal RandomOrgExternalRandomSource(bool useDiskSourceForUnitTests, Guid apiKey)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = ExternalWebContentSource.DefaultUserAgent;
+            this._UserAgent = WebClientHelpers.DefaultUserAgent;
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
             this._ApiKey = apiKey;
         }
@@ -71,10 +71,16 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!_UseDiskSourceForUnitTests)
             {
                 var apiUri = new Uri("https://www.random.org/cgi-bin/randbyte?nbytes=" + _BytesPerRequest + "&format=h");
-                var wc = new WebClient();
-                wc.Headers.Add("User-Agent:" + _UserAgent);
-                // TODO: exception handling.
-                response = await wc.DownloadStringTaskAsync(apiUri);
+                var wc = WebClientHelpers.Create(userAgent: _UserAgent);
+                try
+                {
+                    response = await wc.DownloadStringTaskAsync(apiUri);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(ex, "Unable to GET from {0}", apiUri);
+                    return null;
+                }
                 Log.Trace("Read {0:N0} characters of html in {1:N2}ms.", response.Length, sw.Elapsed.TotalMilliseconds);
             }
             else
@@ -112,12 +118,18 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!_UseDiskSourceForUnitTests)
             {
                 var apiUri = new Uri("https://api.random.org/json-rpc/1/invoke");
-                var wc = new WebClient();
-                wc.Headers.Add("User-Agent:" + _UserAgent);
+                var wc = WebClientHelpers.Create(userAgent: _UserAgent);
                 wc.Headers.Add("Content-Type", "application/json-rpc");
                 var requestBody = "{\"jsonrpc\":\"2.0\",\"method\":\"generateBlobs\",\"params\":{\"apiKey\":\"" + _ApiKey.ToString("D") + "\",\"n\":1,\"size\":" + (_BytesPerRequest * 8) + ",\"format\":\"base64\"},\"id\":1}";
-                // TODO: exception handling.
-                response = await wc.UploadStringTaskAsync(apiUri, "POST", requestBody);
+                try
+                {
+                    response = await wc.UploadStringTaskAsync(apiUri, "POST", requestBody);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(ex, "Unable to POST to {0} with body {1}", apiUri, requestBody);
+                    return null;
+                }
                 Log.Trace("Read {0:N0} characters of html in {1:N2}ms.", response.Length, sw.Elapsed.TotalMilliseconds);
             }
             else
