@@ -132,6 +132,8 @@ namespace MurrayGrant.Terninger.Console
             {
                 Con.WriteLine("Generating {0:N0} random bytes as {1} output.", byteCount <= 0 ? "∞" : byteCount.ToString("N0"), outputStyle);
                 Con.WriteLine("Source: {0}", generatorDetails.Description);
+                if (!String.IsNullOrEmpty(generatorDetails.ExtraDescription))
+                    Con.WriteLine("    " + generatorDetails.ExtraDescription);
                 Con.WriteLine("Seed source: {0}", generatorDetails.SeedDescription);
                 Con.WriteLine("Output target: {0}", outStreamAndTarget.Item2);
                 if (outFile == "")
@@ -264,7 +266,7 @@ namespace MurrayGrant.Terninger.Console
             var result = new GeneratorAndDescription();
             if (generatorType == Generator.StockRandom)
             {
-                result.Description = "deterministic PRNG: " + typeof(Random).Namespace + "." + typeof(Random).Name;
+                result.Description = "deterministic PRNG - " + typeof(Random).Namespace + "." + typeof(Random).Name;
                 var seedAndDescription = DeriveSeed();
                 result.SeedDescription = seedAndDescription.Item2;
                 result.Generator = new StandardRandomWrapperGenerator(new Random(BitConverter.ToInt32(seedAndDescription.Item1, 0)));
@@ -272,7 +274,7 @@ namespace MurrayGrant.Terninger.Console
             }
             else if (generatorType == Generator.CryptoRandom)
             {
-                result.Description = "non-deterministic CPRNG: " + typeof(RandomNumberGenerator).Namespace + "." + typeof(RandomNumberGenerator).Name;
+                result.Description = "non-deterministic CPRNG - " + typeof(RandomNumberGenerator).Namespace + "." + typeof(RandomNumberGenerator).Name;
                 result.SeedDescription = "No seed required";
                 result.Generator = new CryptoRandomWrapperGenerator();
                 result.WaitForGeneratorReady = () => { };
@@ -284,7 +286,8 @@ namespace MurrayGrant.Terninger.Console
                 var counter = new CypherCounter(primitive.BlockSizeBytes);
                 var entropyGetter = GetEntropyGetter();
                 var seedAndDescription = DeriveSeed();
-                result.Description = $"{(nonDeterministic ? "non-" : "")}deterministic PRNG, using crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
+                result.Description = $"{(nonDeterministic ? "non-" : "")}deterministic PRNG - " + typeof(CypherBasedPrngGenerator).Namespace + "." + typeof(CypherBasedPrngGenerator).Name;
+                result.ExtraDescription = $"Using crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
                 result.SeedDescription = seedAndDescription.Item2;
                 result.Generator = CypherBasedPrngGenerator.Create(seedAndDescription.Item1, primitive, hash, counter, entropyGetter);
                 result.WaitForGeneratorReady = () => { };
@@ -329,7 +332,8 @@ namespace MurrayGrant.Terninger.Console
                         });
                 var generator = new PooledEntropyCprngGenerator(sources, acc, genPrng);
                 result.Generator = generator;
-                result.Description = $"non-deterministic CPRNG, using {linearPools}+{randomPools} pools (linear+random), {sources.Count()} entropy sources, crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
+                result.Description = $"non-deterministic CPRNG - " + typeof(PooledEntropyCprngGenerator).Namespace + "." + typeof(PooledEntropyCprngGenerator).Name;
+                result.ExtraDescription = $"Using {linearPools}+{randomPools} pools (linear+random), {sources.Count()} entropy sources, crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
                 result.WaitForGeneratorReady = () => {
                     generator.StartAndWaitForFirstSeed().GetAwaiter().GetResult();
                 };
@@ -342,6 +346,7 @@ namespace MurrayGrant.Terninger.Console
         {
             public IRandomNumberGenerator Generator { get; set; }
             public string Description { get; set; }
+            public string ExtraDescription { get; set; }
             public string SeedDescription { get; set; }
             public Action WaitForGeneratorReady { get; set; }
         }
