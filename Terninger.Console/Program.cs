@@ -7,10 +7,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 
+using MurrayGrant.Terninger.Accumulator;
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.Generator;
 using MurrayGrant.Terninger.CryptoPrimitives;
 using MurrayGrant.Terninger.EntropySources;
+using MurrayGrant.Terninger.EntropySources.Local;
+using MurrayGrant.Terninger.EntropySources.Network;
 
 using Con = System.Console;
 
@@ -25,10 +28,26 @@ namespace MurrayGrant.Terninger.Console
         static OutputStyle outputStyle = OutputStyle.Hex;
         static bool quiet = false;
 
+        static Generator generatorType = Generator.TerningerCypher;
         static bool nonDeterministic = false;       // Will inject additional entropy into the generator based on timing & memory.
         static CryptoPrimitiveOption cryptoPrimitive = CryptoPrimitiveOption.Default;
         static HashAlgorithmOption hashAlgorithm = HashAlgorithmOption.Default;
-        static bool useNativeCrypto = false;        // If true, will use CSP / CNG versions of the crypto primitives, if available.
+        static bool useNativeCrypto = true;        // If true, will use CSP / CNG versions of the crypto primitives, if available.
+
+        static int linearPools = 16;
+        static int randomPools = 16;
+        static bool includeNetworkSources = false;         // If true, includes network entropy sources. This will make network calls.
+
+        static LibLog.LogLevel _MinLogLevel = LibLog.LogLevel.Info;
+        static LibLog.ILog _Logger;
+
+        public enum Generator
+        {
+            StockRandom,
+            CryptoRandom,
+            TerningerCypher,
+            TerningerPooled,
+        }
 
         public enum OutputStyle
         {
@@ -56,6 +75,7 @@ namespace MurrayGrant.Terninger.Console
         private static readonly int OutBufferSize = 32 * 1024;
         private static readonly long OneMBAsLong = 1024L * 1024L;
         private static readonly double OneMBAsDouble = 1024.0 * 1024.0;
+        private static readonly TimeSpan StatusUpdatePeriod = TimeSpan.FromSeconds(2);
 
         private static bool _CancelSignalled = false;
 
@@ -72,7 +92,7 @@ namespace MurrayGrant.Terninger.Console
                 }
 
                 // Initialise logging. In real world, your wouldn't need this as LibLog supports most major logging frameworks auto-magically.
-                Terninger.LibLog.LogProvider.SetCurrentLogProvider(new LibLog.ColoredConsoleLogProvider());
+                Terninger.LibLog.LogProvider.SetCurrentLogProvider(new LibLog.ColoredConsoleLogProvider(_MinLogLevel));
 
                 RunMain();
                 Environment.Exit(0);
@@ -98,21 +118,21 @@ namespace MurrayGrant.Terninger.Console
         private static void RunMain()
         {
             // TODO: integrate with logging.
+            _Logger = LibLog.LogProvider.For<Program>();
 
             // Hello world!
             if (!quiet)
                 Con.WriteLine("Terninger CPRNG   © Murray Grant");
 
             // Load and initialise objects.
-            var seedAndSource = DeriveSeed();
             var outStreamAndTarget = GetOutputStream();
             var outputWriter = GetOutputWriter();
-            var generatorAndSource = CreateRandomGenerator(seedAndSource.Item1);
+            var generatorDetails = CreateRandomGenerator();
             if (!quiet)
             {
-                Con.WriteLine("Generating {0:N0} random bytes as {1} output.", byteCount, outputStyle);
-                Con.WriteLine("Source: {0}", generatorAndSource.Item2);
-                Con.WriteLine("Seed source: {0}", seedAndSource.Item2);
+                Con.WriteLine("Generating {0:N0} random bytes as {1} output.", byteCount <= 0 ? "∞" : byteCount.ToString("N0"), outputStyle);
+                Con.WriteLine("Source: {0}", generatorDetails.Description);
+                Con.WriteLine("Seed source: {0}", generatorDetails.SeedDescription);
                 Con.WriteLine("Output target: {0}", outStreamAndTarget.Item2);
                 if (outFile == "")
                     // Stdio output needs extra line here
@@ -120,11 +140,13 @@ namespace MurrayGrant.Terninger.Console
             }
 
             long generatedBytes = 0L;
-            var rng = generatorAndSource.Item1;
+            var rng = generatorDetails.Generator;
             var sw = Stopwatch.StartNew();      // Start the clock for a basic measure of performance.
+            generatorDetails.WaitForGeneratorReady();
+            var nextStatusUpdate = sw.Elapsed.Add(StatusUpdatePeriod);
             using (var outStream = outStreamAndTarget.Item1)
             {
-                long remaining = byteCount;
+                long remaining = byteCount <= 0 ? Int64.MaxValue : byteCount;
 
                 // Read and write in buffered chunks (for larger requests).
                 byte[] buf = new byte[OutBufferSize];
@@ -133,10 +155,19 @@ namespace MurrayGrant.Terninger.Console
                     rng.FillWithRandomBytes(buf);          // Fill one buffer with randomness.
                     generatedBytes = generatedBytes + buf.Length;   // Increment counter.
                     outputWriter(outStream, buf);           // Write the buffer to out output stream.
-                    remaining = remaining - buf.Length;     // Decrement remaining.
+                    if (byteCount > 0)
+                        remaining = remaining - buf.Length;     // Decrement remaining (unless infinite).
 
                     if (_CancelSignalled) break;
-                    if (generatedBytes % OneMBAsLong == 0) Con.Write(".");    // Status update.
+                    if (!quiet 
+                        && outFile != "" 
+                        && generatedBytes % OneMBAsLong == 0 
+                        && sw.Elapsed > nextStatusUpdate)
+                    {
+                        // Status updates: only if not quiet, not stdout, on MB boundaries and regular interval.
+                        Con.WriteLine("Generated {0:N0}MB.", generatedBytes / OneMBAsLong);
+                        nextStatusUpdate = sw.Elapsed.Add(StatusUpdatePeriod);
+                    }
                 }
 
                 // The remaining bytes required.
@@ -164,9 +195,17 @@ namespace MurrayGrant.Terninger.Console
         private static Tuple<byte[], string> DeriveSeed()
         {
             var seedLength = GetKeysizeBytesForCryptoPrimitive();
+            var sha512 = SHA512.Create();
             if (String.IsNullOrEmpty(seed))
-                // No seed: use null array.
-                return Tuple.Create(new byte[seedLength], "Null seed - WARNING, INSECURE: the following random numbers are always the same.");
+                // No seed provided: generate one!
+                return Tuple.Create(
+                            sha512.ComputeHash(
+                                StaticLocalEntropy.Get32().GetAwaiter().GetResult().Concat(
+                                    CheapEntropy.Get32()
+                                ).ToArray()
+                            ).EnsureArraySize(seedLength)
+                            , "System environment."
+                        );
             if (seed.IsHexString() && seed.Length == seedLength * 2)
                 // A hex string of required bytes.
                 return Tuple.Create(seed.ParseFromHexString(), $"{seedLength} byte hex seed.");
@@ -175,14 +214,14 @@ namespace MurrayGrant.Terninger.Console
                 // A file reference: get the SHA512 hash of it as a seed.
                 using (var stream = new FileStream(seed, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024))
                     return Tuple.Create(
-                            new SHA512Managed().ComputeHash(stream).EnsureArraySize(seedLength), 
+                            sha512.ComputeHash(stream).EnsureArraySize(seedLength), 
                             "SHA512 hash of file."
                         );
             }
             else
                 // Assume a random set of characters: get the SHA256 hash of the UTF8 string as a seed.
                 return Tuple.Create(
-                        new SHA512Managed().ComputeHash(Encoding.UTF8.GetBytes(seed)).EnsureArraySize(seedLength),
+                        sha512.ComputeHash(Encoding.UTF8.GetBytes(seed)).EnsureArraySize(seedLength),
                         "SHA512 hash of random string / password / passphrase."
                     );
         }
@@ -220,14 +259,91 @@ namespace MurrayGrant.Terninger.Console
                 throw new Exception("Unexpected outputStyle: " + outputStyle);
         }
 
-        private static Tuple<IRandomNumberGenerator, string> CreateRandomGenerator(byte[] key)
+        private static GeneratorAndDescription CreateRandomGenerator()
         {
-            var primitive = GetCryptoPrimitive();
-            var hash = GetHashAlgorithm();
-            var counter = new CypherCounter(primitive.BlockSizeBytes);
-            var entropyGetter = GetEntropyGetter();
-            var result = (IRandomNumberGenerator)CypherBasedPrngGenerator.Create(key, primitive, hash, counter, entropyGetter);
-            return Tuple.Create(result, $"{(nonDeterministic ? "non-" : "")}deterministic PRNG, using crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}");
+            var result = new GeneratorAndDescription();
+            if (generatorType == Generator.StockRandom)
+            {
+                result.Description = "deterministic PRNG: " + typeof(Random).Namespace + "." + typeof(Random).Name;
+                var seedAndDescription = DeriveSeed();
+                result.SeedDescription = seedAndDescription.Item2;
+                result.Generator = new StandardRandomWrapperGenerator(new Random(BitConverter.ToInt32(seedAndDescription.Item1, 0)));
+                result.WaitForGeneratorReady = () => { };
+            }
+            else if (generatorType == Generator.CryptoRandom)
+            {
+                result.Description = "non-deterministic CPRNG: " + typeof(RandomNumberGenerator).Namespace + "." + typeof(RandomNumberGenerator).Name;
+                result.SeedDescription = "No seed required";
+                result.Generator = new CryptoRandomWrapperGenerator();
+                result.WaitForGeneratorReady = () => { };
+            }
+            else if (generatorType == Generator.TerningerCypher)
+            {
+                var primitive = GetCryptoPrimitive();
+                var hash = GetHashAlgorithm();
+                var counter = new CypherCounter(primitive.BlockSizeBytes);
+                var entropyGetter = GetEntropyGetter();
+                var seedAndDescription = DeriveSeed();
+                result.Description = $"{(nonDeterministic ? "non-" : "")}deterministic PRNG, using crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
+                result.SeedDescription = seedAndDescription.Item2;
+                result.Generator = CypherBasedPrngGenerator.Create(seedAndDescription.Item1, primitive, hash, counter, entropyGetter);
+                result.WaitForGeneratorReady = () => { };
+            }
+            else if (generatorType == Generator.TerningerPooled)
+            {
+                var seedAndDescription = DeriveSeed();
+                result.SeedDescription = seedAndDescription.Item2;
+
+                // Accumulator.
+                var accKey = SHA512.Create().ComputeHash(
+                    StaticLocalEntropy.Get32().GetAwaiter().GetResult().Concat(
+                        CheapEntropy.Get32()
+                    ).ToArray()
+                ).EnsureArraySize(32);
+                var accPrng = CypherBasedPrngGenerator.Create(accKey, CryptoPrimitive.Aes256(), SHA512.Create());
+                var acc = new EntropyAccumulator(linearPools, randomPools, accPrng, SHA512.Create);
+
+                // Generator.
+                var primitive = GetCryptoPrimitive();
+                var hash = GetHashAlgorithm();
+                var genPrng = CypherBasedPrngGenerator.Create(new byte[32], primitive, hash);
+                IEnumerable<IEntropySource> sources = new IEntropySource[] {
+                    new UserSuppliedSource(seedAndDescription.Item1),
+                    new CurrentTimeSource(),
+                    new TimerSource(),
+                    new GCMemorySource(),
+                    new CryptoRandomSource(),
+                    new NetworkStatsSource(),
+                    new ProcessStatsSource(),
+                };
+                if (includeNetworkSources)
+                    sources = sources.Concat(new IEntropySource[] {
+                            new PingStatsSource(),
+                            new ExternalWebContentSource(),
+                            new AnuExternalRandomSource(),
+                            new BeaconNistExternalRandomSource(),
+                            new HotbitsExternalRandomSource(),
+                            new RandomNumbersInfoExternalRandomSource(),
+                            new RandomOrgExternalRandomSource(),
+                            new RandomServerExternalRandomSource(),
+                        });
+                var generator = new PooledEntropyCprngGenerator(sources, acc, genPrng);
+                result.Generator = generator;
+                result.Description = $"non-deterministic CPRNG, using {linearPools}+{randomPools} pools (linear+random), {sources.Count()} entropy sources, crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
+                result.WaitForGeneratorReady = () => {
+                    generator.StartAndWaitForFirstSeed().GetAwaiter().GetResult();
+                };
+            }
+            else
+                throw new Exception("Unexpected Generator type: " + generatorType);
+            return result;
+        }
+        private class GeneratorAndDescription
+        {
+            public IRandomNumberGenerator Generator { get; set; }
+            public string Description { get; set; }
+            public string SeedDescription { get; set; }
+            public Action WaitForGeneratorReady { get; set; }
         }
 
         private static ICryptoPrimitive GetCryptoPrimitive()
@@ -300,9 +416,13 @@ namespace MurrayGrant.Terninger.Console
                         Con.WriteLine("Unable to parse number '{0}' for 'byteCount' option.", args[i + 1]);
                         return false;
                     }
-                    if (byteCount <= 0)
+                    i++;
+                }
+                else if (arg == "g" || arg == "generator")
+                {
+                    if (!Enum.TryParse<Generator>(args[i + 1], true, out generatorType))
                     {
-                        Con.WriteLine("ByteCount option '{0}' must be at least 1.", args[i + 1]);
+                        Con.WriteLine("Unknown 'generator' option '{0}'.", args[i + 1]);
                         return false;
                     }
                     i++;
@@ -312,9 +432,26 @@ namespace MurrayGrant.Terninger.Console
                     seed = args[i + 1];
                     i++;
                 }
-                else if (arg == "s" || arg == "seed")
+                else if (arg == "ns" || arg == "netsources")
                 {
-                    seed = args[i + 1];
+                    includeNetworkSources = true;
+                }
+                else if (arg == "poollinear")
+                {
+                    if (!Int32.TryParse(args[i + 1].Trim(), out linearPools))
+                    {
+                        Con.WriteLine("Unable to parse number '{0}' for 'poolLinear' option.", args[i + 1]);
+                        return false;
+                    }
+                    i++;
+                }
+                else if (arg == "poolrandom")
+                {
+                    if (!Int32.TryParse(args[i + 1].Trim(), out randomPools))
+                    {
+                        Con.WriteLine("Unable to parse number '{0}' for 'poolRandom' option.", args[i + 1]);
+                        return false;
+                    }
                     i++;
                 }
                 else if (arg == "outstyle")
@@ -334,24 +471,30 @@ namespace MurrayGrant.Terninger.Console
                 else if (arg == "outstdout")
                 {
                     outFile = "";       // Empty string = stdout.
-                    i++;
                 }
                 else if (arg == "outnull")
                 {
                     outFile = null;     // Null = null output.
-                    i++;
                 }
                 else if (arg == "q" || arg == "quiet")
                 {
                     quiet = true;
                 }
+                else if (arg == "debug")
+                {
+                    _MinLogLevel = LibLog.LogLevel.Debug;
+                }
+                else if (arg == "trace")
+                {
+                    _MinLogLevel = LibLog.LogLevel.Trace;
+                }
                 else if (arg == "nd" || arg == "nondeterministic")
                 {
                     nonDeterministic = true;
                 }
-                else if (arg == "n" || arg == "native")
+                else if (arg == "managed")
                 {
-                    useNativeCrypto = true;
+                    useNativeCrypto = false;
                 }
                 else if (arg == "cp" || arg == "cryptoprimitive")
                 {
@@ -388,27 +531,35 @@ namespace MurrayGrant.Terninger.Console
 
         static void PrintUsage()
         {
-            // TODO: --randomSeed -> use static local entropy
-            // TODO: --generator -> pooled | cypher | cypto random | standard
-            // TODO: --byteCount -1 = infinite
-            // TODO: --networkSources -> include network sources
-            // TODO: --poolRandom -> random pool count (default = 16)
-            // TODO: --poolLinear -> linear pool count (default = 16)
-
             Con.WriteLine("Usage: Terninger.exe [options]");
             Con.WriteLine("  -c --byteCount nnn    Generates nnn random bytes (default: {0})", byteCount);
-            Con.WriteLine("  -s --seed xxx         Initial seed material (default: null)");
-            Con.WriteLine("            xxx =         [hex string|file path|any random string]");
+            Con.WriteLine("                          Use negative for infinite (CTRL+C to end)");
+            Con.WriteLine();
             Con.WriteLine("  -o --outFile xxx      File to save output to (default: stdout)");
             Con.WriteLine("  --outStdout           Output to stdout (default)");
             Con.WriteLine("  --outNull             Output is discarded");
             Con.WriteLine("  --outStyle xxx        Output style (default: {0})", outputStyle);
             Con.WriteLine("             xxx =        [hex|binary]");
+            Con.WriteLine();
+            Con.WriteLine("  -g --generator xxx    Type of random generator (default: {0})", generatorType);
+            Con.WriteLine("        StockRandom:      System.Random");
+            Con.WriteLine("        CryptoRandom:     System.Security.Cryptography.RandomNumberGenerator", Generator.CryptoRandom);
+            Con.WriteLine("        TerningerCypher:  Terninger.Generator.CypherBasedPrngGenerator", Generator.TerningerCypher);
+            Con.WriteLine("        TerningerPooled:  Terninger.Generator.PooledEntropyCprngGenerator", Generator.TerningerPooled);
+            Con.WriteLine("  -s --seed xxx         Initial seed material (default: random)");
+            Con.WriteLine("            xxx =         [hex string|file path|any random string]");
+            Con.WriteLine("  -ns --netSources      Include network sources for entropy (default: false)");
+            Con.WriteLine("  --poolLinear nn       Number of linear pools (default: 16)");
+            Con.WriteLine("  --poolRandom nn       Number of random pools (default: 16)");
             Con.WriteLine("  -nd --nonDeterministic  Injects timing / memory based entropy");
-            Con.WriteLine("  -n --native           Uses native crypto modules, if available");
+            Con.WriteLine("  --managed             Uses managed crypto modules (default: false)");
             Con.WriteLine("  -cp --cryptoPrimitive Determines crypto primitive to use (default: AES256)");
+            Con.WriteLine("  -ha --hashAlgorithm   Determines hash algorithm to use (default: SHA512)");
             Con.WriteLine();
             Con.WriteLine("  -q --quiet            Does not display any status messages (default: {0})", quiet ? "hide" : "show");
+            Con.WriteLine("  --debug               Show debug messages");
+            Con.WriteLine("  --trace               Show low level trace messages");
+
             Con.WriteLine("  -h -? --help          Displays this message ");
             Con.WriteLine("See {0} for more information", TerningerCPRNG.Website);
         }

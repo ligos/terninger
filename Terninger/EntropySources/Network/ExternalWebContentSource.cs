@@ -74,7 +74,9 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         public static async Task<List<Uri>> LoadInternalServerListAsync()
         {
-            Log.Debug("Loading internal source URL list...");
+            var log = LibLog.LogProvider.For<ExternalWebContentSource>();
+            log.Debug("Loading internal source URL list...");
+
             var sources = new List<Uri>();
             using (var stream = typeof(ExternalWebContentSource).Assembly.GetManifestResourceStream(typeof(ExternalWebContentSource), "ExternalWebServerList.txt"))
             using (var reader = new StreamReader(stream, Encoding.UTF8))
@@ -92,16 +94,16 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                     try
                     {
                         sources.Add(new Uri(l.Trim()));
-                        Log.Trace("Read URL {0} on line {1}", sources.Last(), lineNum);
+                        log.Trace("Read URL {0} on line {1}", sources.Last(), lineNum);
                     }
                     catch (UriFormatException)
                     {
-                        Log.Warn("Unable to parse URL for {0}: {1} (line {2:N0})", nameof(ExternalWebContentSource), l, lineNum);
+                        log.Warn("Unable to parse URL for {0}: {1} (line {2:N0})", nameof(ExternalWebContentSource), l, lineNum);
                     }
 
                 }
             }
-            Log.Debug("Loaded {0:N0} source URLs from internal list.", sources.Count);
+            log.Debug("Loaded {0:N0} source URLs from internal list.", sources.Count);
             return sources;
         }
         public static List<Uri> LoadInternalServerList()
@@ -147,6 +149,8 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private class ServerFetcher
         {
+            private static readonly ILog Log = LibLog.LogProvider.For<ExternalWebContentSource>();
+
             public ServerFetcher(Uri url, string userAgent, byte[] staticEntropy)
             {
                 this.Url = url;
@@ -168,7 +172,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 {
                     var responseBytes = await wc.DownloadDataTaskAsync(Url);
                     sw.Stop();
-                    // TODO: logging of response size and time?
+                    Log.Trace("GET from '{0}' in {1:N2}ms, received {2:N0} bytes", Url, sw.Elapsed.TotalMilliseconds, responseBytes.Length);
                     var result = hash.ComputeHash(
                                     responseBytes
                                     .Concat(BitConverter.GetBytes(sw.ElapsedTicks))

@@ -27,7 +27,7 @@ namespace MurrayGrant.Terninger.EntropySources
 
         protected DateTime _LastPollDatestamp;
 
-        protected static readonly ILog Log = LogProvider.GetCurrentClassLogger();
+        protected readonly ILog Log;
 
 
         protected EntropySourceWithPeriod(TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
@@ -42,6 +42,8 @@ namespace MurrayGrant.Terninger.EntropySources
             this._PeriodNormalPriority = periodNormalPriority;
             this._PeriodHighPriority = periodHighPriority;
             this._PeriodLowPriority = periodLowPriority;
+
+            Log = LogProvider.GetLogger(this.GetType());
         }
 
         public virtual void Dispose()

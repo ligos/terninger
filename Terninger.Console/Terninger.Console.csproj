@@ -7,7 +7,7 @@
     <ProjectGuid>{DFD4245E-33F7-4B73-BBFF-16879B5A1C71}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>MurrayGrant.Terninger.Console</RootNamespace>
-    <AssemblyName>Terninger.Console</AssemblyName>
+    <AssemblyName>Terninger</AssemblyName>
     <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

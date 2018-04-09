@@ -7,34 +7,40 @@
     public class ColoredConsoleLogProvider : ILogProvider
     {
         private readonly bool _LogToTraceOut;
-        public ColoredConsoleLogProvider() : this(false) { }
-        public ColoredConsoleLogProvider(bool logToTrace)
+        private readonly LogLevel _MinLogLevel;
+
+        public ColoredConsoleLogProvider() : this(LogLevel.Trace, false) { }
+        public ColoredConsoleLogProvider(bool logToTrace) : this(LogLevel.Trace, logToTrace) { }
+        public ColoredConsoleLogProvider(LogLevel minLogLevel) : this(minLogLevel, false) { }
+        public ColoredConsoleLogProvider(LogLevel minLogLevel, bool logToTrace)
         {
+            _MinLogLevel = minLogLevel;
             _LogToTraceOut = logToTrace;
         }
 
-        private static readonly Dictionary<LogLevel, ConsoleColor> Colors = new Dictionary<LogLevel, ConsoleColor>
+        // This relies on the int value of LogLevel.
+        private static readonly ConsoleColor[] Colors = new []
             {
-                {LogLevel.Fatal, ConsoleColor.Red},
-                {LogLevel.Error, ConsoleColor.Yellow},
-                {LogLevel.Warn, ConsoleColor.Magenta},
-                {LogLevel.Info, ConsoleColor.White},
-                {LogLevel.Debug, ConsoleColor.Gray},
-                {LogLevel.Trace, ConsoleColor.DarkGray},
+                ConsoleColor.DarkGray,  // Trace
+                ConsoleColor.Gray,      // Debug
+                ConsoleColor.White,     // Info
+                ConsoleColor.Magenta,   // Warn
+                ConsoleColor.Yellow,    // Error
+                ConsoleColor.Red,       // Fatal
             };
 
         public Logger GetLogger(string name)
         {
             return (logLevel, messageFunc, exception, formatParameters) =>
             {
+                if (logLevel < _MinLogLevel)
+                    return false;   // Log level disabled.
                 if (messageFunc == null)
-                {
-                    return true; // All log levels are enabled
-                }
+                    return true;    // All log levels are enabled
 
-                ConsoleColor consoleColor;
-                if (Colors.TryGetValue(logLevel, out consoleColor))
+                try
                 {
+                    ConsoleColor consoleColor = Colors[(int)logLevel];
                     var originalForground = Console.ForegroundColor;
                     try
                     {
@@ -45,9 +51,7 @@
                     {
                         Console.ForegroundColor = originalForground;
                     }
-                }
-                else
-                {
+                } catch (IndexOutOfRangeException) { 
                     WriteMessage(logLevel, name, messageFunc, formatParameters, exception);
                 }
 
@@ -69,7 +73,7 @@
             {
                 message = message + "|" + exception;
             }
-            var line = String.Format("{0} | {1} | {2} | {3}", DateTime.UtcNow, logLevel, name, message);
+            var line = String.Format("{0:yyyy-MM-dd HH:mm:ss} | {1} | {2} | {3}", DateTime.UtcNow, logLevel.ToString().ToUpper(), name, message);
             Console.WriteLine(line);
             if (_LogToTraceOut)
                 System.Diagnostics.Trace.WriteLine(line);

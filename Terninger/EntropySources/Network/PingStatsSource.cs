@@ -78,7 +78,9 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         public static async Task<List<IPAddress>> LoadInternalServerListAsync()
         {
-            Log.Debug("Loading internal server list...");
+            var log = LibLog.LogProvider.For<PingStatsSource>();
+            log.Debug("Loading internal server list...");
+
             var servers = new List<IPAddress>();
             using (var stream = typeof(PingStatsSource).Assembly.GetManifestResourceStream(typeof(PingStatsSource), "PingServerList.txt"))
             using (var reader = new StreamReader(stream, Encoding.UTF8))
@@ -95,15 +97,15 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                         continue;
                     if (IPAddress.TryParse(l.Trim(), out var ip))
                     {
-                        Log.Trace("Read IP {0} on line {1}", ip, lineNum);
+                        log.Trace("Read IP {0} on line {1}", ip, lineNum);
                         servers.Add(ip);
                     }
                     else
                         // Couldn't parse IP.
-                        Log.Warn("Unable to parse IP for {0}: {1} (line {2:N0})", nameof(PingStatsSource), l, lineNum);
+                        log.Warn("Unable to parse IP for {0}: {1} (line {2:N0})", nameof(PingStatsSource), l, lineNum);
                 }
             }
-            Log.Debug("Loaded {0:N0} server IP addresses from internal list.", servers.Count);
+            log.Debug("Loaded {0:N0} server IP addresses from internal list.", servers.Count);
             return servers;
         }
         public static List<IPAddress> LoadInternalServerList()
@@ -160,6 +162,8 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private class PingAndStopwatch
         {
+            private static readonly ILog Log = LibLog.LogProvider.For<PingStatsSource>();
+
             public PingAndStopwatch(IPAddress ip)
             {
                 this.IP = ip;
