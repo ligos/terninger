@@ -68,7 +68,7 @@ namespace MurrayGrant.Terninger.EntropySources
             // Now we get the real entropy.
             Log.Trace("Reading entropy...");
             var result = await GetInternalEntropyAsync(priority);
-            Log.Debug("Read {0:N0} bytes of entropy.", (result == null ? 0 : result.Length));
+            Log.Trace("Read {0:N0} bytes of entropy.", (result == null ? 0 : result.Length));
 
             // And update when we last ran.
             _LastPollDatestamp = DateTime.UtcNow;
