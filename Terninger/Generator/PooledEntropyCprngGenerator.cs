@@ -256,24 +256,25 @@ namespace MurrayGrant.Terninger.Generator
                 Logger.Trace("Running entropy loop.");
 
                 var sources = GetSources();
-                if (sources == null)
+                if (sources == null || !sources.Any())
                 {
+                    // No entropy sources; sleep and try again soon.
                     Logger.Trace("No entropy sources available yet.");
-                    continue;
                 }
+                else
+                {
+                    // Poll all sources.
+                    Logger.Trace("Gathering entropy from {0:N0} source(s).", sources.Count());
+                    this.PollSources(sources);
+                    Logger.Trace("Accumulator stats (bytes): available entropy = {0}, first pool entropy = {1}, min pool entropy = {2}, max pool entropy = {3}, total entropy ever seen {4}.", _Accumulator.AvailableEntropyBytesSinceLastSeed, _Accumulator.PoolZeroEntropyBytesSinceLastSeed, _Accumulator.MinPoolEntropyBytesSinceLastSeed, _Accumulator.MaxPoolEntropyBytesSinceLastSeed, _Accumulator.TotalEntropyBytes);
 
 
-                // Poll all sources.
-                Logger.Trace("Gathering entropy from {0:N0} source(s).", sources.Count());
-                this.PollSources(sources);
-                Logger.Trace("Accumulator stats (bytes): available entropy = {0}, first pool entropy = {1}, min pool entropy = {2}, max pool entropy = {3}, total entropy ever seen {4}.", _Accumulator.AvailableEntropyBytesSinceLastSeed, _Accumulator.PoolZeroEntropyBytesSinceLastSeed, _Accumulator.MinPoolEntropyBytesSinceLastSeed, _Accumulator.MaxPoolEntropyBytesSinceLastSeed, _Accumulator.TotalEntropyBytes);
+                    // Reseed the generator (if requirements for reseed are met).
+                    bool didReseed = MaybeReseedGenerator();
 
-                
-                // Reseed the generator (if requirements for reseed are met).
-                bool didReseed = MaybeReseedGenerator();
-
-                // Update the priority based on recent data requests.
-                MaybeUpdatePriority(didReseed);
+                    // Update the priority based on recent data requests.
+                    MaybeUpdatePriority(didReseed);
+                }
 
                 // Wait for some period of time before polling again.
                 var sleepTime = WaitTimeBetweenPolls();

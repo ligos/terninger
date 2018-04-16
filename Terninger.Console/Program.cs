@@ -560,9 +560,9 @@ namespace MurrayGrant.Terninger.Console
             Con.WriteLine();
             Con.WriteLine("  -g --generator xxx    Type of random generator (default: {0})", generatorType);
             Con.WriteLine("        StockRandom:      System.Random");
-            Con.WriteLine("        CryptoRandom:     System.Security.Cryptography.RandomNumberGenerator", Generator.CryptoRandom);
-            Con.WriteLine("        TerningerCypher:  Terninger.Generator.CypherBasedPrngGenerator", Generator.TerningerCypher);
-            Con.WriteLine("        TerningerPooled:  Terninger.Generator.PooledEntropyCprngGenerator", Generator.TerningerPooled);
+            Con.WriteLine("        CryptoRandom:     System.Security.Cryptography.RandomNumberGenerator");
+            Con.WriteLine("        TerningerCypher:  Terninger.Generator.CypherBasedPrngGenerator");
+            Con.WriteLine("        TerningerPooled:  Terninger.Generator.PooledEntropyCprngGenerator");
             Con.WriteLine("  -s --seed xxx         Initial seed material (default: random)");
             Con.WriteLine("            xxx =         [hex string|file path|any random string]");
             Con.WriteLine("  -ns --netSources      Include network sources for entropy (default: false)");

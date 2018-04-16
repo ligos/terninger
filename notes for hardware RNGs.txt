@@ -5,3 +5,6 @@ https://en.wikipedia.org/wiki/List_of_random_number_generators
 
 https://github.com/damianh/LibLog/wiki/Using
 https://github.com/damianh/LibLog/blob/master/src/LibLog/LibLog.cs
+
+
+https://defuse.ca/online-x86-assembler.htm

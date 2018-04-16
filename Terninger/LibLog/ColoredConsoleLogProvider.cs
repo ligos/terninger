@@ -73,7 +73,7 @@
             {
                 message = message + "|" + exception;
             }
-            var line = String.Format("{0:yyyy-MM-dd HH:mm:ss} | {1} | {2} | {3}", DateTime.UtcNow, logLevel.ToString().ToUpper(), name, message);
+            var line = String.Format("{0:HH:mm:ss} | {1} | {2} | {3}", DateTime.Now, logLevel.ToString().ToUpper(), name, message);
             Console.WriteLine(line);
             if (_LogToTraceOut)
                 System.Diagnostics.Trace.WriteLine(line);
