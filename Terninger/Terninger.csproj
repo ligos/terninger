@@ -49,6 +49,7 @@
     <Compile Include="CryptoPrimitives\BlockCypherCryptoPrimitive.cs" />
     <Compile Include="BigMath\Int128.cs" />
     <Compile Include="EntropySources\EntropySourceWithPeriod.cs" />
+    <Compile Include="EntropySources\EntropySourceComparer.cs" />
     <Compile Include="EntropySources\Local\UserSuppliedSource.cs" />
     <Compile Include="EntropySources\Network\BeaconNistExternalRandomSource.cs" />
     <Compile Include="EntropySources\Network\HotbitsExternalRandomSource.cs" />

@@ -17,17 +17,26 @@ namespace MurrayGrant.Terninger.Accumulator
     public sealed class EntropyPool
     {
         private readonly HashAlgorithm _Hash;
+        private readonly int _SingleSourceCountAppliesFrom;
+        private readonly double _MaxSingleSourceRatio;
+        private readonly Dictionary<IEntropySource, int> _CountOfBytesBySource = new Dictionary<IEntropySource, int>(EntropySourceComparer.Value);
 
         // Counters so we know how much entropy has accumulated in this pool.
         public Int128 TotalEntropyBytes { get; private set; }
         public Int128 EntropyBytesSinceLastDigest { get; private set; }
 
         // Default to SHA512 as the hash algorithm.
-        public EntropyPool() : this(SHA512.Create()) { }
-        public EntropyPool(HashAlgorithm hash)
+        public EntropyPool() : this(SHA512.Create(), 0.5) { }
+        public EntropyPool(HashAlgorithm hash) : this(hash, 0.5) { }
+        public EntropyPool(HashAlgorithm hash, double maxSingleSourceRatio)
         {
             if (hash == null) throw new ArgumentNullException(nameof(hash));
+            if (maxSingleSourceRatio < 0 || maxSingleSourceRatio > 1.0) throw new ArgumentOutOfRangeException(nameof(maxSingleSourceRatio), "Max Single Source Ratio must be between 0 and 1.0.");
             _Hash = hash;
+            _SingleSourceCountAppliesFrom = (hash.HashSize / 8) / 2;        // Minimum threshold for single source rule to apply.
+            _MaxSingleSourceRatio = maxSingleSourceRatio;       // Defaults to 50% (0.5).
+            if (_MaxSingleSourceRatio == 0.0)
+                _MaxSingleSourceRatio = 1.0;        // 0 means nothing could be accumulated, so interpert it as 1.0, which means the single source rule is not enforced.
         }
 
         /// <summary>
@@ -42,16 +51,43 @@ namespace MurrayGrant.Terninger.Accumulator
         }
         internal void Add(byte[] entropy, IEntropySource source)
         {
-            // TODO: track the source to prevent any single source dominating this pool.
-            //  Need to be careful when few sources in play or minimal entropy has been added.
-            //  Suggest limit of 50% from any one instance and 80% from any one type??
+            // Determine how much of the packet will be accepted.
+            _CountOfBytesBySource.TryGetValue(source, out var countFromSource);
+            var bytesToaccept = BytesToAcceptFromSource(entropy.Length, countFromSource);
 
-            // Accumulate this event in the hash function.
-            _Hash.TransformBlock(entropy, 0, entropy.Length, null, 0);
+            if (bytesToaccept <= 0)
+                // Ignoring this packet entirely.
+                return;
+            
+            // Accumulate the packer into the hash function.
+            // Note that this may only incorporate part of the packet.
+            _Hash.TransformBlock(entropy, 0, bytesToaccept, null, 0);
 
             // Increment counters.
-            TotalEntropyBytes = TotalEntropyBytes + entropy.Length;
-            EntropyBytesSinceLastDigest = EntropyBytesSinceLastDigest + entropy.Length;
+            _CountOfBytesBySource[source] = countFromSource + bytesToaccept;
+
+            TotalEntropyBytes = TotalEntropyBytes + bytesToaccept;
+            EntropyBytesSinceLastDigest = EntropyBytesSinceLastDigest + bytesToaccept;
+        }
+
+        private int BytesToAcceptFromSource(int byteCount, int countFromSource)
+        {
+            // We may not accept all (or any) bytes from an entropy packet.
+            // The goal is to prevent any single source instance from dominating the pool, 
+            // which could an attacker to guess or influence the state of the overall generator.
+            // By default, the threshold is set to 50% - so no source should have more than 50% of bytes accumulated in a pool.
+
+            // When minimal entropy has been received, we accept everything.
+            if (EntropyBytesSinceLastDigest < _SingleSourceCountAppliesFrom)
+                return byteCount;
+
+            // Otherwise, we enforce the source ratio.
+            var maxBytesAllowedForThisSource = (int)((EntropyBytesSinceLastDigest > Int32.MaxValue ? Int32.MaxValue : (int)EntropyBytesSinceLastDigest) * _MaxSingleSourceRatio);
+            var result = maxBytesAllowedForThisSource - countFromSource;
+            if (result < 0)
+                return 0;
+            else
+                return Math.Min(byteCount, result);
         }
 
         /// <summary>

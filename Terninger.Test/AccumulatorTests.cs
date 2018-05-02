@@ -117,6 +117,32 @@ namespace MurrayGrant.Terninger.Test
             Assert.IsFalse(p.GetDigest().All(b => b == 0));
         }
 
+        [TestMethod]
+        public void Pool_First32BytesAreOK()
+        {
+            var p = new EntropyPool();
+            var evt = EventFromBytes(_Zero8Bytes);
+            p.Add(evt);
+            p.Add(evt);
+            p.Add(evt);
+            p.Add(evt);
+            Assert.AreEqual(p.TotalEntropyBytes, 32);
+            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 32);
+        }
+        [TestMethod]
+        public void Pool_After32BytesAreIgnored()
+        {
+            var p = new EntropyPool();
+            var evt = EventFromBytes(_Zero8Bytes);
+            p.Add(evt);
+            p.Add(evt);
+            p.Add(evt);
+            p.Add(evt);
+            p.Add(evt);     // This triggers the "too much entropy from one source" thing.
+            Assert.AreEqual(p.TotalEntropyBytes, 32);
+            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 32);
+        }
+
 
 
         [TestMethod]
@@ -379,14 +405,17 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void Accumulator_2kBEntropyPacket()
         {
+            // 2kB from one source is enough to trip the "too much entropy from one source" thing on pools.
+            // 1kB extra is almost enough to balance it out.
             var a = new EntropyAccumulator(32, 0, _Rng);
+            a.Add(EventFromBytes(_Zero1KBytes));
             a.Add(EventFromBytes(_Zero2KBytes));
-            Assert.AreEqual(a.TotalEntropyBytes, _Zero2KBytes.Length);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, _Zero2KBytes.Length);
+            Assert.AreEqual(a.TotalEntropyBytes, 1984);
+            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 1984);
             Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 64);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 64);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 64);
+            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 62);
+            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 62);
+            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 62);
         }
         [TestMethod]
         public void Accumulator_1kBEntropyPacket()
