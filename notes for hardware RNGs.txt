@@ -8,3 +8,6 @@ https://github.com/damianh/LibLog/blob/master/src/LibLog/LibLog.cs
 
 
 https://defuse.ca/online-x86-assembler.htm
+
+disk IO timing
+https://stackoverflow.com/questions/122362/how-to-empty-flush-windows-read-disk-cache-in-c

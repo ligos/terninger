@@ -304,6 +304,9 @@ namespace MurrayGrant.Terninger.Generator
                 var wasTimeout = wakeIdx == WaitHandle.WaitTimeout;
                 return null;
             }
+            // Note if we could use some more sources.
+            if (sources.Length <= 2)
+                Logger.Warn("Only {0} entropy source(s) are available. A minimum of 2 is required; 3 or more recommended.", sources.Length);
 
             lock (_PrngLock)
             {

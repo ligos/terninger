@@ -118,7 +118,7 @@ namespace MurrayGrant.Terninger.Test
         }
 
         [TestMethod]
-        public void Pool_First32BytesAreOK()
+        public void Pool_First48BytesAreOK()
         {
             var p = new EntropyPool();
             var evt = EventFromBytes(_Zero8Bytes);
@@ -126,23 +126,101 @@ namespace MurrayGrant.Terninger.Test
             p.Add(evt);
             p.Add(evt);
             p.Add(evt);
-            Assert.AreEqual(p.TotalEntropyBytes, 32);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 32);
+            p.Add(evt);
+            p.Add(evt);
+            Assert.AreEqual(p.TotalEntropyBytes, 48);
+            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 48);
         }
         [TestMethod]
-        public void Pool_After32BytesAreIgnored()
+        public void Pool_After48BytesAreIgnored()
         {
             var p = new EntropyPool();
             var evt = EventFromBytes(_Zero8Bytes);
+            p.Add(evt);
+            p.Add(evt);
             p.Add(evt);
             p.Add(evt);
             p.Add(evt);
             p.Add(evt);
             p.Add(evt);     // This triggers the "too much entropy from one source" thing.
-            Assert.AreEqual(p.TotalEntropyBytes, 32);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 32);
+            Assert.AreEqual(p.TotalEntropyBytes, 48);
+            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 48);
         }
+        [TestMethod]
+        public void Pool_TwoSourcesCanGoBeyond48BytesEachWhenEvenlyDistributed()
+        {
+            var p = new EntropyPool();
+            var evt = EventFromBytes(_Zero16Bytes);
+            var evt2 = EventFromBytes(_Zero16Bytes);
+            p.Add(evt);
+            p.Add(evt2);
+            p.Add(evt);
+            p.Add(evt2);
+            p.Add(evt);
+            p.Add(evt2);
+            p.Add(evt);
+            p.Add(evt2);
+            Assert.AreEqual(p.TotalEntropyBytes, 128);
+            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 128);
+        }
+        [TestMethod]
+        public void Pool_ThreeSourcesCanGoBeyond48BytesEachWhenEvenlyDistributed()
+        {
+            var p = new EntropyPool();
+            var evt = EventFromBytes(_Zero16Bytes);
+            var evt2 = EventFromBytes(_Zero16Bytes);
+            var evt3 = EventFromBytes(_Zero16Bytes);
+            p.Add(evt);
+            p.Add(evt2);
+            p.Add(evt3);
+            p.Add(evt);
+            p.Add(evt2);
+            p.Add(evt3);
+            p.Add(evt);
+            p.Add(evt2);
+            p.Add(evt3);
+            p.Add(evt);
+            p.Add(evt2);
+            p.Add(evt3);
+            Assert.AreEqual(p.TotalEntropyBytes, 192);
+            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 192);
+        }
+        [TestMethod]
+        public void Pool_OneSourceIsLimitedWhenDominating()
+        {
+            var p = new EntropyPool();
+            var evt = EventFromBytes(_Zero16Bytes);
+            var evt2 = EventFromBytes(_Zero16Bytes);
+            p.Add(evt);
+            p.Add(evt);
+            p.Add(evt);
+            p.Add(evt);     // Ignored.
+            Assert.AreEqual(p.TotalEntropyBytes, 48);
+            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 48);
 
+            p.Add(evt2);
+            p.Add(evt2);
+            p.Add(evt2);
+            Assert.AreEqual(p.TotalEntropyBytes, 96);
+            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 96);
+
+            p.Add(evt);
+            p.Add(evt);
+            p.Add(evt);
+            p.Add(evt);     // Ignored.
+            Assert.AreEqual(p.TotalEntropyBytes, 144);
+            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 144);
+        }
+        [TestMethod]
+        public void Pool_GetDigestResetsCountsBySource()
+        {
+            var p = new EntropyPool();
+            var evt = EventFromBytes(_Zero16Bytes);
+            p.Add(evt);
+            Assert.AreEqual(p.GetCountOfBytesBySource().Count, 1);
+            var digest = p.GetDigest();
+            Assert.AreEqual(p.GetCountOfBytesBySource().Count, 0);
+        }
 
 
         [TestMethod]
@@ -410,12 +488,12 @@ namespace MurrayGrant.Terninger.Test
             var a = new EntropyAccumulator(32, 0, _Rng);
             a.Add(EventFromBytes(_Zero1KBytes));
             a.Add(EventFromBytes(_Zero2KBytes));
-            Assert.AreEqual(a.TotalEntropyBytes, 1984);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 1984);
+            Assert.AreEqual(a.TotalEntropyBytes, 3072);
+            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 3072);
             Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 62);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 62);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 62);
+            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 96);
+            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 96);
+            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 96);
         }
         [TestMethod]
         public void Accumulator_1kBEntropyPacket()
