@@ -296,7 +296,7 @@ namespace MurrayGrant.Terninger.Console
                 result.Description = $"{(nonDeterministic ? "non-" : "")}deterministic PRNG - " + typeof(CypherBasedPrngGenerator).Namespace + "." + typeof(CypherBasedPrngGenerator).Name;
                 result.ExtraDescription = $"Using crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
                 result.SeedDescription = seedAndDescription.Item2;
-                result.Generator = CypherBasedPrngGenerator.Create(seedAndDescription.Item1, primitive, hash, counter, entropyGetter);
+                result.Generator = CypherBasedPrngGenerator.Create(key: seedAndDescription.Item1, cryptoPrimitive: primitive, hashAlgorithm: hash, initialCounter: counter, additionalEntropyGetter: entropyGetter);
                 result.WaitForGeneratorReady = () => { };
                 result.WaitForGeneratorStopped = () => { };
             }

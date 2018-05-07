@@ -7,13 +7,23 @@ using System.Threading.Tasks;
 using MurrayGrant.Terninger.Generator;
 
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Code;
 
 namespace MurrayGrant.Terninger.Perf.Benchmarks
 {
     public class GenerateNumbers
     {
         private static readonly byte[] _ZeroKey32Bytes = new byte[32];
-        private static readonly CypherBasedPrngGenerator _Generator = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+        [Params(0, 1024, 4096)]
+        public int BufferSize;
+
+        private CypherBasedPrngGenerator _Generator;
+
+        [GlobalSetup]
+        public void Setup()
+        {
+            _Generator = CypherBasedPrngGenerator.Create(_ZeroKey32Bytes, outputBufferSize: BufferSize);
+        }
 
         [Benchmark]
         public bool Boolean()

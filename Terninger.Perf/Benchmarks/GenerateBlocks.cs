@@ -26,5 +26,10 @@ namespace MurrayGrant.Terninger.Perf.Benchmarks
         {
             return _Generator.GetRandomBytes(_BlockSize * 10);
         }
+        [Benchmark]
+        public byte[] ThirtyTwoKBytes()
+        {
+            return _Generator.GetRandomBytes(32 * 1024);
+        }
     }
 }

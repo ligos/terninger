@@ -44,7 +44,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateSingleBlock()
         {
-            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            var crng = CypherBasedPrngGenerator.Create(_ZeroKey32Bytes, outputBufferSize: 0);
             var buffer = new byte[crng.BlockSizeBytes];
             crng.FillWithRandomBytes(buffer);
 
@@ -56,7 +56,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateTwoBlocksInOneRequest()
         {
-            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            var crng = CypherBasedPrngGenerator.Create(_ZeroKey32Bytes, outputBufferSize: 0);
             var buffer = new byte[crng.BlockSizeBytes * 2];
             crng.FillWithRandomBytes(buffer);
 
@@ -68,7 +68,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateTwoBlocksInTwoRequests()
         {
-            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            var crng = CypherBasedPrngGenerator.Create(_ZeroKey32Bytes, outputBufferSize: 0);
             var buffer1 = new byte[crng.BlockSizeBytes * 2];
             var buffer2 = new byte[crng.BlockSizeBytes * 2];
             crng.FillWithRandomBytes(buffer1);
@@ -110,7 +110,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateOneByte()
         {
-            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            var crng = CypherBasedPrngGenerator.Create(_ZeroKey32Bytes, outputBufferSize: 0);
             var result = crng.GetRandomBytes(1);
 
             Assert.AreEqual(crng.BytesGenerated, crng.BlockSizeBytes + 32);
@@ -119,7 +119,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateFourBytes()
         {
-            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            var crng = CypherBasedPrngGenerator.Create(_ZeroKey32Bytes, outputBufferSize: 0);
             var result = crng.GetRandomBytes(4);
 
             Assert.AreEqual(crng.BytesGenerated, crng.BlockSizeBytes + 32);

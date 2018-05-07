@@ -20,7 +20,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateSingleBlockAesManaged()
         {
-            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Managed(), SHA256.Create(), new CypherCounter(16));
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Managed(), SHA256.Create(), new CypherCounter(16), 0);
             var buffer = new byte[crng.BlockSizeBytes];
             crng.FillWithRandomBytes(buffer);
 
@@ -31,7 +31,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateSingleBlockAesCsp()
         {
-            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Native(), SHA256.Create(), new CypherCounter(16));
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Native(), SHA256.Create(), new CypherCounter(16), 0);
             var buffer = new byte[crng.BlockSizeBytes];
             crng.FillWithRandomBytes(buffer);
 
@@ -162,8 +162,8 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void SameCypherAndKeyButAdditionalEntropyProduceDifferentRandomBlocks16Bytes()
         {
-            var crng1 = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), CheapEntropy.Get16);
-            var crng2 = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), CheapEntropy.Get16);
+            var crng1 = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), 0, CheapEntropy.Get16);
+            var crng2 = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), 0, CheapEntropy.Get16);
             var buffer1 = new byte[crng1.BlockSizeBytes * 2];
             var buffer2 = new byte[crng2.BlockSizeBytes * 2];
             crng1.FillWithRandomBytes(buffer1);
@@ -174,8 +174,8 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void SameCypherAndKeyButAdditionalEntropyProduceDifferentRandomBlocks32Bytes()
         {
-            var crng1 = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), CheapEntropy.Get32);
-            var crng2 = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), CheapEntropy.Get32);
+            var crng1 = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), 0, CheapEntropy.Get32);
+            var crng2 = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(16), 0, CheapEntropy.Get32);
             var buffer1 = new byte[crng1.BlockSizeBytes * 2];
             var buffer2 = new byte[crng2.BlockSizeBytes * 2];
             crng1.FillWithRandomBytes(buffer1);
@@ -252,6 +252,19 @@ namespace MurrayGrant.Terninger.Test
             );
         }
 
+
+        [TestMethod]
+        public void BufferedGeneratorCopesWithAllSizedRequests()
+        {
+            var crng = CypherBasedPrngGenerator.Create(_ZeroKey32Bytes, outputBufferSize: 1024);
+            var buffer = new byte[1280];
+            for (int i = 1; i < 1280; i++)
+            {
+                crng.FillWithRandomBytes(buffer, 0, i);
+                Assert.IsFalse(buffer.All(b => b == 0));
+                Array.Clear(buffer, 0, buffer.Length);
+            }
+        }
 
         private static ICryptoPrimitive CreateCryptoPrimitive(SymmetricAlgorithm cypher)
         {
