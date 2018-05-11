@@ -550,7 +550,7 @@ namespace MurrayGrant.Terninger.Console
         {
             Con.WriteLine("Usage: Terninger.exe [options]");
             Con.WriteLine("  -c --byteCount nnn    Generates nnn random bytes (default: {0})", byteCount);
-            Con.WriteLine("                          Use negative for infinite (CTRL+C to end)");
+            Con.WriteLine("                          Use zero for infinite (CTRL+C to end)");
             Con.WriteLine();
             Con.WriteLine("  -o --outFile xxx      File to save output to (default: stdout)");
             Con.WriteLine("  --outStdout           Output to stdout (default)");

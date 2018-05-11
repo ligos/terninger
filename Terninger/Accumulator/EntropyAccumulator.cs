@@ -178,6 +178,14 @@ namespace MurrayGrant.Terninger.Accumulator
             return result;
         }
 
+        /// <summary>
+        /// Resets any entropy gathered in pool zero.
+        /// </summary>
+        public void ResetPoolZero()
+        {
+            // Get the digest from pool zero and discard it.
+            _AllPools[0].GetDigest();
+        }
 
         private ulong GetDigestsFromLinearPools(ICollection<byte[]> digests, ulong reseedCount)
         {

@@ -19,7 +19,6 @@ namespace MurrayGrant.Terninger.Generator
     public class PooledEntropyCprngGenerator : IDisposableRandomNumberGenerator
     {
         // The main random number generator for Fortuna and Terniner.
-        // As specified in sections TODO
 
         // The PRNG based on a cypher or other crypto primitive, as specifeid in section 9.4.
         private readonly IReseedableRandomNumberGenerator _Prng;
@@ -39,7 +38,14 @@ namespace MurrayGrant.Terninger.Generator
         private readonly static ILog Logger = LogProvider.For<PooledEntropyCprngGenerator>();
 
         public int MaxRequestBytes => _Prng.MaxRequestBytes;
- 
+
+        // Various state to determine polling intervals, reseed times, etc.
+        private DateTime _LastReseedUtc;
+        private DateTime _LastRandomRequestUtc;
+        private Int128 _ReseedCountAtLastRandomRequest;
+
+        public PooledGeneratorConfig Config { get; private set; }
+
         public Guid UniqueId { get; private set; }
 
         public Int128 BytesRequested { get; private set; }
@@ -66,22 +72,21 @@ namespace MurrayGrant.Terninger.Generator
         /// </summary>
         public event EventHandler<PooledEntropyCprngGenerator> OnReseed;
 
-        // TODO: make this configurable.
-        private const int MinEntropyForReseed = 48;
-
 
         public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources) 
-            : this(initialisedSources, new EntropyAccumulator(), CypherBasedPrngGenerator.CreateWithNullKey()) { }
+            : this(initialisedSources, new EntropyAccumulator(), CypherBasedPrngGenerator.CreateWithCheapKey(), new PooledGeneratorConfig()) { }
         public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, EntropyAccumulator accumulator)
-            : this(initialisedSources, accumulator, CypherBasedPrngGenerator.CreateWithCheapKey()) { }
+            : this(initialisedSources, accumulator, CypherBasedPrngGenerator.CreateWithCheapKey(), new PooledGeneratorConfig()) { }
         public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, IReseedableRandomNumberGenerator prng)
-            : this(initialisedSources, new EntropyAccumulator(), prng) { }
+            : this(initialisedSources, new EntropyAccumulator(), prng, new PooledGeneratorConfig()) { }
+        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, EntropyAccumulator accumulator, IReseedableRandomNumberGenerator prng)
+            : this(initialisedSources, accumulator, prng, new PooledGeneratorConfig()) { }
 
         /// <summary>
         /// Initialise the CPRNG with the given PRNG, accumulator, entropy sources and thread.
         /// This does not start the generator.
         /// </summary>
-        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, EntropyAccumulator accumulator, IReseedableRandomNumberGenerator prng)
+        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, EntropyAccumulator accumulator, IReseedableRandomNumberGenerator prng, PooledGeneratorConfig config)
         {
             if (initialisedSources == null) throw new ArgumentNullException(nameof(initialisedSources));
             if (accumulator == null) throw new ArgumentNullException(nameof(accumulator));
@@ -91,6 +96,7 @@ namespace MurrayGrant.Terninger.Generator
             this._Prng = prng;      // Note that this is keyed with a low entropy key.
             this._Accumulator = accumulator;
             this._EntropySources = new List<IEntropySource>(initialisedSources);
+            this.Config = config ?? new PooledGeneratorConfig();
             this._SchedulerThread = new Thread(ThreadLoop, 256 * 1024);
             _SchedulerThread.Name = "Terninger Worker Thread - " + UniqueId.ToString("X");
             _SchedulerThread.IsBackground = true;
@@ -98,6 +104,15 @@ namespace MurrayGrant.Terninger.Generator
             // Important, the index of these are used in WakeReason()
             _AllSignals = new[] { _WakeSignal, _ShouldStop.Token.WaitHandle };
         }
+
+        public static PooledEntropyCprngGenerator Create(IEnumerable<IEntropySource> initialisedSources = null
+                            , EntropyAccumulator accumulator = null
+                            , IReseedableRandomNumberGenerator prng = null
+                            , PooledGeneratorConfig config = null)
+            => new PooledEntropyCprngGenerator(initialisedSources ?? Enumerable.Empty<IEntropySource>()
+                                            , accumulator ?? new EntropyAccumulator()
+                                            , prng ?? CypherBasedPrngGenerator.CreateWithCheapKey()
+                                            , config ?? new PooledGeneratorConfig());
 
         public void Dispose()
         {
@@ -134,10 +149,16 @@ namespace MurrayGrant.Terninger.Generator
             {
                 _Prng.FillWithRandomBytes(toFill, offset, count);
             }
+            // Metrics to help decide priority.
             this.BytesRequested = this.BytesRequested + count;
+            this._LastRandomRequestUtc = DateTime.UtcNow;
+            this._ReseedCountAtLastRandomRequest = this.ReseedCount;
             // Any request for data in low priority should raise the level to normal.
             if (this.EntropyPriority == EntropyPriority.Low)
+            {
                 this.EntropyPriority = EntropyPriority.Normal;
+                this._WakeSignal.Set();
+            }
         }
 
 
@@ -148,6 +169,8 @@ namespace MurrayGrant.Terninger.Generator
         /// </summary>
         public void Start()
         {
+            _LastRandomRequestUtc = DateTime.UtcNow;
+            _LastReseedUtc = DateTime.UtcNow;
             this._SchedulerThread.Start();
         }
 
@@ -221,9 +244,24 @@ namespace MurrayGrant.Terninger.Generator
         /// </summary>
         public void ResetPoolZero()
         {
-            throw new NotImplementedException();
+            Logger.Debug("Received external pool zero reset.");
+            lock (_AccumulatorLock)
+            {
+                _Accumulator.ResetPoolZero();
+            }
         }
 
+
+        /// <summary>
+        /// Sets the generator priority to the value provided.
+        /// </summary>
+        public void SetPriority(EntropyPriority priority)
+        {
+            Logger.Debug("Received external priority: {0}, was {1}.", priority, EntropyPriority);
+            this.EntropyPriority = priority;
+            if (this.EntropyPriority == EntropyPriority.High)
+                this._WakeSignal.Set();
+        }
 
         /// <summary>
         /// Add an initialised and ready to use entropy source to the generator.
@@ -378,6 +416,7 @@ namespace MurrayGrant.Terninger.Generator
                     this._Prng.Reseed(seedMaterial);
                 }
                 didReseed = true;
+                this._LastReseedUtc = DateTime.UtcNow;
                 Logger.Trace("Reseed complete.");
 
 
@@ -398,43 +437,156 @@ namespace MurrayGrant.Terninger.Generator
 
         private void MaybeUpdatePriority(bool didReseed)
         {
-            if (didReseed && this.EntropyPriority == EntropyPriority.High)
+            var now = DateTime.UtcNow;
+            var originalPriority = this.EntropyPriority;
+            if (didReseed && originalPriority == EntropyPriority.High)
             {
                 // If we reseed in high priorty, drop to normal priority.
                 this.EntropyPriority = EntropyPriority.Normal;
-                Logger.Debug("After reseed in High priority, dropping to normal.");
+                Logger.Debug("After reseed in High priority, dropping to Normal.");
             }
-            //else if (!didReseed && this.EntropyPriority == EntropyPriority.Normal && this.LastRequest > some long time)
+            else if (this.EntropyPriority == EntropyPriority.Normal && this._LastRandomRequestUtc < now.Subtract(Config.TimeBeforeSwitchToLowPriority))
+            {
                 // If there has been a long time since the last request, drop to low priority.
-                //this.EntropyPriority = EntropyPriority.Low;
+                this.EntropyPriority = EntropyPriority.Low;
+                Logger.Debug("Exceeded {0} since last request for random bytes: dropping priority to Low.", Config.TimeBeforeSwitchToLowPriority);
+            }
+            else if (this.EntropyPriority == EntropyPriority.Normal && this._ReseedCountAtLastRandomRequest < this.ReseedCount - Config.ReseedCountBeforeSwitchToLowPriority)
+            {
+                // If there has been several reseeds since the last request, drop to low priority.
+                this.EntropyPriority = EntropyPriority.Low;
+                Logger.Debug("Exceeded {0} reseed events since last request for random bytes: dropping priority to Low.", Config.ReseedCountBeforeSwitchToLowPriority);
+            }
+
+            Logger.Trace("MaybeUpdatePriority(): priority was {0}, is now {1}.", originalPriority, this.EntropyPriority);
         }
 
         private bool ShouldReseed()
         {
-            // TODO: Fortuna requires minimum of 100ms between reseed events.
+            var now = DateTime.UtcNow;
             if (this._ShouldStop.IsCancellationRequested)
+            {
+                // Cancelled: abort as quickly as possible.
+                Logger.Trace("ShouldReseed(): false - cancellation requested.");
                 return false;
+            }
+            else if (_LastReseedUtc > now.Subtract(Config.MinimumTimeBetweenReseeds))
+            {
+                // Within minimum reseed interval: no reseed.
+                Logger.Trace("ShouldReseed(): false - within minimum reseed time.");
+                return false;
+            }
+            else if (_LastReseedUtc < now.Subtract(Config.MaximumTimeBeforeReseed))
+            {
+                // Outside of maximum reseed interval: must reseed.
+                Logger.Trace("ShouldReseed(): true - exceeded time allowed before reseed.");
+                return true;
+            }
             else if (this.EntropyPriority == EntropyPriority.High)
-                // TODO: configure how much entropy we need to accumulate before reseed.
-                return this._Accumulator.PoolZeroEntropyBytesSinceLastSeed > MinEntropyForReseed;
+            {
+                // Enough entropy gathered: reseed.
+                Logger.Trace("ShouldReseed(): true - exceeded required bytes in pool zero for High priority.");
+                return this._Accumulator.PoolZeroEntropyBytesSinceLastSeed > Config.EntropyToTriggerReseedInHighPriority;
+            }
+            else if (this.EntropyPriority == EntropyPriority.Normal)
+            {
+                // Enough entropy gathered: reseed.
+                Logger.Trace("ShouldReseed(): true - exceeded required bytes in pool zero for Normal priority.");
+                return this._Accumulator.PoolZeroEntropyBytesSinceLastSeed > Config.EntropyToTriggerReseedInNormalPriority;
+            }
             else if (this.EntropyPriority == EntropyPriority.Low)
-                // TODO: use priority, rate of consumption and date / time to determine when to reseed.
-                return this._Accumulator.MinPoolEntropyBytesSinceLastSeed > 256;
-            else
-                // TODO: use priority, rate of consumption and date / time to determine when to reseed.
-                return this._Accumulator.MinPoolEntropyBytesSinceLastSeed > 96;
+            {
+                // Enough entropy gathered: reseed.
+                Logger.Trace("ShouldReseed(): true - exceeded required bytes in pool zero for Low priority.");
+                return this._Accumulator.PoolZeroEntropyBytesSinceLastSeed > Config.EntropyToTriggerReseedInLowPriority;
+            }
+
+            Logger.Warn("ShouldReseed(): false - unexpected state.");
+            return false;
         }
 
-        // TODO: work out how often to poll based on minimum and rate entropy is being consumed.
-        // TODO: use a PRNG to introduce a random bias into this??
-        private TimeSpan WaitTimeBetweenPolls() => EntropyPriority == EntropyPriority.High ? TimeSpan.FromMilliseconds(1)
-                                                 : EntropyPriority == EntropyPriority.Normal ? TimeSpan.FromSeconds(5)
-                                                 : EntropyPriority == EntropyPriority.Low ? TimeSpan.FromSeconds(30)
+        // FUTURE: work out how often to poll based on minimum and rate entropy is being consumed.
+        private TimeSpan WaitTimeBetweenPolls() => EntropyPriority == EntropyPriority.High ? Config.PollWaitTimeInHighPriority
+                                                 : EntropyPriority == EntropyPriority.Normal ? Config.PollWaitTimeInNormalPriority
+                                                 : EntropyPriority == EntropyPriority.Low ? Config.PollWaitTimeInLowPriority
                                                  : TimeSpan.FromSeconds(1);     // Impossible case.
 
         private string WakeReason(int wakeIdx) => wakeIdx == WakeReason_SleepElapsed ? "sleep time elapsed"
                                                 : wakeIdx == WakeReason_ExternalReseed ? "external reseed request"
                                                 : wakeIdx == WakeReason_GeneratorStopped ? "generator stopped"
                                                 : "unknown";
+
+        public class PooledGeneratorConfig
+        {
+            // TODO: this class should be immutable.
+
+            /// <summary>
+            /// Minimum time between reseed events.
+            /// Deafult: 100ms (according to Fortuna spec).
+            /// </summary>
+            public TimeSpan MinimumTimeBetweenReseeds { get; set; } = TimeSpan.FromMilliseconds(100);
+            /// <summary>
+            /// After this time, a reseed will be required.
+            /// Default: 12 hours.
+            /// </summary>
+            public TimeSpan MaximumTimeBeforeReseed { get; set; } = TimeSpan.FromHours(12);
+
+
+            /// <summary>
+            /// Number of bytes of entropy in first pool to trigger a reseed when in High priority.
+            /// Default: 48 bytes.
+            /// </summary>
+            /// <remarks>
+            /// Actual entropy selected will be minimum of this, maximum of pool count * this, median of 3 * this.
+            /// First seed will usually only have this amount of entropy.
+            /// </remarks>
+            public int EntropyToTriggerReseedInHighPriority { get; set; } = 48;
+            /// <summary>
+            /// Number of bytes of entropy in first pool to trigger a reseed when in Normal priority.
+            /// Default: 128 bytes.
+            /// </summary>
+            /// <remarks>
+            /// Actual entropy selected will be minimum of this, maximum of pool count * this, median of 3 * this.
+            /// </remarks>
+            public int EntropyToTriggerReseedInNormalPriority { get; set; } = 128;
+            /// <summary>
+            /// Number of bytes of entropy in first pool to trigger a reseed when in Idle priority.
+            /// Default: 128 bytes.
+            /// </summary>
+            /// <remarks>
+            /// Actual entropy selected will be minimum of this, maximum of pool count * this, median of 3 * this.
+            /// </remarks>
+            public int EntropyToTriggerReseedInLowPriority { get; set; } = 128;
+
+
+            /// <summary>
+            /// Time to wait between entropy polls when in High priority.
+            /// Default: 1 ms
+            /// </summary>
+            public TimeSpan PollWaitTimeInHighPriority { get; set; } = TimeSpan.FromMilliseconds(1);
+            /// <summary>
+            /// Time to wait between entropy polls when in Normal priority.
+            /// Default: 10 sec
+            /// </summary>
+            public TimeSpan PollWaitTimeInNormalPriority { get; set; } = TimeSpan.FromSeconds(10);
+            /// <summary>
+            /// Time to wait between entropy polls when in Low priority.
+            /// Default: 1 min
+            /// </summary>
+            public TimeSpan PollWaitTimeInLowPriority { get; set; } = TimeSpan.FromSeconds(60);
+
+
+            /// <summary>
+            /// Number of reseeds at Normal priority without any further random requests before generator will drop to Low priority.
+            /// Default: 10.
+            /// </summary>
+            public int ReseedCountBeforeSwitchToLowPriority { get; set; } = 10;
+
+            /// <summary>
+            /// Time at Normal priority without any further random requests before generator will drop to Low priority.
+            /// Default: 2 hours.
+            /// </summary>
+            public TimeSpan TimeBeforeSwitchToLowPriority { get; set; } = TimeSpan.FromHours(2);
+        }
     }
 }
