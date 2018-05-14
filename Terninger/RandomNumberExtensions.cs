@@ -203,5 +203,20 @@ namespace MurrayGrant.Terninger
                 array[swapIndex] = tmp;
             }
         }
+
+
+        /// <summary>
+        /// Creates a light weight PRNG from a Pooled Generator.
+        /// </summary>
+        public static IRandomNumberGenerator CreateCypherBasedGenerator(this PooledEntropyCprngGenerator pooledRng) => CreateCypherBasedGenerator(pooledRng, 1024);
+        /// <summary>
+        /// Creates a light weight PRNG from a Pooled Generator.
+        /// </summary>
+        public static IRandomNumberGenerator CreateCypherBasedGenerator(this PooledEntropyCprngGenerator pooledRng, int bufferSize)
+        {
+            var key = pooledRng.GetRandomBytes(32);
+            var result = CypherBasedPrngGenerator.Create(key, outputBufferSize: bufferSize);
+            return result;
+        }
     }
 }

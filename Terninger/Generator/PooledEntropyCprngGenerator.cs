@@ -16,7 +16,7 @@ using BigMath;
 
 namespace MurrayGrant.Terninger.Generator
 {
-    public class PooledEntropyCprngGenerator : IDisposableRandomNumberGenerator
+    public sealed class PooledEntropyCprngGenerator : IDisposableRandomNumberGenerator
     {
         // The main random number generator for Fortuna and Terniner.
 
@@ -273,6 +273,35 @@ namespace MurrayGrant.Terninger.Generator
             {
                 _EntropySources.Add(source);
             }
+        }
+        /// <summary>
+        /// Add an initialised and ready to use entropy source to the generator.
+        /// </summary>
+        public void AddInitialisedSources(IEnumerable<IEntropySource> sources)
+        {
+            lock (_EntropySources)
+            {
+                _EntropySources.AddRange(sources);
+            }
+        }
+
+        /// <summary>
+        /// Adds initialised entropy sources to the generator. 
+        /// Fluent interface.
+        /// </summary>
+        public PooledEntropyCprngGenerator With(IEnumerable<IEntropySource> sources)
+        {
+            AddInitialisedSources(sources);
+            return this;
+        }
+        /// <summary>
+        /// Adds an initialised entropy source to the generator. 
+        /// Fluent interface.
+        /// </summary>
+        public PooledEntropyCprngGenerator With(IEntropySource source)
+        {
+            AddInitialisedSource(source);
+            return this;
         }
 
 

@@ -26,6 +26,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly bool _UseDiskSourceForUnitTests;
 
         public BeaconNistExternalRandomSource() : this(WebClientHelpers.DefaultUserAgent, TimeSpan.FromHours(4)) { }
+        public BeaconNistExternalRandomSource(string userAgent) : this(userAgent, TimeSpan.FromHours(4)) { }
         public BeaconNistExternalRandomSource(string userAgent, TimeSpan periodNormalPriority) : this(userAgent, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
         public BeaconNistExternalRandomSource(string userAgent, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
             : base(periodNormalPriority, periodHighPriority, periodLowPriority)

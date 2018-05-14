@@ -17,7 +17,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// <summary>
     /// An entropy source which uses https://random.org as input.
     /// Either via a public interface or an API with a key.
-    /// Rate limits of ~250k bits or 1000 requests per day, so use large chunks with 12 hour timouts.
+    /// Rate limits of ~250k bits or 1000 requests per day, so use large chunks with 8 hour timouts.
     /// </summary>
     public class RandomOrgExternalRandomSource : EntropySourceWithPeriod
     {
@@ -29,6 +29,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly bool _UseDiskSourceForUnitTests;
 
         public RandomOrgExternalRandomSource() : this(WebClientHelpers.DefaultUserAgent, 128, TimeSpan.FromHours(8)) { }
+        public RandomOrgExternalRandomSource(string userAgent, Guid apiKey) : this(userAgent, 128, apiKey, TimeSpan.FromHours(8)) { }
         public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest) : this (userAgent, bytesPerRequest, TimeSpan.FromHours(8)) { }
         public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest, Guid apiKey) : this(userAgent, bytesPerRequest, apiKey, TimeSpan.FromHours(8)) { }
         public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest, TimeSpan periodNormalPriority) : this(userAgent, bytesPerRequest, Guid.Empty, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }

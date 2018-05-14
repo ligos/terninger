@@ -582,7 +582,7 @@ namespace MurrayGrant.Terninger.Console
             Con.WriteLine("  --trace               Show low level trace messages");
 
             Con.WriteLine("  -h -? --help          Displays this message ");
-            Con.WriteLine("See {0} for more information", TerningerCPRNG.Website);
+            Con.WriteLine("See {0} for more information", RandomGenerator.Website);
         }
 
     }

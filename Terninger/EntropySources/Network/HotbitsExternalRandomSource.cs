@@ -29,6 +29,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly bool _UseDiskSourceForUnitTests;
 
         public HotbitsExternalRandomSource() : this(WebClientHelpers.DefaultUserAgent, 128, TimeSpan.FromHours(8)) { }
+        public HotbitsExternalRandomSource(string userAgent, string apiKey) : this(userAgent, 128, TimeSpan.FromHours(8)) { }
         public HotbitsExternalRandomSource(string userAgent, int bytesPerRequest) : this (userAgent, bytesPerRequest, TimeSpan.FromHours(8)) { }
         public HotbitsExternalRandomSource(string userAgent, int bytesPerRequest, string apiKey) : this(userAgent, bytesPerRequest, apiKey, TimeSpan.FromHours(8)) { }
         public HotbitsExternalRandomSource(string userAgent, int bytesPerRequest, TimeSpan periodNormalPriority) : this(userAgent, bytesPerRequest, null, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
