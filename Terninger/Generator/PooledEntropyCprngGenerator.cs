@@ -43,6 +43,7 @@ namespace MurrayGrant.Terninger.Generator
         private DateTime _LastReseedUtc;
         private DateTime _LastRandomRequestUtc;
         private Int128 _ReseedCountAtLastRandomRequest;
+        private Int128 _BytesGeneratedAtLastReseed;
 
         public PooledGeneratorConfig Config { get; private set; }
 
@@ -417,6 +418,7 @@ namespace MurrayGrant.Terninger.Generator
                 }
                 didReseed = true;
                 this._LastReseedUtc = DateTime.UtcNow;
+                this._BytesGeneratedAtLastReseed = this.BytesRequested;
                 Logger.Trace("Reseed complete.");
 
 
@@ -482,6 +484,12 @@ namespace MurrayGrant.Terninger.Generator
                 Logger.Trace("ShouldReseed(): true - exceeded time allowed before reseed.");
                 return true;
             }
+            else if (Config.MaximumBytesGeneratedBeforeReseed < this.BytesRequested - _BytesGeneratedAtLastReseed)
+            {
+                // Generated too many bytes: must reseed.
+                Logger.Trace("ShuldReseed(): true - exceeded allowed bytes generated.");
+                return true;
+            }
             else if (this.EntropyPriority == EntropyPriority.High)
             {
                 // Enough entropy gathered: reseed.
@@ -531,6 +539,12 @@ namespace MurrayGrant.Terninger.Generator
             /// </summary>
             public TimeSpan MaximumTimeBeforeReseed { get; set; } = TimeSpan.FromHours(12);
 
+
+            /// <summary>
+            /// After this many bytes of entropy are produced, a reseed will be triggered.
+            /// Default: 16MB.
+            /// </summary>
+            public long MaximumBytesGeneratedBeforeReseed { get; set; } = 16L * 1024L * 1024L;
 
             /// <summary>
             /// Number of bytes of entropy in first pool to trigger a reseed when in High priority.

@@ -338,7 +338,11 @@ namespace MurrayGrant.Terninger.Console
                             new RandomOrgExternalRandomSource(),
                             new RandomServerExternalRandomSource(),
                         });
-                var generator = new PooledEntropyCprngGenerator(sources, acc, genPrng);
+                var config = new PooledEntropyCprngGenerator.PooledGeneratorConfig()
+                {
+                    MaximumBytesGeneratedBeforeReseed = Int32.MaxValue,
+                };
+                var generator = new PooledEntropyCprngGenerator(sources, acc, genPrng, config);
                 result.Generator = generator;
                 result.Description = $"non-deterministic CPRNG - " + typeof(PooledEntropyCprngGenerator).Namespace + "." + typeof(PooledEntropyCprngGenerator).Name;
                 result.ExtraDescription = $"Using {linearPools}+{randomPools} pools (linear+random), {sources.Count()} entropy sources, crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";

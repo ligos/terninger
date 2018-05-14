@@ -28,7 +28,7 @@ namespace BigMath
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay
         {
-            get { return "0x" + ToString("X1"); }
+            get { return this == Int128.Zero ? "0x0" : "0x" + ToString("X1"); }
         }
 
         private const ulong NegativeSignMask = 0x1UL << 63;
@@ -1592,12 +1592,17 @@ namespace BigMath
         /// </returns>
         public static Int128 operator +(Int128 left, Int128 right)
         {
-            left._hi += right._hi;
-            left._lo += right._lo;
+            // Unchecked is here because otherwise zero minus zero overflows.
+            // This is probably wrong, 0 - 0 is much more common than a real overflow.
+            unchecked
+            { 
+                left._hi += right._hi;
+                left._lo += right._lo;
 
-            if (left._lo < right._lo)
-            {
-                left._hi++;
+                if (left._lo < right._lo)
+                {
+                    left._hi++;
+                }
             }
 
             return left;
