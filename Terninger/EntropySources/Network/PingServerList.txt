@@ -61,7 +61,7 @@
 2001:470:20::2 
 
 # https://dns.lightningwirelabs.com/knowledge-base/specs/name-servers
-81.3.27.54, 
+81.3.27.54
 74.113.60.185
 2001:470:bbf2:2::1
 

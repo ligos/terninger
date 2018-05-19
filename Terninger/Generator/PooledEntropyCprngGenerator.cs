@@ -16,7 +16,7 @@ using BigMath;
 
 namespace MurrayGrant.Terninger.Generator
 {
-    public sealed class PooledEntropyCprngGenerator : IDisposableRandomNumberGenerator
+    public sealed class PooledEntropyCprngGenerator : IRandomNumberGenerator
     {
         // The main random number generator for Fortuna and Terniner.
 
@@ -99,7 +99,7 @@ namespace MurrayGrant.Terninger.Generator
             this._EntropySources = new List<IEntropySource>(initialisedSources);
             this.Config = config ?? new PooledGeneratorConfig();
             this._SchedulerThread = new Thread(ThreadLoop, 256 * 1024);
-            _SchedulerThread.Name = "Terninger Worker Thread - " + UniqueId.ToString("X");
+            _SchedulerThread.Name = "Terninger Worker Thread (" + UniqueId.ToString() + ")";
             _SchedulerThread.IsBackground = true;
             this.EntropyPriority = EntropyPriority.High;        // A new generator must reseed as quickly as possible.
             // Important, the index of these are used in WakeReason()
@@ -170,9 +170,13 @@ namespace MurrayGrant.Terninger.Generator
         /// </summary>
         public void Start()
         {
-            _LastRandomRequestUtc = DateTime.UtcNow;
-            _LastReseedUtc = DateTime.UtcNow;
-            this._SchedulerThread.Start();
+            if ((this._SchedulerThread.ThreadState & System.Threading.ThreadState.Unstarted) == System.Threading.ThreadState.Unstarted)
+            {
+                Logger.Info("Starting Terninger pooling loop for generator {0}.", UniqueId);
+                _LastRandomRequestUtc = DateTime.UtcNow;
+                _LastReseedUtc = DateTime.UtcNow;
+                this._SchedulerThread.Start();
+            }
         }
 
         /// <summary>
@@ -185,7 +189,7 @@ namespace MurrayGrant.Terninger.Generator
         public Task StartAndWaitForNthSeed(Int128 seedNumber)
         {
             if (this.ReseedCount >= seedNumber)
-                return Task.FromResult(0);
+                return Task.FromResult(this);
             this.Start();
             return WaitForNthSeed(seedNumber);
         }
@@ -285,35 +289,17 @@ namespace MurrayGrant.Terninger.Generator
             }
         }
 
-        /// <summary>
-        /// Adds initialised entropy sources to the generator. 
-        /// Fluent interface.
-        /// </summary>
-        public PooledEntropyCprngGenerator With(IEnumerable<IEntropySource> sources)
-        {
-            AddInitialisedSources(sources);
-            return this;
-        }
-        /// <summary>
-        /// Adds an initialised entropy source to the generator. 
-        /// Fluent interface.
-        /// </summary>
-        public PooledEntropyCprngGenerator With(IEntropySource source)
-        {
-            AddInitialisedSource(source);
-            return this;
-        }
-
 
         private void ThreadLoop()
         {
             try
             {
                 ThreadLoopInner();
+                Logger.Info("Stopped Terninger pooling loop for generator {0}.", UniqueId);
             }
             catch (Exception ex)
             {
-                Logger.FatalException("Unhandled exception in generator. Generator will now stop, no further entropy will be generated or available.", ex);
+                Logger.FatalException("Unhandled exception in generator {0}. Generator will now stop, no further entropy will be generated or available.", ex, UniqueId);
                 this.Dispose();
             }
         }
@@ -448,7 +434,7 @@ namespace MurrayGrant.Terninger.Generator
                 didReseed = true;
                 this._LastReseedUtc = DateTime.UtcNow;
                 this._BytesGeneratedAtLastReseed = this.BytesRequested;
-                Logger.Trace("Reseed complete.");
+                Logger.Info("Re-seeded Generator using {0:N0} bytes of entropy from {2:N0} accumulator pool(s).", seedMaterial.Length, _Accumulator.PoolCountUsedInLastSeedGeneration);
 
 
 
@@ -632,4 +618,47 @@ namespace MurrayGrant.Terninger.Generator
             public TimeSpan TimeBeforeSwitchToLowPriority { get; set; } = TimeSpan.FromHours(2);
         }
     }
+
+    public static class PooledEntropyCprngGeneratorExtensions
+    {
+        /// <summary>
+        /// Adds initialised entropy sources to the generator. 
+        /// Fluent interface.
+        /// </summary>
+        public static PooledEntropyCprngGenerator With(this PooledEntropyCprngGenerator pooled, IEnumerable<IEntropySource> sources)
+        {
+            pooled.AddInitialisedSources(sources);
+            return pooled;
+        }
+        /// <summary>
+        /// Adds an initialised entropy source to the generator. 
+        /// Fluent interface.
+        /// </summary>
+        public static PooledEntropyCprngGenerator With(this PooledEntropyCprngGenerator pooled, IEntropySource source)
+        {
+            pooled.AddInitialisedSource(source);
+            return pooled;
+        }
+
+
+        /// <summary>
+        /// Starts the generator. Note that the return value is NOT immediately able to generate random numbers.
+        /// Fluent interface.
+        /// </summary>
+        public static PooledEntropyCprngGenerator StartNoWait(this PooledEntropyCprngGenerator pooled)
+        {
+            pooled.Start();
+            return pooled;
+        }
+        /// <summary>
+        /// Starts the generator and waits for the first seed to become available.
+        /// Fluent interface.
+        /// </summary>
+        public static async Task<PooledEntropyCprngGenerator> StartAndWaitForSeedAsync(this PooledEntropyCprngGenerator pooled)
+        {
+            await pooled.StartAndWaitForFirstSeed();
+            return pooled;
+        }
+    }
+
 }

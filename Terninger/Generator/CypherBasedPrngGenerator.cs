@@ -13,7 +13,7 @@ using BigMath;
 
 namespace MurrayGrant.Terninger.Generator
 {
-    public class CypherBasedPrngGenerator : IReseedableRandomNumberGenerator, IDisposable
+    public class CypherBasedPrngGenerator : IReseedableRandomNumberGenerator
     {
         // A block cypher or keyed hash algorithm.
         // Default: AES with 256 bit key, as specified in 9.4
@@ -164,6 +164,15 @@ namespace MurrayGrant.Terninger.Generator
             Func<byte[]> additionalEntropyGetter = null)
         {
             return Create(EntropySources.CheapEntropy.Get32(), cryptoPrimitive, hashAlgorithm, initialCounter, outputBufferSize, additionalEntropyGetter);
+        }
+        public static CypherBasedPrngGenerator CreateWithSystemCrngKey(
+            ICryptoPrimitive cryptoPrimitive = null,
+            HashAlgorithm hashAlgorithm = null,
+            CypherCounter initialCounter = null,
+            int outputBufferSize = -1,
+            Func<byte[]> additionalEntropyGetter = null)
+        {
+            return Create(new CryptoRandomWrapperGenerator().GetRandomBytes(32), cryptoPrimitive, hashAlgorithm, initialCounter, outputBufferSize, additionalEntropyGetter);
         }
 
         public void Dispose()

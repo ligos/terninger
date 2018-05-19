@@ -204,7 +204,7 @@ namespace MurrayGrant.Terninger.Test
             Assert.IsTrue(acc.TotalEntropyBytes > 0);
             Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
 
-            var prng = rng.CreatePrng();
+            var prng = rng.CreateCypherBasedGenerator();
             Assert.IsNotNull(prng);
 
             var bytes = prng.GetRandomBytes(16);

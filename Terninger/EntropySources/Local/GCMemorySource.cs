@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using MurrayGrant.Terninger.Generator;
 
-namespace MurrayGrant.Terninger.EntropySources
+namespace MurrayGrant.Terninger.EntropySources.Local
 {
     /// <summary>
     /// Am entropy source based on managed memory / garbage collector stats.

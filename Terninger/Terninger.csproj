@@ -30,6 +30,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <DocumentationFile>bin\Release\Terninger.Core.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -75,7 +76,7 @@
     <Compile Include="Generator\PooledEntropyCprngGenerator.cs" />
     <Compile Include="Generator\CypherBasedPrngGenerator.cs" />
     <Compile Include="CryptoPrimitives\ICryptoPrimitive.cs" />
-    <Compile Include="Generator\IRandomNumberGenerator.cs" />
+    <Compile Include="IRandomNumberGenerator.cs" />
     <Compile Include="Generator\CypherCounter.cs" />
     <Compile Include="Generator\RandomByteStream.cs" />
     <Compile Include="Generator\CryptoRandomWrapperGenerator.cs" />

@@ -4,6 +4,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
+using MurrayGrant.Terninger.Helpers;
+
 namespace MurrayGrant.Terninger.Generator
 {
     /// <summary>
@@ -18,6 +20,11 @@ namespace MurrayGrant.Terninger.Generator
         {
             if (rng == null) throw new ArgumentNullException(nameof(rng));
             _Rng = rng;
+        }
+
+        public void Dispose()
+        {
+            _Rng.TryDispose();
         }
 
         public int MaxRequestBytes => Int32.MaxValue;

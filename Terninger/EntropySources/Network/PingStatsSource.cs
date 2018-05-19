@@ -155,7 +155,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             // Check for IPs where every attempt was a failure: something is likely wrong.
             foreach (var server in serversToSample.Where(x => x.Failures == _PingsPerSample))
-                Log.Warn("Every attempt to ping IP {0} failed. Server is likely offline or filewalled.", server.IP);
+                Log.Warn("Every attempt to ping IP {0} failed. Server is likely offline or firewalled.", server.IP);
 
             return result.ToArray();
         }

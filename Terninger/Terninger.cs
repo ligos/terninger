@@ -82,22 +82,22 @@ namespace MurrayGrant.Terninger
 
 
         /// <summary>
-        /// Create a random number generator based on a cryptographic cypher using a random seed.
+        /// Create a random number generator based on a cryptographic cypher using a random seed based on the system crypto random number generator.
         /// </summary>
-        public static IDisposableRandomNumberGenerator CreateCypherBasedGenerator() => CypherBasedPrngGenerator.CreateWithCheapKey();
+        public static IRandomNumberGenerator CreateCypherBasedGenerator() => CypherBasedPrngGenerator.CreateWithSystemCrngKey();
         /// <summary>
         /// Create a random number generator based on a cryptographic cypher using the supplied seed.
         /// </summary>
-        public static IDisposableRandomNumberGenerator CreateCypherBasedGenerator(byte[] seed) => CypherBasedPrngGenerator.Create(seed);
+        public static IRandomNumberGenerator CreateCypherBasedGenerator(byte[] seed) => CypherBasedPrngGenerator.Create(seed);
 
         /// <summary>
-        /// Create an unbuffered (slower but more secure) random number generator based on a cryptographic cypher using a random seed.
+        /// Create an unbuffered (slower but more secure) random number generator based on a cryptographic cypher using a random seed based on the system crypto random number generator.
         /// </summary>
-        public static IDisposableRandomNumberGenerator CreateUnbufferedCypherBasedGenerator() => CypherBasedPrngGenerator.CreateWithCheapKey(outputBufferSize: 0);
+        public static IRandomNumberGenerator CreateUnbufferedCypherBasedGenerator() => CypherBasedPrngGenerator.CreateWithSystemCrngKey(outputBufferSize: 0);
         /// <summary>
         /// Create an unbuffered (slower but more secure) random number generator based on a cryptographic cypher using the supplied seed.
         /// </summary>
-        public static IDisposableRandomNumberGenerator CreateUnbufferedCypherBasedGenerator(byte[] seed) => CypherBasedPrngGenerator.Create(seed, outputBufferSize: 0);
+        public static IRandomNumberGenerator CreateUnbufferedCypherBasedGenerator(byte[] seed) => CypherBasedPrngGenerator.Create(seed, outputBufferSize: 0);
 
     }
 }

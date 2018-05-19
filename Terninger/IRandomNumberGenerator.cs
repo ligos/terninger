@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MurrayGrant.Terninger.Generator
+namespace MurrayGrant.Terninger
 {
     /// <summary>
     /// Interface to any source of random numbers based on filling byte arrays.
     /// </summary>
-    public interface IRandomNumberGenerator
+    public interface IRandomNumberGenerator : IDisposable
     {
         /// <summary>
         /// Maximum number of bytes which can be requested from the generator in one call.
@@ -32,14 +32,9 @@ namespace MurrayGrant.Terninger.Generator
     }
 
     /// <summary>
-    /// Interface which adds Dispose() to IRandomNumberGenerator.
-    /// </summary>
-    public interface IDisposableRandomNumberGenerator : IRandomNumberGenerator, IDisposable { }
-
-    /// <summary>
     /// Interface which builds on the standard source of random numbers by allowed additional seed material to be added.
     /// </summary>
-    public interface IReseedableRandomNumberGenerator : IDisposableRandomNumberGenerator, IDisposable
+    public interface IReseedableRandomNumberGenerator : IRandomNumberGenerator
     {
         /// <summary>
         /// Adds additional seed material to the random number generator.

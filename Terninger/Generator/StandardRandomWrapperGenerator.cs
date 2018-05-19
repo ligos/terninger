@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using MurrayGrant.Terninger.Helpers;
+
 namespace MurrayGrant.Terninger.Generator
 {
     /// <summary>
@@ -20,7 +22,9 @@ namespace MurrayGrant.Terninger.Generator
             _Rng = rng;
         }
 
-        // TODO: would be nice to have a light-weight PRNG which accepts a 128 bit seed.
+        public void Dispose()
+        {
+        }
 
         public static IRandomNumberGenerator StockRandom() => new StandardRandomWrapperGenerator(new Random());
         public static IRandomNumberGenerator StockRandom(int seed) => new StandardRandomWrapperGenerator(new Random(seed));
