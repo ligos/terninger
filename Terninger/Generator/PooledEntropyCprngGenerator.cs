@@ -434,7 +434,7 @@ namespace MurrayGrant.Terninger.Generator
                 didReseed = true;
                 this._LastReseedUtc = DateTime.UtcNow;
                 this._BytesGeneratedAtLastReseed = this.BytesRequested;
-                Logger.Info("Re-seeded Generator using {0:N0} bytes of entropy from {2:N0} accumulator pool(s).", seedMaterial.Length, _Accumulator.PoolCountUsedInLastSeedGeneration);
+                Logger.Info("Re-seeded Generator using {0:N0} bytes of entropy from {1:N0} accumulator pool(s).", seedMaterial.Length, _Accumulator.PoolCountUsedInLastSeedGeneration);
 
 
 
