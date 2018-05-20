@@ -40,7 +40,6 @@ http://news.mit.edu/
 http://www.time.com/            
 https://bj.baiyewang.com/      
 https://www.nbcnews.com/
-https://www.nasa.gov/            
 http://www.dailymail.co.uk/home/index.html            
 https://www.wired.com/
 https://www.bloomberg.com/asia
