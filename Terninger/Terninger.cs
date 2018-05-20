@@ -12,8 +12,14 @@ using MurrayGrant.Terninger.EntropySources.Network;
 
 namespace MurrayGrant.Terninger
 {
+    /// <summary>
+    /// Terninger random number generator: and implementation of Fortuna in C#.
+    /// </summary>
     public class RandomGenerator
     {
+        /// <summary>
+        /// For more information.
+        /// </summary>
         public static readonly Uri Website = new Uri("https://bitbucket/ligos/terninger");
 
         /// <summary>
@@ -26,6 +32,7 @@ namespace MurrayGrant.Terninger
                             accumulator: new EntropyAccumulator(32, 0),
                             config: new PooledEntropyCprngGenerator.PooledGeneratorConfig()
                             {
+                                // Set the ways to enter low priority mode so high they should never be hit.
                                 ReseedCountBeforeSwitchToLowPriority = Int32.MaxValue,
                                 TimeBeforeSwitchToLowPriority = TimeSpan.MaxValue,
                             }
@@ -59,7 +66,7 @@ namespace MurrayGrant.Terninger
         /// <summary>
         /// An additional set of sources which gather entropy from external network sources such as ping timings, web content and 3rd party entropy generators.
         /// </summary>
-        /// <param name="userAgent">A user agent string to include in web requests. Highly recommended to identify yourself in case of problems.</param>
+        /// <param name="userAgent">A user agent string to include in web requests. Highly recommended to identify yourself in case of problems. See MurrayGrant.Terninger.Helpers.WebClientHelpers.DefaultUserAgent for an example.</param>
         /// <param name="hotBitsApiKey">API key for true random source at https://www.fourmilab.ch/hotbits </param>
         /// <param name="randomOrgApiKey">API for https://api.random.org </param>
         public static IEnumerable<IEntropySource> NetworkSources(string userAgent = null, string hotBitsApiKey = null, Guid? randomOrgApiKey = null) => new IEntropySource[]
@@ -76,7 +83,7 @@ namespace MurrayGrant.Terninger
 
         /// <summary>
         /// If you have one-off externally derived entropy, you can add it here.
-        /// If you have a stream of external entropy, you should add your own UserSuppliedSource and call SetEntropy().
+        /// If you have a stream of external entropy, you should add your own UserSuppliedSource and call SetEntropy() as required.
         /// </summary>
         public static IEntropySource UserSuppliedEntropy(byte[] entropy) => new UserSuppliedSource(entropy);
 
@@ -87,6 +94,7 @@ namespace MurrayGrant.Terninger
         public static IRandomNumberGenerator CreateCypherBasedGenerator() => CypherBasedPrngGenerator.CreateWithSystemCrngKey();
         /// <summary>
         /// Create a random number generator based on a cryptographic cypher using the supplied seed.
+        /// This generator is deterministic based on the seed (that is, the same seed gives the same sequence of random numbers).
         /// </summary>
         public static IRandomNumberGenerator CreateCypherBasedGenerator(byte[] seed) => CypherBasedPrngGenerator.Create(seed);
 
@@ -96,6 +104,7 @@ namespace MurrayGrant.Terninger
         public static IRandomNumberGenerator CreateUnbufferedCypherBasedGenerator() => CypherBasedPrngGenerator.CreateWithSystemCrngKey(outputBufferSize: 0);
         /// <summary>
         /// Create an unbuffered (slower but more secure) random number generator based on a cryptographic cypher using the supplied seed.
+        /// This generator is deterministic based on the seed (that is, the same seed gives the same sequence of random numbers).
         /// </summary>
         public static IRandomNumberGenerator CreateUnbufferedCypherBasedGenerator(byte[] seed) => CypherBasedPrngGenerator.Create(seed, outputBufferSize: 0);
 
