@@ -338,9 +338,12 @@ namespace MurrayGrant.Terninger.Console
                             new RandomOrgExternalRandomSource(),
                             new RandomServerExternalRandomSource(),
                         });
+                // As the pooled generator will be churning out entropy as fast as it can, we increase the reseed rate by polling faster and forcing reseeds more frequently.
                 var config = new PooledEntropyCprngGenerator.PooledGeneratorConfig()
                 {
                     MaximumBytesGeneratedBeforeReseed = Int32.MaxValue,
+                    PollWaitTimeInNormalPriority = TimeSpan.FromSeconds(1),
+                    EntropyToTriggerReseedInNormalPriority = 64,
                 };
                 var generator = new PooledEntropyCprngGenerator(sources, acc, genPrng, config);
                 result.Generator = generator;
