@@ -18,8 +18,8 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// </summary>
     public class NetworkStatsSource : EntropySourceWithPeriod
     {
-        public override string Name => typeof(NetworkStatsSource).FullName;
-        
+        public override string Name { get; set; }
+
         private bool _HasRunOnce = false;
         private IRandomNumberGenerator _Rng;
 

@@ -18,7 +18,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
         private RandomNumberGenerator _Rng;
         private int _ResultLength;
 
-        public string Name => typeof(CryptoRandomSource).FullName;
+        public string Name { get; set; }
 
         public CryptoRandomSource() : this(16, RandomNumberGenerator.Create()) { }
         public CryptoRandomSource(int resultLength) : this(resultLength, RandomNumberGenerator.Create()) { }

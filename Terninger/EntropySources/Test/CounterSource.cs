@@ -15,7 +15,8 @@ namespace MurrayGrant.Terninger.EntropySources.Test
     public class CounterSource : IEntropySource
     {
         private readonly CypherCounter _Counter;
-        public string Name => typeof(CounterSource).FullName;
+
+        public string Name { get; set; }
 
         public CounterSource() : this(new CypherCounter(8)) { }
         public CounterSource(CypherCounter counter)

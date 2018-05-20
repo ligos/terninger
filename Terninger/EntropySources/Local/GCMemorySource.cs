@@ -13,7 +13,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// </summary>
     public class GCMemorySource : IEntropySource
     {
-        public string Name => typeof(GCMemorySource).FullName;
+        public string Name { get; set; }
 
         public void Dispose()
         {

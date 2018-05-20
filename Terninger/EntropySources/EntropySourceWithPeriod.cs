@@ -16,7 +16,7 @@ namespace MurrayGrant.Terninger.EntropySources
     /// </summary>
     public abstract class EntropySourceWithPeriod : IEntropySource
     {
-        public abstract string Name { get; }
+        public abstract string Name { get; set; }
 
         protected readonly TimeSpan _PeriodHighPriority;
         public TimeSpan PeriodHighPriority => _PeriodHighPriority;

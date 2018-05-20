@@ -19,7 +19,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// </summary>
     public class PingStatsSource : EntropySourceWithPeriod
     {
-        public override string Name => typeof(PingStatsSource).FullName;
+        public override string Name { get; set; }
 
         private IRandomNumberGenerator _Rng;
 

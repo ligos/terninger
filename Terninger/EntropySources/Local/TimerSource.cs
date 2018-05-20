@@ -13,7 +13,8 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// </summary>
     public class TimerSource : IEntropySource
     {
-        public string Name => typeof(TimerSource).FullName;
+        public string Name { get; set; }
+
         private readonly Stopwatch _Timer = Stopwatch.StartNew();
 
         public void Dispose()

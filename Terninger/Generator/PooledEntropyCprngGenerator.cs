@@ -96,9 +96,12 @@ namespace MurrayGrant.Terninger.Generator
             this.UniqueId = Guid.NewGuid();
             this._Prng = prng;      // Note that this is keyed with a low entropy key.
             this._Accumulator = accumulator;
-            this._EntropySources = new List<IEntropySource>(initialisedSources);
+            this._EntropySources = new List<IEntropySource>();
+            foreach (var s in initialisedSources.Where(s => s != null))
+                _EntropySources.Add(AssignSourceUniqueName(s));
             this.Config = config ?? new PooledGeneratorConfig();
             this._SchedulerThread = new Thread(ThreadLoop, 256 * 1024);
+            this._SchedulerThread.CurrentCulture = Thread.CurrentThread.CurrentCulture;
             _SchedulerThread.Name = "Terninger Worker Thread (" + UniqueId.ToString() + ")";
             _SchedulerThread.IsBackground = true;
             this.EntropyPriority = EntropyPriority.High;        // A new generator must reseed as quickly as possible.
@@ -273,9 +276,10 @@ namespace MurrayGrant.Terninger.Generator
         /// </summary>
         public void AddInitialisedSource(IEntropySource source)
         {
+            if (source == null) return;
             lock(_EntropySources)
             {
-                _EntropySources.Add(source);
+                _EntropySources.Add(AssignSourceUniqueName(source));
             }
         }
         /// <summary>
@@ -283,12 +287,37 @@ namespace MurrayGrant.Terninger.Generator
         /// </summary>
         public void AddInitialisedSources(IEnumerable<IEntropySource> sources)
         {
+            if (sources == null) return;
             lock (_EntropySources)
             {
-                _EntropySources.AddRange(sources);
+                foreach (var s in sources.Where(s => s != null))
+                {
+                    _EntropySources.Add(AssignSourceUniqueName(s));
+                }
             }
         }
+        private IEntropySource AssignSourceUniqueName(IEntropySource source)
+        {
+            // Assumption: the caller has a lock on _EntropySources.
 
+            // Choses a name for entropy sources based on:
+            // a) user supplied name.
+            // b) type name.
+            // c) a unique-ifier.
+
+            var candidateName = source.Name;
+            if (String.IsNullOrEmpty(candidateName))
+                candidateName = source.GetType().Name;
+
+            var baseName = candidateName;
+            int uniquifier = 1;
+            while (_EntropySources.Any(x => String.Equals(candidateName, x.Name, StringComparison.CurrentCultureIgnoreCase)))
+            {
+                candidateName = baseName + " " + uniquifier;
+            }
+            source.Name = candidateName;
+            return source;
+        }
 
         private void ThreadLoop()
         {

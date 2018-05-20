@@ -18,7 +18,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// </summary>
     public class ProcessStatsSource : EntropySourceWithPeriod
     {
-        public override string Name => typeof(ProcessStatsSource).FullName;
+        public override string Name { get; set; }
 
         private const int _ItemsPerProcess = 17;            // This many properties are read from each process. Based on available properties.
 

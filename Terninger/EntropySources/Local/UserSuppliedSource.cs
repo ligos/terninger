@@ -13,7 +13,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// </summary>
     public class UserSuppliedSource : IEntropySource
     {
-        public string Name => typeof(UserSuppliedSource).FullName;
+        public string Name { get; set; }
 
         private byte[] _Entropy;
 

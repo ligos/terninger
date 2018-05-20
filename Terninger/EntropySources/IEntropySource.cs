@@ -17,7 +17,7 @@ namespace MurrayGrant.Terninger.EntropySources
         /// <summary>
         /// A unique name of the entropy source. Eg: Type name.
         /// </summary>
-        string Name { get; }
+        string Name { get; set; }
 
         /// <summary>
         /// Gets entropy from the source.

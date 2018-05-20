@@ -20,7 +20,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// </summary>
     public class RandomServerExternalRandomSource : EntropySourceWithPeriod
     {
-        public override string Name => typeof(RandomServerExternalRandomSource).FullName;
+        public override string Name { get; set; }
 
         private readonly string _UserAgent;
         private readonly int _BytesPerRequest;

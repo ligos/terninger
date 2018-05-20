@@ -20,7 +20,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// </summary>
     public class BeaconNistExternalRandomSource : EntropySourceWithPeriod
     {
-        public override string Name => typeof(BeaconNistExternalRandomSource).FullName;
+        public override string Name { get; set; }
 
         private readonly string _UserAgent;
         private readonly bool _UseDiskSourceForUnitTests;

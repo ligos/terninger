@@ -15,7 +15,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     {
         private bool _HasRunOnce = false;
 
-        public string Name => typeof(CurrentTimeSource).FullName;
+        public string Name { get; set; }
 
         public void Dispose()
         {

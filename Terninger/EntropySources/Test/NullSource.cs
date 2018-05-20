@@ -13,7 +13,7 @@ namespace MurrayGrant.Terninger.EntropySources.Test
     /// </summary>
     public class NullSource : IEntropySource
     {
-        public string Name => typeof(NullSource).FullName;
+        public string Name { get; set; }
 
         public void Dispose()
         {
