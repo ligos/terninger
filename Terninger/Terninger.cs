@@ -35,6 +35,9 @@ namespace MurrayGrant.Terninger
                                 // Set the ways to enter low priority mode so high they should never be hit.
                                 ReseedCountBeforeSwitchToLowPriority = Int32.MaxValue,
                                 TimeBeforeSwitchToLowPriority = TimeSpan.MaxValue,
+                                // Reseed more aggressively as well.
+                                MaximumBytesGeneratedBeforeReseed = 1024L * 1024L,
+                                MinimumTimeBetweenReseeds = TimeSpan.FromHours(1),
                             }
                         );
 
