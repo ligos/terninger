@@ -19,7 +19,7 @@ namespace MurrayGrant.Terninger.EntropySources
         /// <summary>
         /// GetHasCode is based on Name and Type.
         /// </summary>
-        public int GetHashCode(IEntropySource obj) => obj == null ? typeof(IEntropySource).GetHashCode() : obj.Name.GetHashCode() ^ obj.GetType().GetHashCode();
+        public int GetHashCode(IEntropySource obj) => obj == null ? typeof(IEntropySource).GetHashCode() : (obj.Name ?? "").GetHashCode() ^ obj.GetType().GetHashCode();
 
         /// <summary>
         /// Sorting is based on Name.
