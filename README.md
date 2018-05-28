@@ -11,7 +11,7 @@ You can either a) start the generator and `await` every call to it, or b) `await
 
 #### Start and Await Usage
 
-``` c#
+```
 using MurrayGrant.Terninger;
 using MurrayGrant.Terninger.Generator;
 
@@ -31,7 +31,7 @@ public class RandomnessRequired {
 
 #### Start and Await Initialisation
 
-``` c#
+``` 
 using MurrayGrant.Terninger;
 using MurrayGrant.Terninger.Generator;
 
