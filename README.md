@@ -11,7 +11,7 @@ You can either a) start the generator and `await` every call to it, or b) `await
 
 #### Start and Await Usage
 
-```c#
+``` c#
 using MurrayGrant.Terninger;
 using MurrayGrant.Terninger.Generator;
 
@@ -31,7 +31,7 @@ public class RandomnessRequired {
 
 #### Start and Await Initialisation
 
-```c#
+``` c#
 using MurrayGrant.Terninger;
 using MurrayGrant.Terninger.Generator;
 
@@ -57,7 +57,7 @@ public class RandomnessRequired {
 
 ### Other Features
 
-Terninger supports a high quality random number generator based on a 256 bit seed: `Terninger.CreateCypherBasedGenerator()`.
+Terninger supports a high quality pseudo random number generator based on a 256 bit seed: `Terninger.CreateCypherBasedGenerator()`.
 This may be useful as a `System.Random` on steroids.
 
 Terninger has extension methods to produce `[U]Int32`, `[U]Int64`, `Boolean`, `Single`, `Double`, `Decimal` and `Guid` primitives.
