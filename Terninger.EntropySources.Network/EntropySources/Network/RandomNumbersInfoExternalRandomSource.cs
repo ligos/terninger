@@ -77,7 +77,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
             else
             {
-                using (var stream = File.OpenRead("../../Online Generators/www.randomnumbers.info.html"))
+                using (var stream = File.OpenRead(HttpClientHelpers._BasePathToUnitTestData + "www.randomnumbers.info.html"))
                 {
                     response = await new StreamReader(stream).ReadToEndAsync();
                 }

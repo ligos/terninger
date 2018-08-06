@@ -23,6 +23,16 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
   <PropertyGroup>
     <DocumentationFile>bin\Release\$(TargetFramework)\Terninger.xml</DocumentationFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="EntropySources\Network\ExternalWebServerList.txt" />
+    <None Remove="EntropySources\Network\PingServerList.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="EntropySources\Network\ExternalWebServerList.txt" />
+    <EmbeddedResource Include="EntropySources\Network\PingServerList.txt" />
+  </ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="System.Net.Http" Version="4.3.3" />

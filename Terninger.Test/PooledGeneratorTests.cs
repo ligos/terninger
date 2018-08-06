@@ -98,8 +98,7 @@ namespace MurrayGrant.Terninger.Test
         {
             var sources = new IEntropySource[] { new CryptoRandomSource(64), new CurrentTimeSource(), new GCMemorySource(), new TimerSource(), new UserSuppliedSource(CypherBasedPrngGenerator.CreateWithCheapKey().GetRandomBytes(2048)) };
             var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
-            var rng = new PooledEntropyCprngGenerator(sources, acc);
-            // Creating a generator should not actually generate any bytes or even start the generator.
+            var rng = PooledEntropyCprngGenerator.Create(sources, accumulator: acc, config: Conf());
             Assert.AreEqual(rng.BytesRequested, 0);
             Assert.AreEqual(rng.ReseedCount, 0);
             Assert.AreEqual(rng.IsRunning, false);
@@ -109,6 +108,7 @@ namespace MurrayGrant.Terninger.Test
             await rng.StartAndWaitForFirstSeed();
             Assert.IsTrue(rng.ReseedCount >= 1);
             Assert.IsTrue(acc.TotalEntropyBytes > 0);
+            System.Threading.Thread.Sleep(1);           // EntropyPriority is only updated after the reseed event, so it might not be current.
             Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
 
             await rng.Stop();
@@ -119,8 +119,7 @@ namespace MurrayGrant.Terninger.Test
         {
             var sources = new IEntropySource[] { new CryptoRandomSource(64), new CurrentTimeSource(), new GCMemorySource(), new TimerSource(), new UserSuppliedSource(CypherBasedPrngGenerator.CreateWithCheapKey().GetRandomBytes(2048)) };
             var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
-            var rng = new PooledEntropyCprngGenerator(sources, acc);
-            // Creating a generator should not actually generate any bytes or even start the generator.
+            var rng = PooledEntropyCprngGenerator.Create(sources, accumulator: acc, config: Conf());
             Assert.AreEqual(rng.BytesRequested, 0);
             Assert.AreEqual(rng.ReseedCount, 0);
             Assert.AreEqual(rng.IsRunning, false);
@@ -130,6 +129,7 @@ namespace MurrayGrant.Terninger.Test
             await rng.StartAndWaitForFirstSeed();
             Assert.IsTrue(rng.ReseedCount >= 1);
             Assert.IsTrue(acc.TotalEntropyBytes > 0);
+            System.Threading.Thread.Sleep(1);           // EntropyPriority is only updated after the reseed event, so it might not be current.
             Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
 
             var bytes = rng.GetRandomBytes(16);
@@ -143,8 +143,7 @@ namespace MurrayGrant.Terninger.Test
         {
             var sources = new IEntropySource[] { new CryptoRandomSource(64), new CurrentTimeSource(), new GCMemorySource(), new TimerSource(), new UserSuppliedSource(CypherBasedPrngGenerator.CreateWithCheapKey().GetRandomBytes(2048)) };
             var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
-            var rng = new PooledEntropyCprngGenerator(sources, acc);
-            // Creating a generator should not actually generate any bytes or even start the generator.
+            var rng = PooledEntropyCprngGenerator.Create(sources, accumulator: acc, config: Conf());
             Assert.AreEqual(rng.BytesRequested, 0);
             Assert.AreEqual(rng.ReseedCount, 0);
             Assert.AreEqual(rng.IsRunning, false);
@@ -154,6 +153,7 @@ namespace MurrayGrant.Terninger.Test
             await rng.StartAndWaitForFirstSeed();
             Assert.IsTrue(rng.ReseedCount >= 1);
             Assert.IsTrue(acc.TotalEntropyBytes > 0);
+            System.Threading.Thread.Sleep(1);           // EntropyPriority is only updated after the reseed event, so it might not be current.
             Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
 
             var reseedCount = rng.ReseedCount;
@@ -170,10 +170,9 @@ namespace MurrayGrant.Terninger.Test
         {
             var sources = new IEntropySource[] { new CryptoRandomSource(64), new CurrentTimeSource(), new GCMemorySource(), new TimerSource(), new UserSuppliedSource(CypherBasedPrngGenerator.CreateWithCheapKey().GetRandomBytes(2048)) };
             var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
-            var rng = new PooledEntropyCprngGenerator(sources, acc);
-            var reseedCountOnEvent = rng.ReseedCount;
-            rng.OnReseed += (o, e) => reseedCountOnEvent = e.ReseedCount;
-            // Creating a generator should not actually generate any bytes or even start the generator.
+            var rng = PooledEntropyCprngGenerator.Create(sources, accumulator: acc, config: Conf());
+            Object setInReseedEvent = null;
+            rng.OnReseed += (o, e) => setInReseedEvent = new object();
             Assert.AreEqual(rng.BytesRequested, 0);
             Assert.AreEqual(rng.ReseedCount, 0);
             Assert.AreEqual(rng.IsRunning, false);
@@ -181,7 +180,7 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(rng.SourceCount, 5);
 
             await rng.StartAndWaitForFirstSeed();
-            Assert.AreEqual(reseedCountOnEvent, rng.ReseedCount);
+            Assert.IsNotNull(setInReseedEvent);
 
             await rng.Stop();
         }
@@ -191,8 +190,7 @@ namespace MurrayGrant.Terninger.Test
         {
             var sources = new IEntropySource[] { new CryptoRandomSource(64), new CurrentTimeSource(), new GCMemorySource(), new TimerSource(), new UserSuppliedSource(CypherBasedPrngGenerator.CreateWithCheapKey().GetRandomBytes(2048)) };
             var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
-            var rng = new PooledEntropyCprngGenerator(sources, acc);
-            // Creating a generator should not actually generate any bytes or even start the generator.
+            var rng = PooledEntropyCprngGenerator.Create(sources, accumulator: acc, config: Conf());
             Assert.AreEqual(rng.BytesRequested, 0);
             Assert.AreEqual(rng.ReseedCount, 0);
             Assert.AreEqual(rng.IsRunning, false);
@@ -202,6 +200,7 @@ namespace MurrayGrant.Terninger.Test
             await rng.StartAndWaitForFirstSeed();
             Assert.IsTrue(rng.ReseedCount >= 1);
             Assert.IsTrue(acc.TotalEntropyBytes > 0);
+            System.Threading.Thread.Sleep(1);           // EntropyPriority is only updated after the reseed event, so it might not be current.
             Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
 
             var prng = rng.CreateCypherBasedGenerator();
@@ -213,5 +212,10 @@ namespace MurrayGrant.Terninger.Test
             await rng.Stop();
         }
 
+
+        private PooledEntropyCprngGenerator.PooledGeneratorConfig Conf() => new PooledEntropyCprngGenerator.PooledGeneratorConfig()
+        {
+            MinimumTimeBetweenReseeds = TimeSpan.FromTicks(1),
+        };
     }
 }

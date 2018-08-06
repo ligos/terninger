@@ -19,6 +19,11 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <PackageTags>security random number generator CPRNG PRNG RNG Fortuna</PackageTags>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)'=='net471'">
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Terninger.EntropySources.Extended\Terninger.EntropySources.Extended.csproj" />
     <ProjectReference Include="..\Terninger.EntropySources.Network\Terninger.EntropySources.Network.csproj" />

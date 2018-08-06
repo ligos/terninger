@@ -249,8 +249,9 @@ namespace MurrayGrant.Terninger.Generator
         public Task Reseed() {
             Logger.Debug("Received external reseed request.");
             this.EntropyPriority = EntropyPriority.High;
+            var reseedCount = this.ReseedCount;
             this._WakeSignal.Set();
-            return WaitForNthSeed(this.ReseedCount + 1);
+            return WaitForNthSeed(reseedCount + 1);
         }
 
         /// <summary>

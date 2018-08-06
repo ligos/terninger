@@ -140,6 +140,7 @@ namespace MurrayGrant.Terninger.Test
 
             Assert.IsFalse(buffer.All(b => b == 0));
         }
+#if NET471
         [TestMethod]
         public void Rijndael128Key256BlockWorks()
         {
@@ -158,6 +159,7 @@ namespace MurrayGrant.Terninger.Test
 
             Assert.IsFalse(buffer.All(b => b == 0));
         }
+#endif
 
         [TestMethod]
         public void SameCypherAndKeyButAdditionalEntropyProduceDifferentRandomBlocks16Bytes()

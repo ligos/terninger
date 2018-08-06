@@ -69,7 +69,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
             else
             {
-                using (var stream = File.OpenRead("../../Online Generators/beacon.nist.gov-last.xml"))
+                using (var stream = File.OpenRead(HttpClientHelpers._BasePathToUnitTestData + "beacon.nist.gov-last.xml"))
                 {
                     response = await new StreamReader(stream).ReadToEndAsync();
                 }

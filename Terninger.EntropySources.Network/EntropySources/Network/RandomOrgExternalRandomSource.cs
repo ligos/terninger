@@ -86,7 +86,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
             else
             {
-                using (var stream = File.OpenRead("../../Online Generators/www.random.org.html"))
+                using (var stream = File.OpenRead(HttpClientHelpers._BasePathToUnitTestData + "www.random.org.html"))
                 {
                     response = await new StreamReader(stream).ReadToEndAsync();
                 }
@@ -135,7 +135,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
             else
             {
-                using (var stream = File.OpenRead("../../Online Generators/api.random.org.html"))
+                using (var stream = File.OpenRead(HttpClientHelpers._BasePathToUnitTestData + "api.random.org.html"))
                 {
                     response = await new StreamReader(stream).ReadToEndAsync();
                 }

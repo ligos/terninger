@@ -27,6 +27,7 @@ namespace MurrayGrant.Terninger.Accumulator
         //  - HashAlgorithm tells you the size of the hash (which we use), IncrementalHash doesn't.
         //  - In box IncrementalHash seems to be limited to the list in HashAlgorithmName (MD5, SHA1, SHA2 family); and isn't obviously inheritable.
         // All in all, we sort the mess out in the constructor, and slightly prefer IncrementalHash.
+        // TODO: abstract this all out into some better interface.
 
 #if (NETSTANDARD1_3 || NETSTANDARD2_0)
         private readonly IncrementalHash _IncHash;
@@ -34,6 +35,7 @@ namespace MurrayGrant.Terninger.Accumulator
         private readonly HashAlgorithm _HashAlg;
 
         private readonly int _SingleSourceCountAppliesFrom;
+        private readonly int _HashLengthInBytes;
         private readonly int _QuarterHashLengthInBytes;
         private readonly double _MaxSingleSourceRatio;
         private readonly Dictionary<IEntropySource, int> _CountOfBytesBySource = new Dictionary<IEntropySource, int>(EntropySourceComparer.Value);
@@ -53,12 +55,13 @@ namespace MurrayGrant.Terninger.Accumulator
             if (maxSingleSourceRatio < 0 || maxSingleSourceRatio > 1.0) throw new ArgumentOutOfRangeException(nameof(maxSingleSourceRatio), "Max Single Source Ratio must be between 0 and 1.0.");
 
             // IncrementalHash doesn't tell us how big its output is, so we just hash an empty array to find out.
-            hash.AppendData(new byte[8]);
+            hash.AppendData(new byte[64]);
             var hashSize = hash.GetHashAndReset().Length;
             _IncHash = hash;
 
             // Identical to HashAlgorithm ctor below.
-            _QuarterHashLengthInBytes = ((hashSize / 8) / 4);
+            _HashLengthInBytes = hashSize;
+            _QuarterHashLengthInBytes = (hashSize / 4);
             _SingleSourceCountAppliesFrom = _QuarterHashLengthInBytes * 3;        // Minimum threshold for single source rule to apply (75% of hash size).
             _MaxSingleSourceRatio = maxSingleSourceRatio;       // Defaults to 60% (0.6).
             if (_MaxSingleSourceRatio == 0.0)
@@ -75,7 +78,7 @@ namespace MurrayGrant.Terninger.Accumulator
             if (maxSingleSourceRatio < 0 || maxSingleSourceRatio > 1.0) throw new ArgumentOutOfRangeException(nameof(maxSingleSourceRatio), "Max Single Source Ratio must be between 0 and 1.0.");
 
             // We slightly prefer IncrementalHash, but there seems to be a closed set of algorithms in-box.
-            var hashSize = hash.HashSize;
+            var hashSize = hash.HashSize / 8;
 #if NET452
             _HashAlg = hash;
 #else
@@ -86,7 +89,8 @@ namespace MurrayGrant.Terninger.Accumulator
 #endif
 
             // Identical to HashAlgorithm ctor below.
-            _QuarterHashLengthInBytes = ((hashSize / 8) / 4);
+            _HashLengthInBytes = hashSize;
+            _QuarterHashLengthInBytes = hashSize / 4;
             _SingleSourceCountAppliesFrom = _QuarterHashLengthInBytes * 3;        // Minimum threshold for single source rule to apply (75% of hash size).
             _MaxSingleSourceRatio = maxSingleSourceRatio;       // Defaults to 60% (0.6).
             if (_MaxSingleSourceRatio == 0.0)
@@ -225,18 +229,23 @@ namespace MurrayGrant.Terninger.Accumulator
 #endif
 #if (NETSTANDARD2_0 || NET452)
             if (_HashAlg != null)
-            // As the final block needs some input, we use part of the total entropy counter.
-                result = _HashAlg.TransformFinalBlock(BitConverter.GetBytes(TotalEntropyBytes.Low), 0, 8);
+            {
+                // As the final block needs some input, we use part of the total entropy counter.
+                _HashAlg.TransformFinalBlock(BitConverter.GetBytes(TotalEntropyBytes.Low), 0, 8);
+                result = _HashAlg.Hash;
+            }
 #endif
 
-            if (result == null)
-                ThrowGetDigestResultIsNull();
+            if (result == null) ThrowGetDigestResultIsNull();
+            if (result.Length != _HashLengthInBytes) ThrowDigestLengthIsWrong(result);
+
             EntropyBytesSinceLastDigest = Int128.Zero;
             _CountOfBytesBySource.Clear();
             return result;
         }
 
         private void ThrowGetDigestResultIsNull() => throw new Exception("Unable to set result in GetDigest() - internal assertion failure.");
+        private void ThrowDigestLengthIsWrong(byte[] result) => throw new Exception($"Result length is wrong in GetDigest() - expected length = {_HashLengthInBytes}, actual = {result.Length}.");
     }
 }
 

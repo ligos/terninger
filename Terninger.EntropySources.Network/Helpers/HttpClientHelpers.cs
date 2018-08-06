@@ -14,6 +14,7 @@ namespace MurrayGrant.Terninger.Helpers
     public static class HttpClientHelpers
     {
         internal const string DefaultUserAgent = "Mozilla/5.0; Microsoft.NET; bitbucket.org/ligos/Terninger; unconfigured";
+        internal const string _BasePathToUnitTestData = "../../../Online Generators/";
 
 #if NET452
         static HttpClientHelpers()

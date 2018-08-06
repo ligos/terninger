@@ -88,7 +88,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
             else
             {
-                using (var stream = File.OpenRead("../../Online Generators/hotbits.html"))
+                using (var stream = File.OpenRead(HttpClientHelpers._BasePathToUnitTestData + "hotbits.html"))
                 {
                     response = await new StreamReader(stream).ReadToEndAsync();
                 }

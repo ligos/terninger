@@ -68,7 +68,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
             else
             {
-                using (var stream = File.OpenRead("../../Online Generators/qrng.anu.edu.au-RawHex.php.html"))
+                using (var stream = File.OpenRead(HttpClientHelpers._BasePathToUnitTestData + "qrng.anu.edu.au-RawHex.php.html"))
                 {
                     response = await new StreamReader(stream).ReadToEndAsync();
                 }

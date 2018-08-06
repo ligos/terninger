@@ -73,7 +73,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
             else
             {
-                using (var stream = File.OpenRead("../../Online Generators/randomserver.dyndns.org.dat"))
+                using (var stream = File.OpenRead(HttpClientHelpers._BasePathToUnitTestData + "randomserver.dyndns.org.dat"))
                 {
                     response = new byte[_BytesPerRequest];
                     await stream.ReadAsync(response, 0, response.Length);

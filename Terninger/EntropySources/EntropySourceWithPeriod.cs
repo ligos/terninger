@@ -11,7 +11,7 @@ namespace MurrayGrant.Terninger.EntropySources
 {
     /// <summary>
     /// Base class for entropy sources with a regular period they pool.
-    /// They will return 
+    /// They will return null until the period elapses.
     /// This class is abstract.
     /// </summary>
     public abstract class EntropySourceWithPeriod : IEntropySource
