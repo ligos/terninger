@@ -1,103 +1,49 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3341DACF-FE94-4497-B71B-AB3326B530FD}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFrameworks>netstandard1.3;netstandard2.0;net452</TargetFrameworks>
+    <Company>Murray Grant</Company>
+    <Product>Terninger</Product>
+    <Copyright>Copyright © Murray Grant 2017-2018</Copyright>
+    <Authors>Murray Grant</Authors>
+    <Version>0.1.0</Version>
+    <Description>Implementation of the Fortuna CPRNG, with various enhancements. Plus a high speed PRNG, and extensions to safely get random integers, doubles, decimals and booleans.
+
+To get started, see the MurrayGrant.Terninger.RandomGenerator class.
+
+See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
     <RootNamespace>MurrayGrant.Terninger</RootNamespace>
-    <AssemblyName>Terninger.Core</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <LangVersion>default</LangVersion>
+    <NoWarn>1701;1702;1591</NoWarn>
+    <RepositoryUrl></RepositoryUrl>
+    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <PackageProjectUrl>https://bitbucket.org/ligos/terninger</PackageProjectUrl>
+    <PackageTags>security random number generator CPRNG PRNG RNG Fortuna</PackageTags>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;LIBLOG_PUBLIC</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+
+  <PropertyGroup>
+    <DocumentationFile>bin\Release\$(TargetFramework)\Terninger.xml</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;LIBLOG_PUBLIC</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-    <DocumentationFile>bin\Release\Terninger.Core.xml</DocumentationFile>
+
+  <!-- LibLog requires LIBLOG_PORTABLE for netstandard, and LIBLOG_PUBLIC for use in dependent assemblies -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
+    <DefineConstants>LIBLOG_PUBLIC;LIBLOG_PORTABLE</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <DefineConstants>LIBLOG_PUBLIC</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)'=='net452'">
+    <DefineConstants>LIBLOG_PUBLIC</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Xml" />
+    <!-- LibLog uses dynamic -->
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
   </ItemGroup>
+  
   <ItemGroup>
-    <Compile Include="Accumulator\EntropyAccumulator.cs" />
-    <Compile Include="Accumulator\EntropyPool.cs" />
-    <Compile Include="BigMath\ArrayUtils.cs" />
-    <Compile Include="BigMath\ExtendedBitConverter.cs" />
-    <Compile Include="BigMath\MathUtils.cs" />
-    <Compile Include="CryptoPrimitives\HashCryptoPrimitive.cs" />
-    <Compile Include="CryptoPrimitives\HmacCryptoPrimitive.cs" />
-    <Compile Include="CryptoPrimitives\CryptoPrimitive.cs" />
-    <Compile Include="CryptoPrimitives\BlockCypherCryptoPrimitive.cs" />
-    <Compile Include="BigMath\Int128.cs" />
-    <Compile Include="EntropySources\EntropySourceWithPeriod.cs" />
-    <Compile Include="EntropySources\EntropySourceComparer.cs" />
-    <Compile Include="EntropySources\Local\UserSuppliedSource.cs" />
-    <Compile Include="EntropySources\Network\BeaconNistExternalRandomSource.cs" />
-    <Compile Include="EntropySources\Network\HotbitsExternalRandomSource.cs" />
-    <Compile Include="EntropySources\Network\RandomServerExternalRandomSource.cs" />
-    <Compile Include="EntropySources\Network\RandomNumbersInfoExternalRandomSource.cs" />
-    <Compile Include="EntropySources\Network\RandomOrgExternalRandomSource.cs" />
-    <Compile Include="EntropySources\Network\AnuExternalRandomSource.cs" />
-    <Compile Include="EntropySources\StaticLocalEntropy.cs" />
-    <Compile Include="EntropySources\CheapEntropy.cs" />
-    <Compile Include="EntropySources\Network\ExternalWebContentSource.cs" />
-    <Compile Include="EntropySources\Network\PingStatsSource.cs" />
-    <Compile Include="EntropySources\Local\ProcessStatsSource.cs" />
-    <Compile Include="EntropySources\Local\NetworkStatsSource.cs" />
-    <Compile Include="EntropySources\Local\CryptoRandomSource.cs" />
-    <Compile Include="EntropySources\Local\GCMemorySource.cs" />
-    <Compile Include="EntropySources\Local\TimerSource.cs" />
-    <Compile Include="EntropySources\Local\CurrentTimeSource.cs" />
-    <Compile Include="EntropySources\EntropyEvent.cs" />
-    <Compile Include="EntropySources\IEntropySource.cs" />
-    <Compile Include="EntropySources\Test\CounterSource.cs" />
-    <Compile Include="EntropySources\Test\NullSource.cs" />
-    <Compile Include="Generator\EntropyPriority.cs" />
-    <Compile Include="Generator\PooledEntropyCprngGenerator.cs" />
-    <Compile Include="Generator\CypherBasedPrngGenerator.cs" />
-    <Compile Include="CryptoPrimitives\ICryptoPrimitive.cs" />
-    <Compile Include="IRandomNumberGenerator.cs" />
-    <Compile Include="Generator\CypherCounter.cs" />
-    <Compile Include="Generator\RandomByteStream.cs" />
-    <Compile Include="Generator\CryptoRandomWrapperGenerator.cs" />
-    <Compile Include="Generator\StandardRandomWrapperGenerator.cs" />
-    <Compile Include="Helpers\ConvertersToInt64.cs" />
-    <Compile Include="Helpers\WebClientHelpers.cs" />
-    <Compile Include="Helpers\DisposeHelper.cs" />
-    <Compile Include="Helpers\ByteArrayHelpers.cs" />
-    <Compile Include="Helpers\ExceptionHelper.cs" />
-    <Compile Include="LibLog\ColoredConsoleLogProvider.cs" />
-    <Compile Include="LibLog\LibLog.cs" />
-    <Compile Include="RandomNumberExtensions.cs" />
-    <Compile Include="Terninger.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Folder Include="Properties\" />
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="EntropySources\Network\PingServerList.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="EntropySources\Network\ExternalWebServerList.txt" />
-  </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
 </Project>

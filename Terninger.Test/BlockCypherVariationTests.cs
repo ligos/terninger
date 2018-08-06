@@ -31,7 +31,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void GenerateSingleBlockAesCsp()
         {
-            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Native(), SHA256.Create(), new CypherCounter(16), 0);
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, NativeCryptoPrimitives.GetAes256Csp(), SHA256.Create(), new CypherCounter(16), 0);
             var buffer = new byte[crng.BlockSizeBytes];
             crng.FillWithRandomBytes(buffer);
 
@@ -45,7 +45,7 @@ namespace MurrayGrant.Terninger.Test
         public void AesCyphersProduceSameRandomBlocks()
         {
             var crngManaged = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Managed(), SHA256.Create(), new CypherCounter(16));
-            var crngCsp = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Native(), SHA256.Create(), new CypherCounter(16));
+            var crngCsp = new CypherBasedPrngGenerator(_ZeroKey32Bytes, NativeCryptoPrimitives.GetAes256Csp(), SHA256.Create(), new CypherCounter(16));
             var bufferManaged = new byte[crngManaged.BlockSizeBytes * 2];
             var bufferCsp = new byte[crngManaged.BlockSizeBytes * 2];
             crngManaged.FillWithRandomBytes(bufferManaged);

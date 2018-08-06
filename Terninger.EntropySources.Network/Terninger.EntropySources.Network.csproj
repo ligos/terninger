@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net452</TargetFrameworks>
+    <Company>Murray Grant</Company>
+    <Product>Terninger</Product>
+    <Copyright>Copyright © Murray Grant 2017-2018</Copyright>
+    <Authors>Murray Grant</Authors>
+    <Version>0.1.0</Version>
+    <Description>Active network based entropy sources for Terninger including ping, external http sites and other random sources (via http).
+
+See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
+    </Description>
+    <RootNamespace>MurrayGrant.Terninger</RootNamespace>
+    <LangVersion>default</LangVersion>
+    <NoWarn>1701;1702;1591</NoWarn>
+    <RepositoryUrl></RepositoryUrl>
+    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <PackageProjectUrl>https://bitbucket.org/ligos/terninger</PackageProjectUrl>
+    <PackageTags>security random number generator CPRNG PRNG RNG Fortuna network ping dns http</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DocumentationFile>bin\Release\$(TargetFramework)\Terninger.xml</DocumentationFile>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="System.Net.Http" Version="4.3.3" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Terninger.EntropySources.Extended\Terninger.EntropySources.Extended.csproj" />
+    <ProjectReference Include="..\Terninger\Terninger.csproj" />
+  </ItemGroup>
+
+</Project>

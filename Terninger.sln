@@ -3,19 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger", "Terninger\Terninger.csproj", "{3341DACF-FE94-4497-B71B-AB3326B530FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger", "Terninger\Terninger.csproj", "{3341DACF-FE94-4497-B71B-AB3326B530FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Test", "Terninger.Test\Terninger.Test.csproj", "{79D06A18-76BC-45B8-810A-F346C661B18C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Test", "Terninger.Test\Terninger.Test.csproj", "{79D06A18-76BC-45B8-810A-F346C661B18C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Console", "Terninger.Console\Terninger.Console.csproj", "{DFD4245E-33F7-4B73-BBFF-16879B5A1C71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Console", "Terninger.Console\Terninger.Console.csproj", "{DFD4245E-33F7-4B73-BBFF-16879B5A1C71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Realtime", "Terninger.Realtime\Terninger.Realtime.csproj", "{6E0E3133-56F1-48EE-B266-CD1E2EFE6EFE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Realtime", "Terninger.Realtime\Terninger.Realtime.csproj", "{6E0E3133-56F1-48EE-B266-CD1E2EFE6EFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Perf", "Terninger.Perf\Terninger.Perf.csproj", "{D2F06E7B-E840-4693-B991-536A2C4D1A6A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Perf", "Terninger.Perf\Terninger.Perf.csproj", "{D2F06E7B-E840-4693-B991-536A2C4D1A6A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Config", "Terninger.Config\Terninger.Config.csproj", "{A951DB15-27AC-4560-B224-2AA9B0742EE6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Config", "Terninger.Config\Terninger.Config.csproj", "{A951DB15-27AC-4560-B224-2AA9B0742EE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Test.Slow", "Terninger.Test.Slow\Terninger.Test.Slow.csproj", "{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Test.Slow", "Terninger.Test.Slow\Terninger.Test.Slow.csproj", "{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.EntropySources.Network", "Terninger.EntropySources.Network\Terninger.EntropySources.Network.csproj", "{F1BAC12F-9F03-4260-B726-B2EB252EEAD4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.EntropySources.Extended", "Terninger.EntropySources.Extended\Terninger.EntropySources.Extended.csproj", "{B0863505-4A9F-4B97-9EA4-01CABCE2DBAD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +55,14 @@ Global
 		{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1BAC12F-9F03-4260-B726-B2EB252EEAD4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1BAC12F-9F03-4260-B726-B2EB252EEAD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1BAC12F-9F03-4260-B726-B2EB252EEAD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1BAC12F-9F03-4260-B726-B2EB252EEAD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0863505-4A9F-4B97-9EA4-01CABCE2DBAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0863505-4A9F-4B97-9EA4-01CABCE2DBAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0863505-4A9F-4B97-9EA4-01CABCE2DBAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0863505-4A9F-4B97-9EA4-01CABCE2DBAD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

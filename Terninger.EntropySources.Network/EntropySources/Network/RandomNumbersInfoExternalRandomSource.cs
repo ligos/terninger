@@ -27,7 +27,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly string _UserAgent;
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public RandomNumbersInfoExternalRandomSource() : this(WebClientHelpers.DefaultUserAgent, 256, TimeSpan.FromHours(8)) { }
+        public RandomNumbersInfoExternalRandomSource() : this(HttpClientHelpers.DefaultUserAgent, 256, TimeSpan.FromHours(8)) { }
         public RandomNumbersInfoExternalRandomSource(string userAgent) : this (userAgent, 256, TimeSpan.FromHours(8)) { }
         public RandomNumbersInfoExternalRandomSource(string userAgent, int numberOfNumbers) : this(userAgent, numberOfNumbers, TimeSpan.FromHours(8)) { }
         public RandomNumbersInfoExternalRandomSource(string userAgent, TimeSpan periodNormalPriority) : this(userAgent, 256, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
@@ -38,13 +38,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (numberOfNumbers < 0 || numberOfNumbers > 1000)
                 throw new ArgumentOutOfRangeException(nameof(numberOfNumbers), numberOfNumbers, "Between 1 and 1000 numbers are allowed");
 
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? WebClientHelpers.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.DefaultUserAgent : userAgent;
             this._NumberOfNumbers = numberOfNumbers;
         }
         internal RandomNumbersInfoExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = WebClientHelpers.DefaultUserAgent;
+            this._UserAgent = HttpClientHelpers.DefaultUserAgent;
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 
@@ -63,10 +63,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!_UseDiskSourceForUnitTests)
             {
                 var apiUri = new Uri("http://www.randomnumbers.info/cgibin/wqrng.cgi?amount=" + _NumberOfNumbers.ToString() + "&limit=" + rangeOfNumbers.ToString());
-                var wc = WebClientHelpers.Create(userAgent: _UserAgent);
+                var hc = HttpClientHelpers.Create(userAgent: _UserAgent);
                 try
                 {
-                    response = await wc.DownloadStringTaskAsync(apiUri);
+                    response = await hc.GetStringAsync(apiUri);
                 }
                 catch (Exception ex)
                 {

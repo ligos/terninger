@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using System.Threading;
 
 namespace MurrayGrant.Terninger.EntropySources
 {
@@ -10,8 +11,11 @@ namespace MurrayGrant.Terninger.EntropySources
     {
         [ThreadStatic]
         private static Stopwatch _Stopwatch;
+#if (NETSTANDARD2_0 || NET452)
+        // Process class is only in netstandard2.0
         [ThreadStatic]
         private static Process _CurrentProcess;
+#endif
         [ThreadStatic]
         private static ulong _Counter;
 
@@ -47,7 +51,12 @@ namespace MurrayGrant.Terninger.EntropySources
             Buffer.BlockCopy(c, 0, result, 16, c.Length);
 
             // Process working set & system uptime.
-            var workingSetAndTickCount = ((long)Environment.TickCount << 32) ^ _CurrentProcess.WorkingSet64;
+            var workingSetAndTickCount = ((long)Environment.TickCount << 32)
+#if (NETSTANDARD2_0 || NET452)
+                    ^ _CurrentProcess.WorkingSet64
+#endif
+            ;
+
             var d = BitConverter.GetBytes(workingSetAndTickCount);
             Buffer.BlockCopy(d, 0, result, 24, d.Length);
 
@@ -79,7 +88,11 @@ namespace MurrayGrant.Terninger.EntropySources
             Buffer.BlockCopy(a, 0, result, 0, a.Length);
 
             // High precision timer ticks + Process working set & system uptime.
-            var b = BitConverter.GetBytes(((long)Environment.TickCount << 32) ^ _CurrentProcess.WorkingSet64 ^ _Stopwatch.ElapsedTicks);
+            var b = BitConverter.GetBytes(((long)Environment.TickCount << 32)
+#if (NETSTANDARD2_0 || NET452)
+                    ^ _CurrentProcess.WorkingSet64 
+#endif
+                    ^ _Stopwatch.ElapsedTicks);
             Buffer.BlockCopy(b, 0, result, 8, b.Length);
 
             return result;
@@ -97,8 +110,10 @@ namespace MurrayGrant.Terninger.EntropySources
         {
             if (_Stopwatch == null)
                 _Stopwatch = Stopwatch.StartNew();
+#if (NETSTANDARD2_0 || NET452)
             if (_CurrentProcess == null)
                 _CurrentProcess = Process.GetCurrentProcess();
+#endif
         }
 
     }

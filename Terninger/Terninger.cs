@@ -8,14 +8,13 @@ using MurrayGrant.Terninger.Generator;
 using MurrayGrant.Terninger.Accumulator;
 using MurrayGrant.Terninger.EntropySources;
 using MurrayGrant.Terninger.EntropySources.Local;
-using MurrayGrant.Terninger.EntropySources.Network;
 
 namespace MurrayGrant.Terninger
 {
     /// <summary>
     /// Terninger random number generator: and implementation of Fortuna in C#.
     /// </summary>
-    public class RandomGenerator
+    public static class RandomGenerator
     {
         /// <summary>
         /// For more information.
@@ -28,7 +27,7 @@ namespace MurrayGrant.Terninger
         /// </summary>
         public static PooledEntropyCprngGenerator CreateFortuna() => 
                         PooledEntropyCprngGenerator.Create(
-                            initialisedSources: StandardSources(), 
+                            initialisedSources: BasicSources(), 
                             accumulator: new EntropyAccumulator(32, 0),
                             config: new PooledEntropyCprngGenerator.PooledGeneratorConfig()
                             {
@@ -47,42 +46,23 @@ namespace MurrayGrant.Terninger
         /// </summary>
         public static PooledEntropyCprngGenerator CreateTerninger() =>
                         PooledEntropyCprngGenerator.Create(
-                            initialisedSources: StandardSources(),
+                            initialisedSources: BasicSources(),
                             accumulator: new EntropyAccumulator(16, 16, CypherBasedPrngGenerator.CreateWithCheapKey())
                         );
 
 
         /// <summary>
-        /// The standard set of entropy sources, local to this computer.
+        /// The basic standard set of entropy sources, local to this computer.
         /// These are included by default in RandomNumberGenerator.CreateFortuna() and RandomNumberGenerator.CreateTerninger(). 
         /// </summary>
-        public static IEnumerable<IEntropySource> StandardSources() => new IEntropySource[]
+        public static IEnumerable<IEntropySource> BasicSources() => new IEntropySource[]
         {
             new CurrentTimeSource(),
             new GCMemorySource(),
             new TimerSource(),
             new CryptoRandomSource(),
-            new NetworkStatsSource(),
-            new ProcessStatsSource(),
         };
 
-        /// <summary>
-        /// An additional set of sources which gather entropy from external network sources such as ping timings, web content and 3rd party entropy generators.
-        /// </summary>
-        /// <param name="userAgent">A user agent string to include in web requests. Highly recommended to identify yourself in case of problems. See MurrayGrant.Terninger.Helpers.WebClientHelpers.DefaultUserAgent for an example.</param>
-        /// <param name="hotBitsApiKey">API key for true random source at https://www.fourmilab.ch/hotbits </param>
-        /// <param name="randomOrgApiKey">API for https://api.random.org </param>
-        public static IEnumerable<IEntropySource> NetworkSources(string userAgent = null, string hotBitsApiKey = null, Guid? randomOrgApiKey = null) => new IEntropySource[]
-        {
-            new PingStatsSource(),
-            new ExternalWebContentSource(userAgent),
-            new AnuExternalRandomSource(userAgent),
-            new BeaconNistExternalRandomSource(userAgent),
-            new HotbitsExternalRandomSource(userAgent, hotBitsApiKey),
-            new RandomNumbersInfoExternalRandomSource(userAgent),
-            new RandomOrgExternalRandomSource(userAgent, randomOrgApiKey.GetValueOrDefault()),
-            new RandomServerExternalRandomSource(userAgent),
-        };
 
         /// <summary>
         /// If you have one-off externally derived entropy, you can add it here.

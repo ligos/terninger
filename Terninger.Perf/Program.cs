@@ -16,6 +16,8 @@ namespace MurrayGrant.Terninger.Perf
                 typeof(Benchmarks.CreateGenerator),
                 typeof(Benchmarks.CheapEntropy),
                 typeof(Benchmarks.CrypoOperations),
+                typeof(Benchmarks.GenerateNumbersByRng),
+                typeof(Benchmarks.NativeCrypo),
             }).Run();
         }
     }

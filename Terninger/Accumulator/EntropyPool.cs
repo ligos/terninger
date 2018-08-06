@@ -18,7 +18,21 @@ namespace MurrayGrant.Terninger.Accumulator
     {
         private static readonly int MaxSourcesToCount = 256;        // After this many sources, we don't bother with the single source rule.
 
-        private readonly HashAlgorithm _Hash;
+        // Hash Algorithm support is a bit of a mess.
+        //  - net452 only has HashAlgorithm, IncrementalHash is first available in net471.
+        //  - netstandard1.3 has HashAlgorithm, but not TransformFinalBlock(), you must use IncrementalHash.
+        //  - netstandard2.0 has both.
+        //  - Both look to be getting support for Span<T>.
+        //  - Most 3rd party has functions use another interface altogether (eg: System.Data.HashFunctions)
+        //  - HashAlgorithm tells you the size of the hash (which we use), IncrementalHash doesn't.
+        //  - In box IncrementalHash seems to be limited to the list in HashAlgorithmName (MD5, SHA1, SHA2 family); and isn't obviously inheritable.
+        // All in all, we sort the mess out in the constructor, and slightly prefer IncrementalHash.
+
+#if (NETSTANDARD1_3 || NETSTANDARD2_0)
+        private readonly IncrementalHash _IncHash;
+#endif
+        private readonly HashAlgorithm _HashAlg;
+
         private readonly int _SingleSourceCountAppliesFrom;
         private readonly int _QuarterHashLengthInBytes;
         private readonly double _MaxSingleSourceRatio;
@@ -29,19 +43,79 @@ namespace MurrayGrant.Terninger.Accumulator
         public Int128 EntropyBytesSinceLastDigest { get; private set; }
 
         // Default to SHA512 as the hash algorithm, and a 60% limit for a single source.
-        public EntropyPool() : this(SHA512.Create(), 0.6) { }
-        public EntropyPool(HashAlgorithm hash) : this(hash, 0.6) { }
-        public EntropyPool(HashAlgorithm hash, double maxSingleSourceRatio)
+#if (NETSTANDARD1_3 || NETSTANDARD2_0)
+        public EntropyPool() :
+            this(IncrementalHash.CreateHash(HashAlgorithmName.SHA512), 0.6) { }
+        public EntropyPool(IncrementalHash hash) : this(hash, 0.6) { }
+        public EntropyPool(IncrementalHash hash, double maxSingleSourceRatio)
         {
             if (hash == null) throw new ArgumentNullException(nameof(hash));
             if (maxSingleSourceRatio < 0 || maxSingleSourceRatio > 1.0) throw new ArgumentOutOfRangeException(nameof(maxSingleSourceRatio), "Max Single Source Ratio must be between 0 and 1.0.");
-            _Hash = hash;
-            _QuarterHashLengthInBytes = ((hash.HashSize / 8) / 4);
+
+            // IncrementalHash doesn't tell us how big its output is, so we just hash an empty array to find out.
+            hash.AppendData(new byte[8]);
+            var hashSize = hash.GetHashAndReset().Length;
+            _IncHash = hash;
+
+            // Identical to HashAlgorithm ctor below.
+            _QuarterHashLengthInBytes = ((hashSize / 8) / 4);
             _SingleSourceCountAppliesFrom = _QuarterHashLengthInBytes * 3;        // Minimum threshold for single source rule to apply (75% of hash size).
             _MaxSingleSourceRatio = maxSingleSourceRatio;       // Defaults to 60% (0.6).
             if (_MaxSingleSourceRatio == 0.0)
                 _MaxSingleSourceRatio = 1.0;        // 0 means nothing could be accumulated, so interpert it as 1.0, which means the single source rule is not enforced.
         }
+#else
+        public EntropyPool() :      // Only for net452, otherwise we prefer the IncrementalHash version.
+            this(SHA512.Create(), 0.6) { }
+#endif
+        public EntropyPool(HashAlgorithm hash) : this(hash, 0.6) { }
+        public EntropyPool(HashAlgorithm hash, double maxSingleSourceRatio)
+        {
+            if (hash == null) throw new ArgumentNullException(nameof(hash));
+            if (maxSingleSourceRatio < 0 || maxSingleSourceRatio > 1.0) throw new ArgumentOutOfRangeException(nameof(maxSingleSourceRatio), "Max Single Source Ratio must be between 0 and 1.0.");
+
+            // We slightly prefer IncrementalHash, but there seems to be a closed set of algorithms in-box.
+            var hashSize = hash.HashSize;
+#if NET452
+            _HashAlg = hash;
+#else
+            var hashName = hash.GetType().FullName;
+            _IncHash = GetIncrementalHashOrThrow(hashName);
+            if (_IncHash == null)
+                _HashAlg = hash;        // Fallback if unknown HashAgorithm.
+#endif
+
+            // Identical to HashAlgorithm ctor below.
+            _QuarterHashLengthInBytes = ((hashSize / 8) / 4);
+            _SingleSourceCountAppliesFrom = _QuarterHashLengthInBytes * 3;        // Minimum threshold for single source rule to apply (75% of hash size).
+            _MaxSingleSourceRatio = maxSingleSourceRatio;       // Defaults to 60% (0.6).
+            if (_MaxSingleSourceRatio == 0.0)
+                _MaxSingleSourceRatio = 1.0;        // 0 means nothing could be accumulated, so interpert it as 1.0, which means the single source rule is not enforced.        
+        }
+
+#if (NETSTANDARD1_3 || NETSTANDARD2_0)
+        private IncrementalHash GetIncrementalHashOrThrow(string hashAlgorithmClassName)
+        {
+            if (hashAlgorithmClassName.Contains("SHA512"))
+                return IncrementalHash.CreateHash(HashAlgorithmName.SHA512);
+            else if (hashAlgorithmClassName.Contains("SHA256"))
+                return IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            else if (hashAlgorithmClassName.Contains("SHA384"))
+                return IncrementalHash.CreateHash(HashAlgorithmName.SHA384);
+            else if (hashAlgorithmClassName.Contains("SHA1"))
+                return IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
+            else if (hashAlgorithmClassName.Contains("MD5"))
+                return IncrementalHash.CreateHash(HashAlgorithmName.MD5);
+            else
+    #if NETSTANDARD1_3
+                // No IncrementalHash support: not supported.
+                throw new ArgumentException($"HashAlgorithm based class '{hashAlgorithmClassName}' is not supported in netstandard1.3, use netstandard2.0 or net452.");
+    #else
+                // No IncrementalHash support: we'll use HashAlgorithm instead.
+                return null;
+    #endif
+        }
+#endif
 
         /// <summary>
         /// Adds a single entropy event to the pool.
@@ -62,10 +136,10 @@ namespace MurrayGrant.Terninger.Accumulator
             if (bytesToaccept <= 0)
                 // Ignoring this packet entirely.
                 return;
-            
+
             // Accumulate the packer into the hash function.
             // Note that this may only incorporate part of the packet.
-            _Hash.TransformBlock(entropy, 0, bytesToaccept, null, 0);
+            AccumulateBlock(entropy, bytesToaccept);
 
             // Increment counters. Note that this may overflow for very long lived pools.
             if (_CountOfBytesBySource.Count <= MaxSourcesToCount && countFromSource < Int32.MaxValue)
@@ -123,18 +197,46 @@ namespace MurrayGrant.Terninger.Accumulator
                 return Math.Min(byteCount, result);
         }
 
+        private void AccumulateBlock(byte[] entropy, int length)
+        {
+            // See above for hash algorithm mess.
+#if (NETSTANDARD2_0 || NETSTANDARD1_3)
+            if (_IncHash != null)
+                _IncHash.AppendData(entropy, 0, length);
+#endif
+#if (NETSTANDARD2_0 || NET452)
+            if (_HashAlg != null)
+                _HashAlg.TransformBlock(entropy, 0, length, null, 0);
+#endif
+        }
+
         /// <summary>
         /// Gets a hash digest of the entropy which has been accumulated.
         /// Note: if no entropy has accumulated, the result is deterministic.
         /// </summary>
         public byte[] GetDigest()
         {
+            byte[] result = null;
+
+            // See above for hash algorithm mess.
+#if (NETSTANDARD2_0 || NETSTANDARD1_3)
+            if (_IncHash != null)
+                result = _IncHash.GetHashAndReset();
+#endif
+#if (NETSTANDARD2_0 || NET452)
+            if (_HashAlg != null)
             // As the final block needs some input, we use part of the total entropy counter.
-            _Hash.TransformFinalBlock(BitConverter.GetBytes(TotalEntropyBytes.Low), 0, 8);
+                result = _HashAlg.TransformFinalBlock(BitConverter.GetBytes(TotalEntropyBytes.Low), 0, 8);
+#endif
+
+            if (result == null)
+                ThrowGetDigestResultIsNull();
             EntropyBytesSinceLastDigest = Int128.Zero;
             _CountOfBytesBySource.Clear();
-            return _Hash.Hash;
+            return result;
         }
+
+        private void ThrowGetDigestResultIsNull() => throw new Exception("Unable to set result in GetDigest() - internal assertion failure.");
     }
 }
 

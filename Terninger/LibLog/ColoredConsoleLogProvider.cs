@@ -6,16 +6,15 @@
 
     public class ColoredConsoleLogProvider : ILogProvider
     {
-        private readonly bool _LogToTraceOut;
+        private readonly Action<string> _ExtraLogger;
         private readonly LogLevel _MinLogLevel;
 
-        public ColoredConsoleLogProvider() : this(LogLevel.Trace, false) { }
-        public ColoredConsoleLogProvider(bool logToTrace) : this(LogLevel.Trace, logToTrace) { }
-        public ColoredConsoleLogProvider(LogLevel minLogLevel) : this(minLogLevel, false) { }
-        public ColoredConsoleLogProvider(LogLevel minLogLevel, bool logToTrace)
+        public ColoredConsoleLogProvider() : this(LogLevel.Trace, null) { }
+        public ColoredConsoleLogProvider(LogLevel minLogLevel) : this(minLogLevel, null) { }
+        public ColoredConsoleLogProvider(LogLevel minLogLevel, Action<string> extraLogger)
         {
             _MinLogLevel = minLogLevel;
-            _LogToTraceOut = logToTrace;
+            _ExtraLogger = extraLogger;
         }
 
         // This relies on the int value of LogLevel.
@@ -75,8 +74,8 @@
             }
             var line = String.Format("{0:HH:mm:ss} | {1} | {2} | {3}", DateTime.Now, logLevel.ToString().ToUpper(), name, message);
             Console.WriteLine(line);
-            if (_LogToTraceOut)
-                System.Diagnostics.Trace.WriteLine(line);
+            if (_ExtraLogger != null)
+                _ExtraLogger(line);
         }
 
         public IDisposable OpenNestedContext(string message)

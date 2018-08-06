@@ -1,60 +1,39 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{DFD4245E-33F7-4B73-BBFF-16879B5A1C71}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <TargetFrameworks>netcoreapp2.1;net452</TargetFrameworks>
+    <Company>Murray Grant</Company>
+    <Product>Terninger</Product>
+    <Copyright>Copyright © Murray Grant 2017-2018</Copyright>
+    <Authors>Murray Grant</Authors>
+    <Version>0.1.0</Version>
+    <Description>Console app to use Terninger from all .NET command line environments.
+
+To get started, see the MurrayGrant.Terninger.RandomGenerator class.
+
+See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
     <RootNamespace>MurrayGrant.Terninger.Console</RootNamespace>
-    <AssemblyName>Terninger</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
+    <LangVersion>default</LangVersion>
+    <NoWarn>1701;1702;1591</NoWarn>
+    <RepositoryUrl></RepositoryUrl>
+    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <PackageProjectUrl>https://bitbucket.org/ligos/terninger</PackageProjectUrl>
+    <PackageTags>security random number generator CPRNG PRNG RNG Fortuna</PackageTags>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <PropertyGroup>
+    <DocumentationFile>bin\Release\$(TargetFramework)\Terninger.Console.xml</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <ProjectReference Include="..\Terninger.EntropySources.Extended\Terninger.EntropySources.Extended.csproj" />
+    <ProjectReference Include="..\Terninger.EntropySources.Network\Terninger.EntropySources.Network.csproj" />
+    <ProjectReference Include="..\Terninger\Terninger.csproj" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Folder Include="Properties\" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Terninger\Terninger.csproj">
-      <Project>{3341dacf-fe94-4497-b71b-ab3326b530fd}</Project>
-      <Name>Terninger</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
 </Project>

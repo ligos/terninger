@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using MurrayGrant.Terninger.Helpers;
 using System.Collections;
+using MurrayGrant.Terninger.LibLog;
 
 namespace MurrayGrant.Terninger.EntropySources
 {

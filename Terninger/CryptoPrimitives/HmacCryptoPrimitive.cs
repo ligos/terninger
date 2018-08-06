@@ -73,10 +73,18 @@ namespace MurrayGrant.Terninger.CryptoPrimitives
                 _Hash = hash;
             }
 
+#if NETSTANDARD2_0 || NETFRAMEWORK
             public int InputBlockSize => _Hash.InputBlockSize;
             public int OutputBlockSize => _Hash.OutputBlockSize;
             public bool CanTransformMultipleBlocks => _Hash.CanTransformMultipleBlocks;
             public bool CanReuseTransform => _Hash.CanReuseTransform;
+#else
+            public int InputBlockSize => throw new PlatformNotSupportedException();
+            public int OutputBlockSize => throw new PlatformNotSupportedException();
+            public bool CanTransformMultipleBlocks => throw new PlatformNotSupportedException();
+            public bool CanReuseTransform => throw new PlatformNotSupportedException();
+#endif
+
 
             public void Dispose()
             {

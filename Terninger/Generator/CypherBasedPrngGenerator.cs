@@ -118,7 +118,7 @@ namespace MurrayGrant.Terninger.Generator
             if (outputBufferSize > _RekeyByteCount + 32)
             {
                 int remainder;
-                _OutputBufferBlockCount = Math.DivRem(outputBufferSize, _BlockSizeInBytes, out remainder);
+                _OutputBufferBlockCount = MathHelper.DivRem(outputBufferSize, _BlockSizeInBytes, out remainder);
                 if (remainder > 0)
                     _OutputBufferBlockCount = _OutputBufferBlockCount + 1;
                 _OutputBuffer = new byte[_OutputBufferBlockCount + _BlockSizeInBytes];
@@ -223,7 +223,7 @@ namespace MurrayGrant.Terninger.Generator
             // Determine the number of blocks required to fullfil the request.
             // PERF: division operation and branch.
             int remainder;
-            var blocksRequired = Math.DivRem(count, _BlockSizeInBytes, out remainder);
+            var blocksRequired = MathHelper.DivRem(count, _BlockSizeInBytes, out remainder);
             if (remainder > 0)
                 blocksRequired = blocksRequired + 1;
 

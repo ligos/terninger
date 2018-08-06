@@ -35,7 +35,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ConstructAesCspCrng()
         {
-            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Native(), SHA256.Create(), new CypherCounter(16));
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, NativeCryptoPrimitives.GetAes256Csp(), SHA256.Create(), new CypherCounter(16));
             // Creating a generator should not actually generate any bytes.
             Assert.AreEqual(crng.BytesGenerated, 0L);
             Assert.AreEqual(crng.BytesRequested, 0L);

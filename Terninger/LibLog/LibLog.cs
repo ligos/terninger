@@ -501,6 +501,7 @@ namespace MurrayGrant.Terninger.LibLog
         /// </summary>
         /// <param name="key">A key.</param>
         /// <param name="value">A value.</param>
+        /// <param name="destructure">Something else.</param>
         /// <returns>A disposable that when disposed removes the map from the context.</returns>
         IDisposable OpenMappedContext(string key, object value, bool destructure = false);
     }
@@ -588,6 +589,7 @@ namespace MurrayGrant.Terninger.LibLog
             return GetLogger(typeof(T));
         }
 
+
 #if !LIBLOG_PORTABLE
         /// <summary>
         /// Gets a logger for the current class.
@@ -666,6 +668,7 @@ namespace MurrayGrant.Terninger.LibLog
         /// </summary>
         /// <param name="key">A key.</param>
         /// <param name="value">A value.</param>
+        /// <param name="destructure">Something else.</param>
         /// <returns>An <see cref="IDisposable"/> that closes context when disposed.</returns>
         [SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "SetCurrentLogProvider")]
 #if LIBLOG_PUBLIC

@@ -30,9 +30,9 @@ namespace MurrayGrant.Terninger.Generator
         private readonly List<IEntropySource> _EntropySources;
         public int SourceCount => this._EntropySources.Count;
 
-        // A thread used to schedule reading from entropy sources.
-        // TODO: make an interface so we don't need to own a real thread (eg: instead use WinForms timers).
-        private readonly Thread _SchedulerThread;
+        // A task used to schedule reading from entropy sources.
+        // TODO: should we have a TaskFactory or TaskScheduler to allow a non-thread pool task?
+        private Task _SchedulerTask;
 
         private bool _Disposed = false;
         private readonly static ILog Logger = LogProvider.For<PooledEntropyCprngGenerator>();
@@ -60,7 +60,7 @@ namespace MurrayGrant.Terninger.Generator
         /// <summary>
         /// True if the generator is currently gathering entropy.
         /// </summary>
-        public bool IsRunning => _SchedulerThread.IsAlive;
+        public bool IsRunning => _SchedulerTask != null && !_SchedulerTask.IsCanceled && !_SchedulerTask.IsCompleted && !_SchedulerTask.IsFaulted;
         private readonly CancellationTokenSource _ShouldStop = new CancellationTokenSource();
         private readonly EventWaitHandle _WakeSignal = new EventWaitHandle(false, EventResetMode.AutoReset);
         private readonly WaitHandle[] _AllSignals;
@@ -100,10 +100,6 @@ namespace MurrayGrant.Terninger.Generator
             foreach (var s in initialisedSources.Where(s => s != null))
                 _EntropySources.Add(AssignSourceUniqueName(s));
             this.Config = config ?? new PooledGeneratorConfig();
-            this._SchedulerThread = new Thread(ThreadLoop, 256 * 1024);
-            this._SchedulerThread.CurrentCulture = Thread.CurrentThread.CurrentCulture;
-            _SchedulerThread.Name = "Terninger Worker Thread (" + UniqueId.ToString() + ")";
-            _SchedulerThread.IsBackground = true;
             this.EntropyPriority = EntropyPriority.High;        // A new generator must reseed as quickly as possible.
             // Important, the index of these are used in WakeReason()
             _AllSignals = new[] { _WakeSignal, _ShouldStop.Token.WaitHandle };
@@ -173,12 +169,24 @@ namespace MurrayGrant.Terninger.Generator
         /// </summary>
         public void Start()
         {
-            if ((this._SchedulerThread.ThreadState & System.Threading.ThreadState.Unstarted) == System.Threading.ThreadState.Unstarted)
+            if (this._SchedulerTask == null)
             {
                 Logger.Info("Starting Terninger pooling loop for generator {0}.", UniqueId);
                 _LastRandomRequestUtc = DateTime.UtcNow;
                 _LastReseedUtc = DateTime.UtcNow;
-                this._SchedulerThread.Start();
+                this._SchedulerTask = Task.Run(() =>
+                {
+                    try
+                    {
+                        WorkerLoop();
+                        Logger.Info("Stopped Terninger pooling loop for generator {0}.", UniqueId);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.FatalException("Unhandled exception in generator {0}. Generator will now stop, no further entropy will be generated or available.", ex, UniqueId);
+                        this.Dispose();
+                    }
+                });
             }
         }
 
@@ -224,7 +232,7 @@ namespace MurrayGrant.Terninger.Generator
             _ShouldStop.Cancel();
             await Task.Delay(1);
             // TODO: work out how to do this without polling. Thread.Join() perhaps.
-            while (this._SchedulerThread.IsAlive)
+            while (this.IsRunning)
                 await Task.Delay(100);
         }
 
@@ -319,20 +327,7 @@ namespace MurrayGrant.Terninger.Generator
             return source;
         }
 
-        private void ThreadLoop()
-        {
-            try
-            {
-                ThreadLoopInner();
-                Logger.Info("Stopped Terninger pooling loop for generator {0}.", UniqueId);
-            }
-            catch (Exception ex)
-            {
-                Logger.FatalException("Unhandled exception in generator {0}. Generator will now stop, no further entropy will be generated or available.", ex, UniqueId);
-                this.Dispose();
-            }
-        }
-        private void ThreadLoopInner()
+        private void WorkerLoop()
         {
             while (!_ShouldStop.IsCancellationRequested)
             {

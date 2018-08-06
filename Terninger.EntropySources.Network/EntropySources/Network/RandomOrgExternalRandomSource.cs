@@ -28,7 +28,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public RandomOrgExternalRandomSource() : this(WebClientHelpers.DefaultUserAgent, 128, TimeSpan.FromHours(8)) { }
+        public RandomOrgExternalRandomSource() : this(HttpClientHelpers.DefaultUserAgent, 128, TimeSpan.FromHours(8)) { }
         public RandomOrgExternalRandomSource(string userAgent, Guid apiKey) : this(userAgent, 128, apiKey, TimeSpan.FromHours(8)) { }
         public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest) : this (userAgent, bytesPerRequest, TimeSpan.FromHours(8)) { }
         public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest, Guid apiKey) : this(userAgent, bytesPerRequest, apiKey, TimeSpan.FromHours(8)) { }
@@ -40,14 +40,14 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (bytesPerRequest < 4 || bytesPerRequest > 4096)
                 throw new ArgumentOutOfRangeException(nameof(bytesPerRequest), bytesPerRequest, "Bytes per request must be between 4 and 4096");
 
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? WebClientHelpers.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.DefaultUserAgent : userAgent;
             this._BytesPerRequest = bytesPerRequest;
             this._ApiKey = apiKey;
         }
         internal RandomOrgExternalRandomSource(bool useDiskSourceForUnitTests, Guid apiKey)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = WebClientHelpers.DefaultUserAgent;
+            this._UserAgent = HttpClientHelpers.DefaultUserAgent;
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
             this._ApiKey = apiKey;
         }
@@ -72,10 +72,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!_UseDiskSourceForUnitTests)
             {
                 var apiUri = new Uri("https://www.random.org/cgi-bin/randbyte?nbytes=" + _BytesPerRequest + "&format=h");
-                var wc = WebClientHelpers.Create(userAgent: _UserAgent);
+                var hc = HttpClientHelpers.Create(userAgent: _UserAgent);
                 try
                 {
-                    response = await wc.DownloadStringTaskAsync(apiUri);
+                    response = await hc.GetStringAsync(apiUri);
                 }
                 catch (Exception ex)
                 {
@@ -119,12 +119,12 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!_UseDiskSourceForUnitTests)
             {
                 var apiUri = new Uri("https://api.random.org/json-rpc/1/invoke");
-                var wc = WebClientHelpers.Create(userAgent: _UserAgent);
-                wc.Headers.Add("Content-Type", "application/json-rpc");
+                var hc = HttpClientHelpers.Create(userAgent: _UserAgent);
+                hc.DefaultRequestHeaders.Add("Content-Type", "application/json-rpc");
                 var requestBody = "{\"jsonrpc\":\"2.0\",\"method\":\"generateBlobs\",\"params\":{\"apiKey\":\"" + _ApiKey.ToString("D") + "\",\"n\":1,\"size\":" + (_BytesPerRequest * 8) + ",\"format\":\"base64\"},\"id\":1}";
                 try
                 {
-                    response = await wc.UploadStringTaskAsync(apiUri, "POST", requestBody);
+                    response = await hc.PostStringAsync(apiUri, requestBody, "application/json-rpc");
                 }
                 catch (Exception ex)
                 {

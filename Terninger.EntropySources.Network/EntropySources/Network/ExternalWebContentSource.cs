@@ -34,7 +34,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private string _UserAgent;
 
 
-        public ExternalWebContentSource() : this(WebClientHelpers.DefaultUserAgent, null, TimeSpan.FromMinutes(15.0), 5) { }
+        public ExternalWebContentSource() : this(HttpClientHelpers.DefaultUserAgent, null, TimeSpan.FromMinutes(15.0), 5) { }
         public ExternalWebContentSource(string userAgent) : this(userAgent, null, TimeSpan.FromMinutes(15.0), 5) { }
         public ExternalWebContentSource(string userAgent, IEnumerable<Uri> sources) : this(userAgent, sources, TimeSpan.FromMinutes(5.0), 5) { }
         public ExternalWebContentSource(string userAgent, IEnumerable<Uri> sources, TimeSpan periodNormalPriority) : this(userAgent, sources, periodNormalPriority, 4) { }
@@ -45,7 +45,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (serversPerSample <= 0)
                 throw new ArgumentOutOfRangeException(nameof(serversPerSample), serversPerSample, "Servers per sample must be at least one.");
 
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? WebClientHelpers.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.DefaultUserAgent : userAgent;
             this._Sources = (sources ?? LoadInternalServerList()).ToList();
             if (_Sources.Count <= 0)
                 throw new ArgumentOutOfRangeException(nameof(sources), sources, "At least one source URL must be provided.");
@@ -56,7 +56,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             _Sources.ShuffleInPlace(_Rng);
         }
         internal ExternalWebContentSource(bool useDiskSourceForUnitTests)
-            : this(WebClientHelpers.DefaultUserAgent, null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null)
+            : this(HttpClientHelpers.DefaultUserAgent, null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null)
         {
             this._UseRandomSourceForUnitTest = useDiskSourceForUnitTests;
         }
@@ -166,11 +166,11 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             {
                 // TODO: timeout.
                 var hash = SHA256.Create();
-                var wc = WebClientHelpers.Create(userAgent: UserAgent);
+                var hc = HttpClientHelpers.Create(userAgent: UserAgent);
                 var sw = Stopwatch.StartNew();
                 try
                 {
-                    var responseBytes = await wc.DownloadDataTaskAsync(Url);
+                    var responseBytes = await hc.GetByteArrayAsync(Url);
                     sw.Stop();
                     Log.Trace("GET from '{0}' in {1:N2}ms, received {2:N0} bytes", Url, sw.Elapsed.TotalMilliseconds, responseBytes.Length);
                     var result = hash.ComputeHash(

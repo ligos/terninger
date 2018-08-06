@@ -26,18 +26,18 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public AnuExternalRandomSource() : this(WebClientHelpers.DefaultUserAgent, TimeSpan.FromHours(12)) { }
+        public AnuExternalRandomSource() : this(HttpClientHelpers.DefaultUserAgent, TimeSpan.FromHours(12)) { }
         public AnuExternalRandomSource(string userAgent) : this (userAgent, TimeSpan.FromHours(12)) { }
         public AnuExternalRandomSource(string userAgent, TimeSpan periodNormalPriority) : this(userAgent, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
         public AnuExternalRandomSource(string userAgent, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
             : base(periodNormalPriority, periodHighPriority, periodLowPriority)
         {
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? WebClientHelpers.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.DefaultUserAgent : userAgent;
         }
         internal AnuExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = WebClientHelpers.DefaultUserAgent;
+            this._UserAgent = HttpClientHelpers.DefaultUserAgent;
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 
@@ -54,10 +54,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!_UseDiskSourceForUnitTests)
             {
                 var apiUri = new Uri("https://qrng.anu.edu.au/RawHex.php");
-                var wc = WebClientHelpers.Create(userAgent: _UserAgent);
+                var hc = HttpClientHelpers.Create(userAgent: _UserAgent);
                 try
                 {
-                    response = await wc.DownloadStringTaskAsync(apiUri);
+                    response = await hc.GetStringAsync(apiUri);
                 }
                 catch (Exception ex)
                 {

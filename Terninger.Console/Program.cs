@@ -33,7 +33,7 @@ namespace MurrayGrant.Terninger.Console
         static bool nonDeterministic = false;       // Will inject additional entropy into the generator based on timing & memory.
         static CryptoPrimitiveOption cryptoPrimitive = CryptoPrimitiveOption.Default;
         static HashAlgorithmOption hashAlgorithm = HashAlgorithmOption.Default;
-        static bool useNativeCrypto = true;        // If true, will use CSP / CNG versions of the crypto primitives, if available.
+        static ManagedOrNative managedOrNativeCrypto = ManagedOrNative.Default;
 
         static int linearPools = 16;
         static int randomPools = 16;
@@ -71,6 +71,12 @@ namespace MurrayGrant.Terninger.Console
             Default = 0,
             Sha256,
             Sha512,
+        }
+        public enum ManagedOrNative
+        {
+            Default = 0,
+            Managed,
+            Native,
         }
 
         private static readonly int OutBufferSize = 32 * 1024;
@@ -372,23 +378,15 @@ namespace MurrayGrant.Terninger.Console
 
         private static ICryptoPrimitive GetCryptoPrimitive()
         {
-            if ((cryptoPrimitive == CryptoPrimitiveOption.Default || cryptoPrimitive == CryptoPrimitiveOption.Aes256) && useNativeCrypto)
-                return CryptoPrimitive.Aes256Native();
-            else if ((cryptoPrimitive == CryptoPrimitiveOption.Default || cryptoPrimitive == CryptoPrimitiveOption.Aes256) && !useNativeCrypto)
-                return CryptoPrimitive.Aes256Managed();
-            else if (cryptoPrimitive == CryptoPrimitiveOption.Aes128 && useNativeCrypto)
-                return CryptoPrimitive.Aes128Native();
-            else if (cryptoPrimitive == CryptoPrimitiveOption.Aes128 && !useNativeCrypto)
-                return CryptoPrimitive.Aes128Managed();
+            if (cryptoPrimitive == CryptoPrimitiveOption.Default || cryptoPrimitive == CryptoPrimitiveOption.Aes256)
+                return GetAes256CryptoPrimitive();
+            else if (cryptoPrimitive == CryptoPrimitiveOption.Aes128)
+                return GetAes128CryptoPrimitive();
 
-            else if (cryptoPrimitive == CryptoPrimitiveOption.Sha256 && useNativeCrypto)
-                return CryptoPrimitive.Sha256Native();
-            else if (cryptoPrimitive == CryptoPrimitiveOption.Sha256 && !useNativeCrypto)
-                return CryptoPrimitive.Sha256Managed();
-            else if (cryptoPrimitive == CryptoPrimitiveOption.Sha512 && useNativeCrypto)
-                return CryptoPrimitive.Sha512Native();
-            else if (cryptoPrimitive == CryptoPrimitiveOption.Sha512 && !useNativeCrypto)
-                return CryptoPrimitive.Sha512Managed();
+            else if (cryptoPrimitive == CryptoPrimitiveOption.Sha256)
+                return GetSha256CryptoPrimitive();
+            else if (cryptoPrimitive == CryptoPrimitiveOption.Sha512)
+                return GetSha512CryptoPrimitive();
 
             else if (cryptoPrimitive == CryptoPrimitiveOption.HmacSha256)
                 return CryptoPrimitive.HmacSha256();
@@ -400,18 +398,33 @@ namespace MurrayGrant.Terninger.Console
         }
         private static HashAlgorithm GetHashAlgorithm()
         {
-            if ((hashAlgorithm == HashAlgorithmOption.Default || hashAlgorithm == HashAlgorithmOption.Sha512) && useNativeCrypto)
-                return new SHA512Cng();
-            else if ((hashAlgorithm == HashAlgorithmOption.Default || hashAlgorithm == HashAlgorithmOption.Sha512) && !useNativeCrypto)
-                return new SHA512Managed();
-            else if (hashAlgorithm == HashAlgorithmOption.Sha256 && useNativeCrypto)
-                return new SHA256Cng();
-            else if (hashAlgorithm == HashAlgorithmOption.Sha256 && !useNativeCrypto)
-                return new SHA256Managed();
+            if ((hashAlgorithm == HashAlgorithmOption.Default || hashAlgorithm == HashAlgorithmOption.Sha512))
+                return GetSha512HashAlgorithm();
+            else if (hashAlgorithm == HashAlgorithmOption.Sha256)
+                return GetSha256HashAlgorithm();
 
             else
                 throw new Exception("Unknown hash algorithm: " + hashAlgorithm);
         }
+        private static ICryptoPrimitive GetAes256CryptoPrimitive() => managedOrNativeCrypto == ManagedOrNative.Managed ? CryptoPrimitive.Aes256Managed()
+                                                                    : managedOrNativeCrypto == ManagedOrNative.Native ? new BlockCypherCryptoPrimitive(new AesCryptoServiceProvider() { KeySize = 256 })
+                                                                    : CryptoPrimitive.Aes256();
+        private static ICryptoPrimitive GetAes128CryptoPrimitive() => managedOrNativeCrypto == ManagedOrNative.Managed ? CryptoPrimitive.Aes128Managed()
+                                                                    : managedOrNativeCrypto == ManagedOrNative.Native ? new BlockCypherCryptoPrimitive(new AesCryptoServiceProvider() { KeySize = 128 })
+                                                                    : CryptoPrimitive.Aes128();
+        private static ICryptoPrimitive GetSha256CryptoPrimitive() => managedOrNativeCrypto == ManagedOrNative.Managed ? CryptoPrimitive.Sha256Managed()
+                                                                    : managedOrNativeCrypto == ManagedOrNative.Native ? new HashCryptoPrimitive(new SHA256CryptoServiceProvider())
+                                                                    : CryptoPrimitive.Sha256();
+        private static ICryptoPrimitive GetSha512CryptoPrimitive() => managedOrNativeCrypto == ManagedOrNative.Managed ? CryptoPrimitive.Sha512Managed()
+                                                                    : managedOrNativeCrypto == ManagedOrNative.Native ? new HashCryptoPrimitive(new SHA512CryptoServiceProvider())
+                                                                    : CryptoPrimitive.Sha512();
+        private static HashAlgorithm GetSha256HashAlgorithm() => managedOrNativeCrypto == ManagedOrNative.Managed ? new SHA256Managed()
+                                                               : managedOrNativeCrypto == ManagedOrNative.Native ? new SHA256CryptoServiceProvider()
+                                                               : SHA256.Create();
+        private static HashAlgorithm GetSha512HashAlgorithm() => managedOrNativeCrypto == ManagedOrNative.Managed ? new SHA512Managed()
+                                                               : managedOrNativeCrypto == ManagedOrNative.Native ? new SHA512CryptoServiceProvider()
+                                                               : SHA512.Create();
+
         private static Func<byte[]> GetEntropyGetter()
         {
             if (nonDeterministic)
@@ -516,9 +529,13 @@ namespace MurrayGrant.Terninger.Console
                 {
                     nonDeterministic = true;
                 }
+                else if (arg == "native")
+                {
+                    managedOrNativeCrypto = ManagedOrNative.Native;
+                }
                 else if (arg == "managed")
                 {
-                    useNativeCrypto = false;
+                    managedOrNativeCrypto = ManagedOrNative.Managed;
                 }
                 else if (arg == "cp" || arg == "cryptoprimitive")
                 {
@@ -576,7 +593,8 @@ namespace MurrayGrant.Terninger.Console
             Con.WriteLine("  --poolLinear nn       Number of linear pools (default: 16)");
             Con.WriteLine("  --poolRandom nn       Number of random pools (default: 16)");
             Con.WriteLine("  -nd --nonDeterministic  Injects timing / memory based entropy");
-            Con.WriteLine("  --managed             Uses managed crypto modules (default: false)");
+            Con.WriteLine("  --managed             Uses managed crypto modules (default: auto)");
+            Con.WriteLine("  --native              Uses native crypto modules (default: auto)");
             Con.WriteLine("  -cp --cryptoPrimitive Determines crypto primitive to use (default: AES256)");
             Con.WriteLine("  -ha --hashAlgorithm   Determines hash algorithm to use (default: SHA512)");
             Con.WriteLine();

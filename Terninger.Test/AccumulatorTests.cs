@@ -118,6 +118,27 @@ namespace MurrayGrant.Terninger.Test
         }
 
         [TestMethod]
+        public void Pool_CanUseNonShaBasedAlgorithm()
+        {
+            var blake2b = System.Data.HashFunction.Blake2.Blake2BFactory.Instance.Create();
+            
+            Assert.Fail("TODO");
+            var p = new EntropyPool(new SHA256Managed());
+            p.Add(EventFromBytes(_Zero8Bytes));
+            Assert.IsFalse(p.GetDigest().All(b => b == 0));
+        }
+
+#if NETCOREAPP2_1
+        [TestMethod]
+        public void Pool_CanUseIncrementalHash()
+        {
+            var p = new EntropyPool(IncrementalHash.CreateHash(HashAlgorithmName.SHA256));
+            p.Add(EventFromBytes(_Zero8Bytes));
+            Assert.IsFalse(p.GetDigest().All(b => b == 0));
+        }
+#endif
+
+        [TestMethod]
         public void Pool_First48BytesAreOK()
         {
             var p = new EntropyPool();

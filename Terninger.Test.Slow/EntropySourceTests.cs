@@ -22,7 +22,7 @@ namespace MurrayGrant.Terninger.Test.Slow
     [TestClass]
     public class EntropySourceTests
     {
-        public static readonly string UnitTestUserAgent = WebClientHelpers.DefaultUserAgent.Replace("unconfigured", "UnitTests; terninger@ligos.net");
+        public static readonly string UnitTestUserAgent = HttpClientHelpers.DefaultUserAgent.Replace("unconfigured", "UnitTests; terninger@ligos.net");
 
         [TestMethod]
         [TestCategory("Fuzzing")]
@@ -172,8 +172,8 @@ namespace MurrayGrant.Terninger.Test.Slow
                 {
                     try
                     {
-                        var wc = WebClientHelpers.Create(userAgent: UnitTestUserAgent);
-                        var result = await wc.DownloadStringTaskAsync(url);
+                        var hc = HttpClientHelpers.Create(userAgent: UnitTestUserAgent);
+                        var result = await hc.GetByteArrayAsync(url);
                         break;
                     }
                     catch (Exception ex)

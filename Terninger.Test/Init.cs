@@ -9,7 +9,7 @@ namespace MurrayGrant.Terninger.Test
         [AssemblyInitialize()]
         public static void AssemblyInit(TestContext context)
         {
-            Terninger.LibLog.LogProvider.SetCurrentLogProvider(new Terninger.LibLog.ColoredConsoleLogProvider(true));
+            Terninger.LibLog.LogProvider.SetCurrentLogProvider(new Terninger.LibLog.ColoredConsoleLogProvider(LibLog.LogLevel.Trace, line => System.Diagnostics.Trace.WriteLine(line)));
         }
     }
 }
