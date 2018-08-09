@@ -28,7 +28,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public HotbitsExternalRandomSource() : this(HttpClientHelpers.DefaultUserAgent, 128, TimeSpan.FromHours(8)) { }
+        public HotbitsExternalRandomSource() : this(HttpClientHelpers.UserAgentString(), 128, TimeSpan.FromHours(8)) { }
         public HotbitsExternalRandomSource(string userAgent, string apiKey) : this(userAgent, 128, TimeSpan.FromHours(8)) { }
         public HotbitsExternalRandomSource(string userAgent, int bytesPerRequest) : this (userAgent, bytesPerRequest, TimeSpan.FromHours(8)) { }
         public HotbitsExternalRandomSource(string userAgent, int bytesPerRequest, string apiKey) : this(userAgent, bytesPerRequest, apiKey, TimeSpan.FromHours(8)) { }
@@ -40,14 +40,14 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (bytesPerRequest < 4 || bytesPerRequest > 2048)      // Max of 2048 bytes based on Web UI.
                 throw new ArgumentOutOfRangeException(nameof(bytesPerRequest), bytesPerRequest, "Bytes per request must be between 4 and 2048");
 
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.UserAgentString() : userAgent;
             this._BytesPerRequest = bytesPerRequest;
             this._ApiKey = string.IsNullOrWhiteSpace(apiKey) ? null : apiKey;
         }
         internal HotbitsExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = HttpClientHelpers.DefaultUserAgent;
+            this._UserAgent = HttpClientHelpers.UserAgentString();
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 

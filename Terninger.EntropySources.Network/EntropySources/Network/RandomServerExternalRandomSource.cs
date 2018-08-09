@@ -26,7 +26,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public RandomServerExternalRandomSource() : this(HttpClientHelpers.DefaultUserAgent, 64, TimeSpan.FromHours(12)) { }
+        public RandomServerExternalRandomSource() : this(HttpClientHelpers.UserAgentString(), 64, TimeSpan.FromHours(12)) { }
         public RandomServerExternalRandomSource(string userAgent) : this (userAgent, 64, TimeSpan.FromHours(12)) { }
         public RandomServerExternalRandomSource(string userAgent, int bytesPerRequest) : this(userAgent, bytesPerRequest, TimeSpan.FromHours(12)) { }
         public RandomServerExternalRandomSource(string userAgent, int bytesPerRequest, TimeSpan periodNormalPriority) : this(userAgent, bytesPerRequest, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
@@ -37,13 +37,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (bytesPerRequest < 4 || bytesPerRequest > 4096)
                 throw new ArgumentOutOfRangeException(nameof(bytesPerRequest), bytesPerRequest, "Bytes per request must be between 4 and 4096");
 
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.UserAgentString() : userAgent;
             this._BytesPerRequest = bytesPerRequest;
         }
         internal RandomServerExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = HttpClientHelpers.DefaultUserAgent;
+            this._UserAgent = HttpClientHelpers.UserAgentString();
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 

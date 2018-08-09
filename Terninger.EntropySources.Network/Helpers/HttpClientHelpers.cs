@@ -13,8 +13,13 @@ namespace MurrayGrant.Terninger.Helpers
 {
     public static class HttpClientHelpers
     {
-        internal const string DefaultUserAgent = "Mozilla/5.0; Microsoft.NET; bitbucket.org/ligos/Terninger; unconfigured";
+        /// <summary>
+        /// The default timeout used by HttpClient instances.
+        /// </summary>
+        public readonly static TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
+
         internal const string _BasePathToUnitTestData = "../../../Online Generators/";
+
 
 #if NET452
         static HttpClientHelpers()
@@ -24,7 +29,15 @@ namespace MurrayGrant.Terninger.Helpers
             ServicePointManager.DefaultConnectionLimit = 100;
         }
 #endif
+        /// <summary>
+        /// Creates a UserAgent string for HttpClient.
+        /// It is recommended to pass a usage identifier such as a website or email address.
+        /// </summary>
+        public static string UserAgentString(string usageIdentifier = "unconfigured") => $"Mozilla/5.0 (Microsoft.NET; {Environment.Version}; bitbucket.org/ligos/Terninger) Terninger/{usageIdentifier}";
 
+        /// <summary>
+        /// Create an HttpClient with parameters or sane defaults.
+        /// </summary>
         public static HttpClient Create(TimeSpan timeout = default(TimeSpan), string userAgent = "", SslProtocols sslProtocols = SslProtocols.None, Action<HttpClientHandler> handlerCustomisation = null)
         {
             // TODO: authentication.
@@ -33,7 +46,7 @@ namespace MurrayGrant.Terninger.Helpers
             var handler = new HttpClientHandler();
             handler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 #if !NET452
-            // TLS1.0+ by default, or 
+            // TLS1.0+ by default, or whatever the user provides.
             handler.SslProtocols = sslProtocols == SslProtocols.None ? SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12 : sslProtocols;
 #endif
             if (handlerCustomisation != null)
@@ -54,9 +67,9 @@ namespace MurrayGrant.Terninger.Helpers
             result.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("en"));
 
             result.DefaultRequestHeaders.UserAgent.Clear();
-            result.DefaultRequestHeaders.UserAgent.ParseAdd(String.IsNullOrEmpty(userAgent) ? DefaultUserAgent : userAgent);
-
-            result.Timeout = timeout <= TimeSpan.Zero ? TimeSpan.FromSeconds(30) : timeout;
+            result.DefaultRequestHeaders.UserAgent.ParseAdd(String.IsNullOrEmpty(userAgent) ? UserAgentString() : userAgent);
+            
+            result.Timeout = timeout <= TimeSpan.Zero ? DefaultTimeout : timeout;
 
             return result;
         }

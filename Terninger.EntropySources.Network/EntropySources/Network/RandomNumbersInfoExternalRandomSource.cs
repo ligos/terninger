@@ -27,7 +27,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly string _UserAgent;
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public RandomNumbersInfoExternalRandomSource() : this(HttpClientHelpers.DefaultUserAgent, 256, TimeSpan.FromHours(8)) { }
+        public RandomNumbersInfoExternalRandomSource() : this(HttpClientHelpers.UserAgentString(), 256, TimeSpan.FromHours(8)) { }
         public RandomNumbersInfoExternalRandomSource(string userAgent) : this (userAgent, 256, TimeSpan.FromHours(8)) { }
         public RandomNumbersInfoExternalRandomSource(string userAgent, int numberOfNumbers) : this(userAgent, numberOfNumbers, TimeSpan.FromHours(8)) { }
         public RandomNumbersInfoExternalRandomSource(string userAgent, TimeSpan periodNormalPriority) : this(userAgent, 256, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
@@ -38,13 +38,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (numberOfNumbers < 0 || numberOfNumbers > 1000)
                 throw new ArgumentOutOfRangeException(nameof(numberOfNumbers), numberOfNumbers, "Between 1 and 1000 numbers are allowed");
 
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.UserAgentString() : userAgent;
             this._NumberOfNumbers = numberOfNumbers;
         }
         internal RandomNumbersInfoExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = HttpClientHelpers.DefaultUserAgent;
+            this._UserAgent = HttpClientHelpers.UserAgentString();
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 

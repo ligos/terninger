@@ -22,8 +22,6 @@ namespace MurrayGrant.Terninger.Test.Slow
     [TestClass]
     public class EntropySourceTests
     {
-        public static readonly string UnitTestUserAgent = HttpClientHelpers.DefaultUserAgent.Replace("unconfigured", "UnitTests; terninger@ligos.net");
-
         [TestMethod]
         [TestCategory("Fuzzing")]
         public void Cheap16Bytes_Fuzzing()
@@ -157,7 +155,7 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void ExternalWebContentSource_Network()
         {
-            FuzzEntropySource(10, new ExternalWebContentSource(UnitTestUserAgent, null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null), "Entropy_" + nameof(ExternalWebContentSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(10, new ExternalWebContentSource(UnitTestUserAgent(), null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null), "Entropy_" + nameof(ExternalWebContentSource), DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
@@ -172,7 +170,7 @@ namespace MurrayGrant.Terninger.Test.Slow
                 {
                     try
                     {
-                        var hc = HttpClientHelpers.Create(userAgent: UnitTestUserAgent);
+                        var hc = HttpClientHelpers.Create(userAgent: UnitTestUserAgent());
                         var result = await hc.GetByteArrayAsync(url);
                         break;
                     }
@@ -186,7 +184,7 @@ namespace MurrayGrant.Terninger.Test.Slow
             }
 
             if (failedUrls.Any())
-                throw new Exception("Urls failed to GET: n" + String.Join("\n", failedUrls.Select(x => x.Item1.ToString() + " - " + x.Item2.ToString())));
+                throw new Exception("Urls failed to GET: " + String.Join("\n", failedUrls.Select(x => x.Item1.ToString() + " - " + x.Item2.ToString())));
 
         }
 
@@ -196,19 +194,19 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void AnuExternalRandomSource_Network()
         {
-            FuzzEntropySource(5, new AnuExternalRandomSource(UnitTestUserAgent, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(AnuExternalRandomSource), Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new AnuExternalRandomSource(UnitTestUserAgent(), TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(AnuExternalRandomSource), Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
         public void BeaconNistExternalRandomSource_Network()
         {
-            FuzzEntropySource(5, new BeaconNistExternalRandomSource(UnitTestUserAgent, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(BeaconNistExternalRandomSource), Sleep30000).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new BeaconNistExternalRandomSource(UnitTestUserAgent(), TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(BeaconNistExternalRandomSource), Sleep30000).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
         public void HotbitsExternalRandomSourcePseudoRandom_Network()
         {
-            FuzzEntropySource(5, new HotbitsExternalRandomSource(UnitTestUserAgent, 32, "", TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(HotbitsExternalRandomSource) + "_PseudoRangom", Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new HotbitsExternalRandomSource(UnitTestUserAgent(), 32, "", TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(HotbitsExternalRandomSource) + "_PseudoRangom", Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
@@ -220,19 +218,19 @@ namespace MurrayGrant.Terninger.Test.Slow
                 Assert.Inconclusive("No API key available: get one from https://www.fourmilab.ch/hotbits/ and set it in the 'Terninger_UnitTest_HotBitsApiKey' environment variable.");
                 return;
             }
-            FuzzEntropySource(2, new HotbitsExternalRandomSource(UnitTestUserAgent, 32, maybeApiKey, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(HotbitsExternalRandomSource) + "_TrueRandom", Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(2, new HotbitsExternalRandomSource(UnitTestUserAgent(), 32, maybeApiKey, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(HotbitsExternalRandomSource) + "_TrueRandom", Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
         public void RandomNumbersInfoExternalRandomSource_Network()
         {
-            FuzzEntropySource(5, new RandomNumbersInfoExternalRandomSource(UnitTestUserAgent, 32, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomNumbersInfoExternalRandomSource), Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new RandomNumbersInfoExternalRandomSource(UnitTestUserAgent(), 32, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomNumbersInfoExternalRandomSource), Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
         public void RandomOrgExternalRandomSourcePublic_Network()
         {
-            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent, 32, Guid.Empty, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, Guid.Empty, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
@@ -244,13 +242,13 @@ namespace MurrayGrant.Terninger.Test.Slow
                 Assert.Inconclusive("No API key available: get one from https://api.random.org and set it in the 'Terninger_UnitTest_RandomOrgApiKey' environment variable.");
                 return;
             }
-            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent, 32, apiKey, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Api", Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, apiKey, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Api", Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
         public void RandomServerExternalRandomSource_Network()
         {
-            FuzzEntropySource(5, new RandomServerExternalRandomSource(UnitTestUserAgent, 32, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomServerExternalRandomSource), Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new RandomServerExternalRandomSource(UnitTestUserAgent(), 32, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomServerExternalRandomSource), Sleep500).GetAwaiter().GetResult();
         }
 
         private async Task FuzzEntropySource(int iterations, IEntropySource source, string filename, Action extra)
@@ -362,5 +360,7 @@ namespace MurrayGrant.Terninger.Test.Slow
             Wait();
             GenerateGarbage();
         }
-    }
+
+        private string UnitTestUserAgent() => HttpClientHelpers.UserAgentString("TerningerUnitTests.at.ligos.net")
+;    }
 }

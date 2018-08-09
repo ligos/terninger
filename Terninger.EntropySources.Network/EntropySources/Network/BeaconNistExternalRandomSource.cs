@@ -25,18 +25,18 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly string _UserAgent;
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public BeaconNistExternalRandomSource() : this(HttpClientHelpers.DefaultUserAgent, TimeSpan.FromHours(4)) { }
+        public BeaconNistExternalRandomSource() : this(HttpClientHelpers.UserAgentString(), TimeSpan.FromHours(4)) { }
         public BeaconNistExternalRandomSource(string userAgent) : this(userAgent, TimeSpan.FromHours(4)) { }
         public BeaconNistExternalRandomSource(string userAgent, TimeSpan periodNormalPriority) : this(userAgent, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
         public BeaconNistExternalRandomSource(string userAgent, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
             : base(periodNormalPriority, periodHighPriority, periodLowPriority)
         {
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.UserAgentString() : userAgent;
         }
         internal BeaconNistExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = HttpClientHelpers.DefaultUserAgent;
+            this._UserAgent = HttpClientHelpers.UserAgentString();
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 

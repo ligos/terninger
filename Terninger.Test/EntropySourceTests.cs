@@ -223,6 +223,14 @@ namespace MurrayGrant.Terninger.Test
         }
 
 
+        [TestMethod]
+        public void TestHttpClientDefaults()
+        {
+            var http = HttpClientHelpers.Create();
+            Assert.AreEqual(HttpClientHelpers.DefaultTimeout, http.Timeout);
+            Assert.AreEqual(HttpClientHelpers.UserAgentString(), String.Join(" ", http.DefaultRequestHeaders.UserAgent.Select(x => x.ToString())));
+        }
+
 
         private async Task FuzzEntropySource(int iterations, IEntropySource source, string filename, Action extra)
         {

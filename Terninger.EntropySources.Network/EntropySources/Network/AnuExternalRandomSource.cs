@@ -26,18 +26,18 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public AnuExternalRandomSource() : this(HttpClientHelpers.DefaultUserAgent, TimeSpan.FromHours(12)) { }
+        public AnuExternalRandomSource() : this(HttpClientHelpers.UserAgentString(), TimeSpan.FromHours(12)) { }
         public AnuExternalRandomSource(string userAgent) : this (userAgent, TimeSpan.FromHours(12)) { }
         public AnuExternalRandomSource(string userAgent, TimeSpan periodNormalPriority) : this(userAgent, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
         public AnuExternalRandomSource(string userAgent, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
             : base(periodNormalPriority, periodHighPriority, periodLowPriority)
         {
-            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.DefaultUserAgent : userAgent;
+            this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.UserAgentString() : userAgent;
         }
         internal AnuExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
-            this._UserAgent = HttpClientHelpers.DefaultUserAgent;
+            this._UserAgent = HttpClientHelpers.UserAgentString();
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 
