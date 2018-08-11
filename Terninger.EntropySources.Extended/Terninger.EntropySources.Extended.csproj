@@ -20,8 +20,15 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <PackageTags>security random number generator CPRNG PRNG RNG Fortuna</PackageTags>
   </PropertyGroup>
 
+  <!-- FOR DEVELOPMENT -->
   <ItemGroup>
     <ProjectReference Include="..\Terninger\Terninger.csproj" />
   </ItemGroup>
+
+  <!-- FOR NUGET BUILDS
+  <ItemGroup>
+    <PackageReference Include="Terninger" Version="0.1.0" />
+  </ItemGroup>
+  -->
 
 </Project>

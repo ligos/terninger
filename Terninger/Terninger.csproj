@@ -19,7 +19,7 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
     <PackageProjectUrl>https://bitbucket.org/ligos/terninger</PackageProjectUrl>
     <PackageTags>security random number generator CPRNG PRNG RNG Fortuna</PackageTags>
-    
+
     <!-- Overflow must be detected and handled. Note that some code paths depend on OverflowExceptions being thrown. -->
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
   </PropertyGroup>

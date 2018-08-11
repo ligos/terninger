@@ -37,10 +37,18 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
   <ItemGroup>
     <PackageReference Include="System.Net.Http" Version="4.3.3" />
   </ItemGroup>
-  
+
+  <!-- FOR DEVELOPMENT -->
   <ItemGroup>
     <ProjectReference Include="..\Terninger.EntropySources.Extended\Terninger.EntropySources.Extended.csproj" />
     <ProjectReference Include="..\Terninger\Terninger.csproj" />
   </ItemGroup>
+
+  <!-- FOR NUGET BUILDS
+  <ItemGroup>
+    <PackageReference Include="Terninger" Version="0.1.0" />
+    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.1.0" />
+  </ItemGroup>
+  -->
 
 </Project>

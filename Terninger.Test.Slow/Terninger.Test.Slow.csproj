@@ -18,11 +18,11 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <PackageProjectUrl>https://bitbucket.org/ligos/terninger</PackageProjectUrl>
     <PackageTags>security random number generator CPRNG PRNG RNG Fortuna</PackageTags>
   </PropertyGroup>
-
+  
   <ItemGroup>
-    <ProjectReference Include="..\Terninger.EntropySources.Extended\Terninger.EntropySources.Extended.csproj" />
-    <ProjectReference Include="..\Terninger.EntropySources.Network\Terninger.EntropySources.Network.csproj" />
-    <ProjectReference Include="..\Terninger\Terninger.csproj" />
+    <PackageReference Include="Terninger" Version="0.1.0" />
+    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.1.0" />
+    <PackageReference Include="Terninger.EntropySources.Network" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup>
