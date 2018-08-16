@@ -36,8 +36,8 @@ namespace MurrayGrant.Terninger.Console
         static HashAlgorithmOption hashAlgorithm = HashAlgorithmOption.Default;
         static ManagedOrNative managedOrNativeCrypto = ManagedOrNative.Default;
 
-        static int linearPools = 16;
-        static int randomPools = 16;
+        static int linearPools = 20;
+        static int randomPools = 12;
         static bool includeNetworkSources = false;         // If true, includes network entropy sources. This will make network calls.
 
         static LogLevel _MinLogLevel = LogLevel.Info;
@@ -590,8 +590,8 @@ namespace MurrayGrant.Terninger.Console
             Con.WriteLine("  -s --seed xxx         Initial seed material (default: random)");
             Con.WriteLine("            xxx =         [hex string|file path|any random string]");
             Con.WriteLine("  -ns --netSources      Include network sources for entropy (default: false)");
-            Con.WriteLine("  --poolLinear nn       Number of linear pools (default: 16)");
-            Con.WriteLine("  --poolRandom nn       Number of random pools (default: 16)");
+            Con.WriteLine("  --poolLinear nn       Number of linear pools (default: 20)");
+            Con.WriteLine("  --poolRandom nn       Number of random pools (default: 12)");
             Con.WriteLine("  -nd --nonDeterministic  Injects timing / memory based entropy");
             Con.WriteLine("  --managed             Uses managed crypto modules (default: auto)");
             Con.WriteLine("  --native              Uses native crypto modules (default: auto)");

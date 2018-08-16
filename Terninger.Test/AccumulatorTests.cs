@@ -5,10 +5,11 @@ using System.IO;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.EntropySources;
 using MurrayGrant.Terninger.EntropySources.Test;
 using MurrayGrant.Terninger.Accumulator;
+using Rand = System.Random;
 
 namespace MurrayGrant.Terninger.Test
 {
@@ -248,8 +249,8 @@ namespace MurrayGrant.Terninger.Test
         public void Accumulator_DefaultCreator()
         {
             var a = new EntropyAccumulator();
-            Assert.AreEqual(a.LinearPoolCount, 16);
-            Assert.AreEqual(a.RandomPoolCount, 16);
+            Assert.AreEqual(a.LinearPoolCount, 20);
+            Assert.AreEqual(a.RandomPoolCount, 12);
             Assert.AreEqual(a.TotalPoolCount, 32);
             Assert.AreEqual(a.TotalEntropyBytes, 0);
             Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
@@ -262,8 +263,8 @@ namespace MurrayGrant.Terninger.Test
         public void Accumulator_WithRandomGenerator()
         {
             var a = new EntropyAccumulator(_Rng);
-            Assert.AreEqual(a.LinearPoolCount, 16);
-            Assert.AreEqual(a.RandomPoolCount, 16);
+            Assert.AreEqual(a.LinearPoolCount, 20);
+            Assert.AreEqual(a.RandomPoolCount, 12);
             Assert.AreEqual(a.TotalPoolCount, 32);
             Assert.AreEqual(a.TotalEntropyBytes, 0);
             Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
@@ -571,7 +572,7 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(a.TotalReseedEvents, 0);
         }
 
-        private static IRandomNumberGenerator CreateRandomGenerator() => new StandardRandomWrapperGenerator(new Random(1));
+        private static IRandomNumberGenerator CreateRandomGenerator() => new StandardRandomWrapperGenerator(new Rand(1));
         private static EntropyEvent EventFromBytes(byte[] bytes)
         {
             return new EntropyEvent(bytes, new NullSource());

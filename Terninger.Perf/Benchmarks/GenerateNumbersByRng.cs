@@ -4,7 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
+using Rand = System.Random;
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Code;
@@ -18,7 +19,7 @@ namespace MurrayGrant.Terninger.Perf.Benchmarks
         private readonly CypherBasedPrngGenerator _TerningerCypher = CypherBasedPrngGenerator.Create(_ZeroKey32Bytes);
         private readonly PooledEntropyCprngGenerator _TerningerPooled = RandomGenerator.CreateTerninger().StartAndWaitForSeedAsync().GetAwaiter().GetResult();
         private readonly CryptoRandomWrapperGenerator _SystemCryptoRandom = new CryptoRandomWrapperGenerator();
-        private readonly StandardRandomWrapperGenerator _SystemRandom = new StandardRandomWrapperGenerator(new Random(1));
+        private readonly StandardRandomWrapperGenerator _SystemRandom = new StandardRandomWrapperGenerator(new Rand(1));
 
         [Benchmark]
         public int TerningerCypher()

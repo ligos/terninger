@@ -5,10 +5,11 @@ using System.IO;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.EntropySources;
 using MurrayGrant.Terninger.EntropySources.Test;
 using MurrayGrant.Terninger.Accumulator;
+using Rand = System.Random;
 
 namespace MurrayGrant.Terninger.Test.Slow
 {
@@ -178,14 +179,35 @@ namespace MurrayGrant.Terninger.Test.Slow
             var a = new EntropyAccumulator(16, 16, _Rng);
             using (var sw = new StreamWriter("accumulator_linearAndRandomUsage.txt", false, Encoding.UTF8))
             {
-                sw.WriteLine($"Seed:Ent'py:# :Pools (linear)  :Pools (random)   ");
+                sw.WriteLine($"Seed:Ent'py:# :Pools Used (linear)             :Pools Used (random)        ");
                 for (int i = 0; i < 10000; i++)
                 {
                     for (int j = 0; j < a.TotalPoolCount; j++)
                         a.Add(EventFromBytes(_Incrementing16Bytes));
                     var availableEntropy = (long)a.AvailableEntropyBytesSinceLastSeed;
                     var seed = a.NextSeed();
-                    sw.WriteLine($"{i + 1:00000}:{availableEntropy:000000}:{a.PoolCountUsedInLastSeedGeneration:00}:{Convert.ToString((long)a.LinearPoolsUsedInLastSeedGeneration, 2),16}:{Convert.ToString((long)a.RandomPoolsUsedInLastSeedGeneration, 2),16}");
+                    sw.WriteLine($"{i + 1:00000}:{availableEntropy:000000}:{a.PoolCountUsedInLastSeedGeneration:00}:{Convert.ToString((long)a.LinearPoolsUsedInLastSeedGeneration, 2),32}:{Convert.ToString((long)a.RandomPoolsUsedInLastSeedGeneration, 2),32}");
+                    Assert.IsTrue(availableEntropy >= a.TotalPoolCount * _Incrementing16Bytes.Length);      // Not every pool is used, so we may have extra bytes here. 
+                    Assert.IsTrue(seed.Length > 0);
+                }
+            }
+            Assert.AreEqual(a.TotalReseedEvents, 10000);
+        }
+        [TestMethod]
+        public void Accumulator_ListDefaultLinearAndRandomPoolsUsedIn1000SeedEvents()
+        {
+            var defA = new EntropyAccumulator();
+            var a = new EntropyAccumulator(defA.LinearPoolCount, defA.RandomPoolCount, _Rng);
+            using (var sw = new StreamWriter("accumulator_defaultLinearAndRandomUsage.txt", false, Encoding.UTF8))
+            {
+                sw.WriteLine($"Seed:Ent'py:# :Pools Used (linear)             :Pools Used (random)        ");
+                for (int i = 0; i < 10000; i++)
+                {
+                    for (int j = 0; j < a.TotalPoolCount; j++)
+                        a.Add(EventFromBytes(_Incrementing16Bytes));
+                    var availableEntropy = (long)a.AvailableEntropyBytesSinceLastSeed;
+                    var seed = a.NextSeed();
+                    sw.WriteLine($"{i + 1:00000}:{availableEntropy:000000}:{a.PoolCountUsedInLastSeedGeneration:00}:{Convert.ToString((long)a.LinearPoolsUsedInLastSeedGeneration, 2),32}:{Convert.ToString((long)a.RandomPoolsUsedInLastSeedGeneration, 2),32}");
                     Assert.IsTrue(availableEntropy >= a.TotalPoolCount * _Incrementing16Bytes.Length);      // Not every pool is used, so we may have extra bytes here. 
                     Assert.IsTrue(seed.Length > 0);
                 }
@@ -194,7 +216,7 @@ namespace MurrayGrant.Terninger.Test.Slow
         }
 
 
-        private static IRandomNumberGenerator CreateRandomGenerator() => new StandardRandomWrapperGenerator(new Random(1));
+        private static IRandomNumberGenerator CreateRandomGenerator() => new StandardRandomWrapperGenerator(new Rand(1));
         private static EntropyEvent EventFromBytes(byte[] bytes)
         {
             return new EntropyEvent(bytes, new NullSource());

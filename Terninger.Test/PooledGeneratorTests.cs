@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using MurrayGrant.Terninger;
 using MurrayGrant.Terninger.Accumulator;
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.EntropySources;
 using MurrayGrant.Terninger.EntropySources.Test;
 using MurrayGrant.Terninger.EntropySources.Local;

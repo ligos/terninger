@@ -35,15 +35,14 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
   </ItemGroup>
 
   <!-- FOR DEVELOPMENT -->
-  <ItemGroup>
+  <ItemGroup Condition="'$(RefNugets)'!='True'">
     <ProjectReference Include="..\Terninger.Random.Cypher\Terninger.Random.Cypher.csproj" />
     <ProjectReference Include="..\Terninger.Random.Pooled\Terninger.Random.Pooled.csproj" />
   </ItemGroup>
 
-  <!-- FOR NUGET BUILDS
-  <ItemGroup>
+  <!-- FOR NUGET BUILDS -->
+  <ItemGroup Condition="'$(RefNugets)'=='True'">
     <PackageReference Include="Terninger.Random.Cypher" Version="0.1.0" />
     <PackageReference Include="Terninger.Random.Pooled" Version="0.1.0" />
   </ItemGroup>
-  -->
 </Project>

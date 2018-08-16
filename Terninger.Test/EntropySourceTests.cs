@@ -4,15 +4,17 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using MurrayGrant.Terninger.Helpers;
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.EntropySources;
 using MurrayGrant.Terninger.EntropySources.Local;
 using MurrayGrant.Terninger.EntropySources.Test;
 using MurrayGrant.Terninger.EntropySources.Network;
 using MurrayGrant.Terninger.Accumulator;
+
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Rand = System.Random;
 
 namespace MurrayGrant.Terninger.Test
 {
@@ -216,11 +218,7 @@ namespace MurrayGrant.Terninger.Test
         {
             FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, Guid.NewGuid()), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
         }
-        [TestMethod]
-        public void ExternalServerRandomSource_RandomServer()
-        {
-            FuzzEntropySource(1, new RandomServerExternalRandomSource(true), "Entropy_" + nameof(RandomServerExternalRandomSource) + "_FromFile", DoNothing).GetAwaiter().GetResult();
-        }
+
 
 
         [TestMethod]
@@ -270,7 +268,7 @@ namespace MurrayGrant.Terninger.Test
 
         private static IRandomNumberGenerator GetGenerator()
         {
-            return new StandardRandomWrapperGenerator(new Random(1));
+            return new StandardRandomWrapperGenerator(new Rand(1));
         }
         private static void DoNothing()
         {

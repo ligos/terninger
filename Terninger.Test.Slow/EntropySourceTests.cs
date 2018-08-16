@@ -4,7 +4,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using MurrayGrant.Terninger.Helpers;
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.EntropySources;
 using MurrayGrant.Terninger.EntropySources.Local;
 using MurrayGrant.Terninger.EntropySources.Test;
@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Net.NetworkInformation;
 using System.Net;
 using System.Collections.Generic;
+using Rand = System.Random;
 
 namespace MurrayGrant.Terninger.Test.Slow
 {
@@ -317,7 +318,7 @@ namespace MurrayGrant.Terninger.Test.Slow
 
         private static IRandomNumberGenerator GetGenerator()
         {
-            return new StandardRandomWrapperGenerator(new Random(1));
+            return new StandardRandomWrapperGenerator(new Rand(1));
         }
         private static void DoNothing()
         {

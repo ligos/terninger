@@ -24,12 +24,24 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!-- FOR DEVELOPMENT -->
+  <ItemGroup Condition="'$(RefNugets)'!='True'">
+    <ProjectReference Include="..\Terninger\Terninger.csproj" />
+    <ProjectReference Include="..\Terninger.Random.Cypher\Terninger.Random.Cypher.csproj" />
+    <ProjectReference Include="..\Terninger.Random.Pooled\Terninger.Random.Pooled.csproj" />
+    <ProjectReference Include="..\Terninger.EntropySources.Extended\Terninger.EntropySources.Extended.csproj" />
+    <ProjectReference Include="..\Terninger.EntropySources.Network\Terninger.EntropySources.Network.csproj" />
+  </ItemGroup>
+
+  <!-- FOR NUGET BUILDS -->
+  <ItemGroup Condition="'$(RefNugets)'=='True'">
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.1.0" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.1.0" />
     <PackageReference Include="Terninger" Version="0.1.0" />
     <PackageReference Include="Terninger.EntropySources.Extended" Version="0.1.0" />
     <PackageReference Include="Terninger.EntropySources.Network" Version="0.1.0" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="1.3.2" />

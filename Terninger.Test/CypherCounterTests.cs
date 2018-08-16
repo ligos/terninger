@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using MurrayGrant.Terninger;
 using MurrayGrant.Terninger.Helpers;
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 
 namespace MurrayGrant.Terninger.Test
 {
