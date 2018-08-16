@@ -8,7 +8,7 @@ using System.IO;
 using System.Net;
 using System.Security.Cryptography;
 
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.LibLog;
 

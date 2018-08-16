@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.Accumulator;
 using MurrayGrant.Terninger.EntropySources;
 using MurrayGrant.Terninger.EntropySources.Local;

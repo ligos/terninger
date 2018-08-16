@@ -32,7 +32,6 @@ namespace MurrayGrant.Terninger
             new HotbitsExternalRandomSource(userAgent, hotBitsApiKey),
             new RandomNumbersInfoExternalRandomSource(userAgent),
             new RandomOrgExternalRandomSource(userAgent, randomOrgApiKey.GetValueOrDefault()),
-            new RandomServerExternalRandomSource(userAgent),
         };
     }
 }

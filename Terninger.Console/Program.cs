@@ -9,13 +9,14 @@ using System.Security.Cryptography;
 
 using MurrayGrant.Terninger.Accumulator;
 using MurrayGrant.Terninger.Helpers;
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.CryptoPrimitives;
 using MurrayGrant.Terninger.EntropySources;
 using MurrayGrant.Terninger.EntropySources.Local;
 using MurrayGrant.Terninger.EntropySources.Network;
 using MurrayGrant.Terninger.LibLog;
 
+using Rand = System.Random;
 using Con = System.Console;
 
 namespace MurrayGrant.Terninger.Console
@@ -277,10 +278,10 @@ namespace MurrayGrant.Terninger.Console
             var result = new GeneratorAndDescription();
             if (generatorType == Generator.StockRandom)
             {
-                result.Description = "deterministic PRNG - " + typeof(Random).Namespace + "." + typeof(Random).Name;
+                result.Description = "deterministic PRNG - " + typeof(Rand).Namespace + "." + typeof(Rand).Name;
                 var seedAndDescription = DeriveSeed();
                 result.SeedDescription = seedAndDescription.Item2;
-                result.Generator = new StandardRandomWrapperGenerator(new Random(BitConverter.ToInt32(seedAndDescription.Item1, 0)));
+                result.Generator = new StandardRandomWrapperGenerator(new Rand(BitConverter.ToInt32(seedAndDescription.Item1, 0)));
                 result.WaitForGeneratorReady = () => { };
                 result.WaitForGeneratorStopped = () => { };
             }
@@ -342,7 +343,6 @@ namespace MurrayGrant.Terninger.Console
                             new HotbitsExternalRandomSource(),
                             new RandomNumbersInfoExternalRandomSource(),
                             new RandomOrgExternalRandomSource(),
-                            new RandomServerExternalRandomSource(),
                         });
                 // As the pooled generator will be churning out entropy as fast as it can, we increase the reseed rate by polling faster and forcing reseeds more frequently.
                 var config = new PooledEntropyCprngGenerator.PooledGeneratorConfig()

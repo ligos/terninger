@@ -8,7 +8,7 @@ using System.Net.NetworkInformation;
 using System.IO;
 using System.Diagnostics;
 
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.LibLog;
 

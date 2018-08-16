@@ -21,6 +21,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.EntropySources.Ne
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.EntropySources.Extended", "Terninger.EntropySources.Extended\Terninger.EntropySources.Extended.csproj", "{B0863505-4A9F-4B97-9EA4-01CABCE2DBAD}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Random.Pooled", "Terninger.Random.Pooled\Terninger.Random.Pooled.csproj", "{A0466059-2BC1-4BBE-BDB5-432217A4E300}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Random.Cypher", "Terninger.Random.Cypher\Terninger.Random.Cypher.csproj", "{61F7D4F4-0C79-4428-9687-CD3C467E8C1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +67,14 @@ Global
 		{B0863505-4A9F-4B97-9EA4-01CABCE2DBAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0863505-4A9F-4B97-9EA4-01CABCE2DBAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B0863505-4A9F-4B97-9EA4-01CABCE2DBAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0466059-2BC1-4BBE-BDB5-432217A4E300}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0466059-2BC1-4BBE-BDB5-432217A4E300}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0466059-2BC1-4BBE-BDB5-432217A4E300}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0466059-2BC1-4BBE-BDB5-432217A4E300}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61F7D4F4-0C79-4428-9687-CD3C467E8C1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61F7D4F4-0C79-4428-9687-CD3C467E8C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61F7D4F4-0C79-4428-9687-CD3C467E8C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61F7D4F4-0C79-4428-9687-CD3C467E8C1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

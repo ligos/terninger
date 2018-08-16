@@ -28,25 +28,22 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <DocumentationFile>bin\Release\$(TargetFramework)\Terninger.xml</DocumentationFile>
   </PropertyGroup>
 
-  <!-- LibLog requires LIBLOG_PORTABLE for netstandard, and LIBLOG_PUBLIC for use in dependent assemblies -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
-    <DefineConstants>LIBLOG_PUBLIC;LIBLOG_PORTABLE</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
-    <DefineConstants>LIBLOG_PUBLIC</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)'=='net452'">
-    <DefineConstants>LIBLOG_PUBLIC</DefineConstants>
-  </PropertyGroup>
-
   <ItemGroup>
     <!-- LibLog uses dynamic -->
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
     <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
   </ItemGroup>
-  
+
+  <!-- FOR DEVELOPMENT -->
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <ProjectReference Include="..\Terninger.Random.Cypher\Terninger.Random.Cypher.csproj" />
+    <ProjectReference Include="..\Terninger.Random.Pooled\Terninger.Random.Pooled.csproj" />
   </ItemGroup>
 
+  <!-- FOR NUGET BUILDS
+  <ItemGroup>
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.1.0" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.1.0" />
+  </ItemGroup>
+  -->
 </Project>

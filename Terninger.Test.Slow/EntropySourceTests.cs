@@ -244,12 +244,7 @@ namespace MurrayGrant.Terninger.Test.Slow
             }
             FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, apiKey, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Api", Sleep500).GetAwaiter().GetResult();
         }
-        [TestMethod]
-        [TestCategory("Network")]
-        public void RandomServerExternalRandomSource_Network()
-        {
-            FuzzEntropySource(5, new RandomServerExternalRandomSource(UnitTestUserAgent(), 32, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomServerExternalRandomSource), Sleep500).GetAwaiter().GetResult();
-        }
+
 
         private async Task FuzzEntropySource(int iterations, IEntropySource source, string filename, Action extra)
         {

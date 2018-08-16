@@ -1,24 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics;
-using System.Threading;
+using System.Text;
 
 namespace MurrayGrant.Terninger.EntropySources
 {
     /// <summary>
     /// Low quality synchronous entropy sources.
     /// </summary>
-    public static class CheapEntropy
+    public static class PortableEntropy
     {
         [ThreadStatic]
         private static Stopwatch _Stopwatch;
-#if (NETSTANDARD2_0 || NET452)
-        // Process class is only in netstandard2.0
-        [ThreadStatic]
-        private static Process _CurrentProcess;
-#endif
         [ThreadStatic]
         private static ulong _Counter;
 
@@ -36,8 +29,8 @@ namespace MurrayGrant.Terninger.EntropySources
             // PERF: ~300ns on Murray's laptop - creating the ICryptoTransform object is ~4000ns, which is the main cost of re-seeding.
 
             EnsureThreadStaticsInitialised();
-            
-            // PERF: all these are doing an extra copy, which isn't needed.
+
+            // PERF: all these are doing an extra copy, which isn't needed. Span<T> should help.
 
             // Current date and time.
             var a = BitConverter.GetBytes(DateTime.UtcNow.Ticks);
@@ -55,14 +48,9 @@ namespace MurrayGrant.Terninger.EntropySources
             var c = BitConverter.GetBytes(_Stopwatch.ElapsedTicks);
             Buffer.BlockCopy(c, 0, buffer, 16, c.Length);
 
-            // Process working set & system uptime.
-            var workingSetAndTickCount = ((long)Environment.TickCount << 32)
-#if (NETSTANDARD2_0 || NET452)
-                    ^ _CurrentProcess.WorkingSet64
-#endif
-            ;
-
-            var d = BitConverter.GetBytes(workingSetAndTickCount);
+            // System uptime.
+            var tickCount = ((long)Environment.TickCount);
+            var d = BitConverter.GetBytes(tickCount);
             Buffer.BlockCopy(d, 0, buffer, 24, d.Length);
         }
 
@@ -92,7 +80,7 @@ namespace MurrayGrant.Terninger.EntropySources
 
             EnsureThreadStaticsInitialised();
 
-            // PERF: all these are doing an extra copy, which isn't needed.
+            // PERF: all these are doing an extra copy, which isn't needed. Span<T> should help.
 
             // Current date and time + CLR / GC memory stats.
             var ticks = (ulong)DateTime.UtcNow.Ticks;
@@ -103,12 +91,8 @@ namespace MurrayGrant.Terninger.EntropySources
             var a = BitConverter.GetBytes(ticks ^ gcCollections ^ gcTotalMemory ^ _Counter);
             Buffer.BlockCopy(a, 0, buffer, 0, a.Length);
 
-            // High precision timer ticks + Process working set & system uptime.
-            var b = BitConverter.GetBytes(((long)Environment.TickCount << 32)
-#if (NETSTANDARD2_0 || NET452)
-                    ^ _CurrentProcess.WorkingSet64 
-#endif
-                    ^ _Stopwatch.ElapsedTicks);
+            // High precision timer ticks + system uptime.
+            var b = BitConverter.GetBytes(((long)Environment.TickCount << 32) ^ _Stopwatch.ElapsedTicks);
             Buffer.BlockCopy(b, 0, buffer, 8, b.Length);
         }
 
@@ -131,14 +115,10 @@ namespace MurrayGrant.Terninger.EntropySources
         {
             if (_Stopwatch == null)
                 _Stopwatch = Stopwatch.StartNew();
-#if (NETSTANDARD2_0 || NET452)
-            if (_CurrentProcess == null)
-                _CurrentProcess = Process.GetCurrentProcess();
-#endif
         }
 
         private static void ThrowArgumentNullException() => throw new ArgumentNullException("buffer");
         private static void ThrowFillBufferSizeException(int minSizeRequired, int actualSize)
             => throw new ArgumentException($"Buffer size is too small to fill. Minimum {minSizeRequired} bytes required, actual array size: {actualSize}.");
-    }
+   }
 }

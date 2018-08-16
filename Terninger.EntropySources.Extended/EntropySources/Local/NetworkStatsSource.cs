@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.NetworkInformation;
 
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.LibLog;
 
