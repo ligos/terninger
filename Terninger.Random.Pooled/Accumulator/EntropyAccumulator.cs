@@ -97,8 +97,8 @@ namespace MurrayGrant.Terninger.Accumulator
         public int RandomPoolCount => _RandomPools.Length;
 
 
-        public EntropyAccumulator() : this(20, 12, CypherBasedPrngGenerator.CreateWithCheapKey(), DefaultHashCreator) { }
-        public EntropyAccumulator(IRandomNumberGenerator rng) : this(20, 12, rng, DefaultHashCreator) { }
+        public EntropyAccumulator() : this(28, 12, CypherBasedPrngGenerator.CreateWithCheapKey(), DefaultHashCreator) { }
+        public EntropyAccumulator(IRandomNumberGenerator rng) : this(28, 12, rng, DefaultHashCreator) { }
         public EntropyAccumulator(int linearPoolCount, int randomPoolCount) : this(linearPoolCount, randomPoolCount, CypherBasedPrngGenerator.CreateWithCheapKey(), DefaultHashCreator) { }
         public EntropyAccumulator(int linearPoolCount, int randomPoolCount, IRandomNumberGenerator rng) : this(linearPoolCount, randomPoolCount, rng, DefaultHashCreator) { }
         public EntropyAccumulator(int linearPoolCount, int randomPoolCount, IRandomNumberGenerator rng, Func<HashAlgorithm> hashCreator)

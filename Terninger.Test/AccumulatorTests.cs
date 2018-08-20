@@ -249,9 +249,9 @@ namespace MurrayGrant.Terninger.Test
         public void Accumulator_DefaultCreator()
         {
             var a = new EntropyAccumulator();
-            Assert.AreEqual(a.LinearPoolCount, 20);
+            Assert.AreEqual(a.LinearPoolCount, 28);
             Assert.AreEqual(a.RandomPoolCount, 12);
-            Assert.AreEqual(a.TotalPoolCount, 32);
+            Assert.AreEqual(a.TotalPoolCount, 40);
             Assert.AreEqual(a.TotalEntropyBytes, 0);
             Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
             Assert.AreEqual(a.TotalReseedEvents, 0);
@@ -263,9 +263,9 @@ namespace MurrayGrant.Terninger.Test
         public void Accumulator_WithRandomGenerator()
         {
             var a = new EntropyAccumulator(_Rng);
-            Assert.AreEqual(a.LinearPoolCount, 20);
+            Assert.AreEqual(a.LinearPoolCount, 28);
             Assert.AreEqual(a.RandomPoolCount, 12);
-            Assert.AreEqual(a.TotalPoolCount, 32);
+            Assert.AreEqual(a.TotalPoolCount, 40);
             Assert.AreEqual(a.TotalEntropyBytes, 0);
             Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
             Assert.AreEqual(a.TotalReseedEvents, 0);
