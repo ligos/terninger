@@ -20,21 +20,20 @@ namespace MurrayGrant.Terninger.EntropySources
         internal static long[] GetLongsForDigest()
         {
             var result = new List<long>();
-            result.AddRange(Process.GetCurrentProcess().ProcessName.ToLongs());
-            result.AddRange(Environment.CurrentDirectory.ToLongs());
+            result.AddRange(ExceptionHelper.TryAndIgnoreException(() => Process.GetCurrentProcess().ProcessName.ToLongs(), Enumerable.Empty<long>()));
+            result.AddRange(ExceptionHelper.TryAndIgnoreException(() => Environment.CurrentDirectory.ToLongs(), Enumerable.Empty<long>()));
             result.Add((Environment.Is64BitOperatingSystem ? 4 : 2)
                     + (Environment.Is64BitProcess ? 8 : 16));
-            result.AddRange(Environment.MachineName.ToLongs());
-            result.AddRange(Environment.OSVersion.VersionString.ToLongs());
+            result.AddRange(ExceptionHelper.TryAndIgnoreException(() => Environment.MachineName.ToLongs(), Enumerable.Empty<long>()));
+            result.AddRange(ExceptionHelper.TryAndIgnoreException(() => Environment.OSVersion.VersionString.ToLongs(), Enumerable.Empty<long>()));
             result.Add(Environment.ProcessorCount);
-            result.AddRange(Environment.SystemDirectory.ToLongs());
-            result.AddRange(Environment.UserDomainName.ToLongs());
-            result.AddRange(Environment.Version.ToString().ToLongs());
-            var flatEnvironmentVars = String.Join(";", Environment.GetEnvironmentVariables().Cast<DictionaryEntry>().Select(x => x.Key.ToString() + ":" + x.Value.ToString()));
-            result.AddRange(flatEnvironmentVars.ToLongs());
+            result.AddRange(ExceptionHelper.TryAndIgnoreException(() => Environment.SystemDirectory.ToLongs(), Enumerable.Empty<long>()));
+            result.AddRange(ExceptionHelper.TryAndIgnoreException(() => Environment.UserDomainName.ToLongs(), Enumerable.Empty<long>()));
+            result.AddRange(ExceptionHelper.TryAndIgnoreException(() => Environment.Version.ToString().ToLongs(), Enumerable.Empty<long>()));
+            result.AddRange(ExceptionHelper.TryAndIgnoreException(() => String.Join(";", Environment.GetEnvironmentVariables().Cast<DictionaryEntry>().Select(x => x.Key.ToString() + ":" + x.Value.ToString())).ToLongs(), Enumerable.Empty<long>()));
 
             // The DHCP lifetime listed in here ticks down slowly, making this change slowly over time.
-            result.AddRange(Local.NetworkStatsSource.GetNetworkInterfaceStaticProperties());
+            result.AddRange(ExceptionHelper.TryAndIgnoreException(() => Local.NetworkStatsSource.GetNetworkInterfaceStaticProperties(), Enumerable.Empty<long>()));
 
             return result.ToArray();
         }
