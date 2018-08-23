@@ -4,7 +4,7 @@ A C# implementation of the [Fortuna](https://www.schneier.com/academic/paperfile
 
 ### Getting Started ###
 
-* Compile from source and reference the project / DLL (nuget will come later).
+* [NuGet](https://www.nuget.org/packages/Terninger): `install-package Terninger`
 
 Terninger requires some time to gather initial entropy before it will produce random numbers.
 You can either a) start the generator and `await` every call to it, or b) `await` starting the generator.
@@ -13,7 +13,7 @@ You can either a) start the generator and `await` every call to it, or b) `await
 
 ```
 using MurrayGrant.Terninger;
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 
 public class RandomnessRequired {
     public static readonly PooledEntropyCprngGenerator PooledGenerator =
@@ -33,7 +33,7 @@ public class RandomnessRequired {
 
 ``` 
 using MurrayGrant.Terninger;
-using MurrayGrant.Terninger.Generator;
+using MurrayGrant.Terninger.Random;
 
 public class RandomnessRequired {
 	public async Task UseTerninger() {
@@ -45,6 +45,52 @@ public class RandomnessRequired {
 		{
 			var randomInt = random.GetRandomInt32();
 		}			
+	}
+}
+```
+
+### Add Extended or Network Sources of Entropy
+
+Out of the box, Terninger gathers entropy from your system random number generator (`/dev/random` or `CryptGenRandom`), plus timing and garbage collector stats.
+There are additional NuGet packages `Terninger.EntropySources.*` which expose additional sources of entropy.
+
+#### Terninger.EntropySources.Extended
+
+Adds entropy based on current running processes and passive network statistics (eg: bytes sent / received).
+
+``` 
+using MurrayGrant.Terninger;
+using MurrayGrant.Terninger.Random;
+
+public class RandomnessRequired {
+	public async Task UseTerninger() {
+		var randomGenerator = 
+			await RandomGenerator.CreateTerninger()
+					.With(ExtendedSources.All())
+					.StartAndWaitForSeedAsync();
+		...
+	}
+}
+```
+
+#### Terninger.EntropySources.Network
+
+Adds entropy based active network requests (HTTP content, other sites generating random numbers, ping statistics).
+It is recommended to set a user-agent identifier for HTTP requests (in case something goes wrong, and fingers need to be pointed).
+
+``` 
+using MurrayGrant.Terninger;
+using MurrayGrant.Terninger.Random;
+
+public class RandomnessRequired {
+	public async Task UseTerninger() {
+		var randomGenerator = 
+			await RandomGenerator.CreateTerninger()
+					.With(NetworkSources.All(
+						userAgent: NetworkSources.UserAgent("some.identifier.com")
+					)
+					.StartAndWaitForSeedAsync();
+		...
 	}
 }
 ```
