@@ -357,6 +357,6 @@ namespace MurrayGrant.Terninger.Test.Slow
             GenerateGarbage();
         }
 
-        private string UnitTestUserAgent() => HttpClientHelpers.UserAgentString("TerningerUnitTests.at.ligos.net")
+        private string UnitTestUserAgent() => HttpClientHelpers.UserAgentString("TerningerUnitTests.AT.ligos.net")
 ;    }
 }

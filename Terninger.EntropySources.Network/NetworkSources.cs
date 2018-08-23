@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.EntropySources;
 using MurrayGrant.Terninger.EntropySources.Network;
 
@@ -33,5 +34,19 @@ namespace MurrayGrant.Terninger
             new RandomNumbersInfoExternalRandomSource(userAgent),
             new RandomOrgExternalRandomSource(userAgent, randomOrgApiKey.GetValueOrDefault()),
         };
+
+        /// <summary>
+        /// Create a user-agent string to use with HTTP requests.
+        /// </summary>
+        /// <param name="usageIdentifier">An email address, website, or other identifying mark to include.</param>
+        /// <exception cref="System.Exception">May throw if the usageIdentifier has invalid characters.</exception>
+        public static string UserAgent(string usageIdentifier)
+        {
+            var id = (usageIdentifier ?? "unconfigured").Replace("@", ".AT.");
+            var ua = HttpClientHelpers.UserAgentString(id);
+            var http = HttpClientHelpers.Create(userAgent: ua);
+            http.Dispose();
+            return ua;
+        }
     }
 }

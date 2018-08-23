@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.3;net40</TargetFrameworks>
+    <Company>Murray Grant</Company>
+    <Product>Terninger</Product>
+    <Copyright>Copyright © Murray Grant 2017-2018</Copyright>
+    <Authors>Murray Grant</Authors>
+    <Version>0.1.0</Version>
+    <Description>A high speed cypher based PRNG with large seed (128+ bits), and extensions to safely get random integers, doubles, decimals and booleans.
+
+To get started, see the MurrayGrant.Terninger.RandomGenerator class.
+
+Or use the 'Terninger' nuget package.
+
+See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
+    </Description>
+    <RootNamespace>MurrayGrant.Terninger</RootNamespace>
+    <LangVersion>default</LangVersion>
+    <NoWarn>1701;1702;1591</NoWarn>
+    <RepositoryUrl></RepositoryUrl>
+    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <PackageProjectUrl>https://bitbucket.org/ligos/terninger</PackageProjectUrl>
+    <PackageTags>security random number generator CPRNG PRNG RNG Fortuna</PackageTags>
+
+    <!-- Overflow must be detected and handled. Note that some code paths depend on OverflowExceptions being thrown. -->
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DocumentationFile>bin\Release\$(TargetFramework)\Terninger.Random.Cypher.xml</DocumentationFile>
+  </PropertyGroup>
+
+</Project>

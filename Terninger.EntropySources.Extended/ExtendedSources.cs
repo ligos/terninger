@@ -8,7 +8,7 @@ using MurrayGrant.Terninger.EntropySources.Local;
 [assembly: InternalsVisibleTo("Terninger.Test"),
            InternalsVisibleTo("Terninger.Test.Slow")]
 
-namespace Murray.Grant.Terninger
+namespace MurrayGrant.Terninger
 {
     /// <summary>
     /// Additional local and cross platform sources.

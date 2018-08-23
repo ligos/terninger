@@ -75,9 +75,12 @@ namespace MurrayGrant.Terninger.EntropySources.Local
                     foreach (var l in props.GatewayAddresses.SelectMany(x => x.Address.ToLongs()).Where(x => x != 0L))
                         yield return l;
 
-                    // Lease lifetime.
-                    foreach (var l in props.UnicastAddresses.Select(x => x.DhcpLeaseLifetime).Where(x => x != 0L))
-                        yield return l;
+                    // Lease lifetime: only available on Windows.
+                    if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                    {
+                        foreach (var l in props.UnicastAddresses.Select(x => x.DhcpLeaseLifetime).Where(x => x != 0L))
+                            yield return l;
+                    }
 
                     // DNS suffix.
                     foreach (var l in props.DnsSuffix.ToLongs().Where(x => x != 0L))

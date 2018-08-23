@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.3;netstandard2.0;net452</TargetFrameworks>
+    <Company>Murray Grant</Company>
+    <Product>Terninger</Product>
+    <Copyright>Copyright © Murray Grant 2017-2018</Copyright>
+    <Authors>Murray Grant</Authors>
+    <Version>0.1.0</Version>
+    <Description>Implementation of the Fortuna CPRNG, with various enhancements. 
+    
+To get started, see the MurrayGrant.Terninger.Random.PooledEntropyCprngGenerator class.
+
+Or use the 'Terninger' nuget package.
+    
+See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
+    <RootNamespace>MurrayGrant.Terninger</RootNamespace>
+    <LangVersion>default</LangVersion>
+    <NoWarn>1701;1702;1591</NoWarn>
+    <RepositoryUrl></RepositoryUrl>
+    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <PackageProjectUrl>https://bitbucket.org/ligos/terninger</PackageProjectUrl>
+    <PackageTags>security random number generator CPRNG PRNG RNG Fortuna</PackageTags>
+
+    <!-- Overflow must be detected and handled. Note that some code paths depend on OverflowExceptions being thrown. -->
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DocumentationFile>bin\Release\$(TargetFramework)\Terninger.Random.Pooled.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <!-- LibLog requires LIBLOG_PORTABLE for netstandard, and LIBLOG_PUBLIC for use in dependent assemblies -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
+    <DefineConstants>LIBLOG_PUBLIC;LIBLOG_PORTABLE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <DefineConstants>LIBLOG_PUBLIC</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)'=='net452'">
+    <DefineConstants>LIBLOG_PUBLIC</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- LibLog uses dynamic -->
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
+  </ItemGroup>
+
+  <!-- FOR DEVELOPMENT -->
+  <ItemGroup Condition="'$(RefNugets)'!='True'">
+    <ProjectReference Include="..\Terninger.Random.Cypher\Terninger.Random.Cypher.csproj" />
+  </ItemGroup>
+
+  <!-- FOR NUGET BUILDS -->
+  <ItemGroup Condition="'$(RefNugets)'=='True'">
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.1.0" />
+  </ItemGroup>
+</Project>
