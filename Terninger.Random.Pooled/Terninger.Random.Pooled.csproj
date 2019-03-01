@@ -4,9 +4,9 @@
     <TargetFrameworks>netstandard1.3;netstandard2.0;net452</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
-    <Copyright>Copyright © Murray Grant 2017-2018</Copyright>
+    <Copyright>Copyright © Murray Grant 2017-2019</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Description>Implementation of the Fortuna CPRNG, with various enhancements. 
     
 To get started, see the MurrayGrant.Terninger.Random.PooledEntropyCprngGenerator class.
@@ -54,6 +54,6 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger.Random.Cypher" Version="0.1.0" />
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.1.*" />
   </ItemGroup>
 </Project>
