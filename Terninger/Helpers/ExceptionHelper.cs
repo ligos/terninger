@@ -10,9 +10,21 @@ namespace MurrayGrant.Terninger.Helpers
     {
         public static T TryAndIgnoreException<T>(Func<T> f)
         {
-            return TryAndIgnoreException(f, default(T));
+            bool ignored = false;
+            return TryAndIgnoreException(f, default(T), ref ignored);
         }
+
+        public static T TryAndIgnoreException<T>(Func<T> f, ref bool didFail)
+        {
+            return TryAndIgnoreException(f, default(T), ref didFail);
+        }
+
         public static T TryAndIgnoreException<T>(Func<T> f, T fallback)
+        {
+            bool ignored = false;
+            return TryAndIgnoreException(f, fallback, ref ignored);
+        }
+        public static T TryAndIgnoreException<T>(Func<T> f, T fallback, ref bool didFail)
         {
             try
             {
@@ -20,15 +32,26 @@ namespace MurrayGrant.Terninger.Helpers
             }
             catch
             {
+                didFail = true;
                 return fallback;
             }
         }
 
         public static U TryAndIgnoreException<T, U>(this T x, Func<T, U> f)
         {
-            return TryAndIgnoreException(x, f, default(U));
+            bool ignored = false;
+            return TryAndIgnoreException(x, f, default(U), ref ignored);
+        }
+        public static U TryAndIgnoreException<T, U>(this T x, Func<T, U> f, ref bool didFail)
+        {
+            return TryAndIgnoreException(x, f, default(U), ref didFail);
         }
         public static U TryAndIgnoreException<T, U>(this T x, Func<T, U> f, U fallback)
+        {
+            bool ignored = false;
+            return TryAndIgnoreException(x, f, fallback, ref ignored);
+        }
+        public static U TryAndIgnoreException<T, U>(this T x, Func<T, U> f, U fallback, ref bool didFail)
         {
             try
             {
@@ -36,6 +59,7 @@ namespace MurrayGrant.Terninger.Helpers
             }
             catch
             {
+                didFail = true;
                 return fallback;
             }
         }

@@ -9,6 +9,7 @@ using System.Net.NetworkInformation;
 using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.LibLog;
+using Uh = MurrayGrant.Terninger.Helpers.UnitHelpers;
 
 namespace MurrayGrant.Terninger.EntropySources.Local
 {
@@ -22,6 +23,20 @@ namespace MurrayGrant.Terninger.EntropySources.Local
 
         private bool _HasRunOnce = false;
         private IRandomNumberGenerator _Rng;
+        // Bunch of flags to notice if we get exceptions on certain properties - as not all platforms support everything.
+        private bool _BytesReceivedFailed;
+        private bool _BytesSentFailed;
+        private bool _IncomingPacketsDiscardedFailed;
+        private bool _IncomingPacketsWithErrorsFailed;
+        private bool _IncomingUnknownProtocolPacketsFailed;
+        private bool _NonUnicastPacketsReceivedFailed;
+        private bool _NonUnicastPacketsSentFailed;
+        private bool _OutgoingPacketsDiscardedFailed;
+        private bool _OutgoingPacketsWithErrorsFailed;
+        private bool _OutputQueueLengthFailed;
+        private bool _UnicastPacketsReceivedFailed;
+        private bool _UnicastPacketsSentFailed;
+        private bool _AddressValidLifetimeFailed;
 
         // Config properties.
         private int _ItemsPerResultChunk = 17;              // This many Int64 stats are combined into one final hash.
@@ -117,22 +132,40 @@ namespace MurrayGrant.Terninger.EntropySources.Local
                 foreach (var i in ins)
                 {
                     // Most of these will be zero.
+                    // Note that these can throw on some platforms, so we do a bunch of exception wrapping.
                     var stats = i.GetIPStatistics();
-                    allStats.Add(stats.BytesReceived);
-                    allStats.Add(stats.BytesSent);
-                    allStats.Add(stats.IncomingPacketsDiscarded);
-                    allStats.Add(stats.IncomingPacketsWithErrors);
-                    allStats.Add(stats.IncomingUnknownProtocolPackets);
-                    allStats.Add(stats.NonUnicastPacketsReceived);
-                    allStats.Add(stats.NonUnicastPacketsSent);
-                    allStats.Add(stats.OutgoingPacketsDiscarded);
-                    allStats.Add(stats.OutgoingPacketsWithErrors);
-                    allStats.Add(stats.OutputQueueLength);
-                    allStats.Add(stats.UnicastPacketsReceived);
-                    allStats.Add(stats.UnicastPacketsSent);
+                    if (!_BytesReceivedFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.BytesReceived)), ref _BytesReceivedFailed);
+                    if (!_BytesSentFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.BytesSent)), ref _BytesSentFailed);
+                    if (!_IncomingPacketsDiscardedFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.IncomingPacketsDiscarded)), ref _IncomingPacketsDiscardedFailed);
+                    if (!_IncomingPacketsWithErrorsFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.IncomingPacketsWithErrors)), ref _IncomingPacketsWithErrorsFailed);
+                    if (!_IncomingUnknownProtocolPacketsFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.IncomingUnknownProtocolPackets)), ref _IncomingUnknownProtocolPacketsFailed);
+                    if (!_NonUnicastPacketsReceivedFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.NonUnicastPacketsReceived)), ref _NonUnicastPacketsReceivedFailed);
+                    if (!_NonUnicastPacketsSentFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.NonUnicastPacketsSent)), ref _NonUnicastPacketsSentFailed);
+                    if (!_OutgoingPacketsDiscardedFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.OutgoingPacketsDiscarded)), ref _OutgoingPacketsDiscardedFailed);
+                    if (!_OutgoingPacketsWithErrorsFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.OutgoingPacketsWithErrors)), ref _OutgoingPacketsWithErrorsFailed);
+                    if (!_OutputQueueLengthFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.OutputQueueLength)), ref _OutputQueueLengthFailed);
+                    if (!_UnicastPacketsReceivedFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.UnicastPacketsReceived)), ref _UnicastPacketsReceivedFailed);
+                    if (!_UnicastPacketsSentFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() => allStats.Add(stats.UnicastPacketsSent)), ref _UnicastPacketsSentFailed);
 
-                    var props = i.GetIPProperties();
-                    allStats.AddRange(props.UnicastAddresses.Select(x => x.AddressValidLifetime));      // Remaining lease duration.
+                    // Remaining lease duration.
+                    if (!_AddressValidLifetimeFailed)
+                        ExceptionHelper.TryAndIgnoreException(() => Uh.ToUnit(() =>
+                        {
+                            var props = i.GetIPProperties();
+                            allStats.AddRange(props.UnicastAddresses.Select(x => x.AddressValidLifetime));
+                        }), ref _AddressValidLifetimeFailed);
                 }
 
                 // Remove zeros and shuffle to prevent obvious correlations.
