@@ -113,6 +113,16 @@ Any generator which can produce a `byte[]` can be easily adapted.
 
 TODO - other features
 
+### Changes ###
+
+**0.1.1**:
+
+* Fixed an issue in `NetworkStatsSource` which generated exceptions repeatedly on Debian.
+
+**0.1.0**:
+
+* Initial release!
+
 ### About ###
 
 See my [blog series about building Turninger and a CPRNG](https://blog.ligos.net/tags/Terninger-Series/).
