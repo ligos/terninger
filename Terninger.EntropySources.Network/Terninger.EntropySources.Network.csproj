@@ -6,7 +6,7 @@
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2019</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Description>Active network based entropy sources for Terninger including ping, external http sites and other random sources (via http).
 
 See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
