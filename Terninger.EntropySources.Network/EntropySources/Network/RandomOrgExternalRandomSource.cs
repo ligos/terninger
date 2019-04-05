@@ -109,21 +109,21 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         {
             // http://www.random.org/
 
-            // https://api.random.org/json-rpc/1/introduction
-            // https://api.random.org/json-rpc/1/basic
-            // https://api.random.org/json-rpc/1/request-builder
+            // https://api.random.org/json-rpc/2/introduction
+            // https://api.random.org/json-rpc/2/basic
+            // https://api.random.org/json-rpc/2/request-builder
 
             // Fetch data.
             var response = "";
             var sw = Stopwatch.StartNew();
             if (!_UseDiskSourceForUnitTests)
             {
-                var apiUri = new Uri("https://api.random.org/json-rpc/1/invoke");
+                var apiUri = new Uri("https://api.random.org/json-rpc/2/invoke");
                 var hc = HttpClientHelpers.Create(userAgent: _UserAgent);
                 var requestBody = "{\"jsonrpc\":\"2.0\",\"method\":\"generateBlobs\",\"params\":{\"apiKey\":\"" + _ApiKey.ToString("D") + "\",\"n\":1,\"size\":" + (_BytesPerRequest * 8) + ",\"format\":\"base64\"},\"id\":1}";
                 try
                 {
-                    response = await hc.PostStringAsync(apiUri, requestBody, "application/json-rpc");
+                    response = await hc.PostStringAsync(apiUri, requestBody, "application/json");
                 }
                 catch (Exception ex)
                 {
