@@ -6,7 +6,7 @@
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2019</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.1.2</Version>
+    <Version>0.2.0</Version>
     <Description>Active network based entropy sources for Terninger including ping, external http sites and other random sources (via http).
 
 See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
@@ -48,10 +48,10 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger" Version="0.1.*" />
-    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.1.*" />
-    <PackageReference Include="Terninger.Random.Cypher" Version="0.1.*" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.1.*" />
+    <PackageReference Include="Terninger" Version="0.2.*" />
+    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.2.*" />
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.2.*" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.2.*" />
   </ItemGroup>
   
 </Project>

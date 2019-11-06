@@ -6,7 +6,7 @@
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2019</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.1.1</Version>
+    <Version>0.2.0</Version>
     <Description>Additional local entropy sources based on .NET Standard 2.0 APIs. Sources are runtime and machine architecture portable.
 
 See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
@@ -29,9 +29,9 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger" Version="0.1.*" />
-    <PackageReference Include="Terninger.Random.Cypher" Version="0.1.*" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.1.*" />
+    <PackageReference Include="Terninger" Version="0.2.*" />
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.2.*" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.2.*" />
   </ItemGroup>
 
 </Project>

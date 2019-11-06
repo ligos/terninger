@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.1;net471</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.0;netcoreapp2.1;net472</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
-    <Copyright>Copyright © Murray Grant 2017-2018</Copyright>
+    <Copyright>Copyright © Murray Grant 2017-2019</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Description>Unit test for Terninger.
 
 See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
@@ -19,7 +19,7 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <PackageTags>security random number generator CPRNG PRNG RNG Fortuna</PackageTags>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)'=='net471'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='net472'">
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
@@ -35,11 +35,11 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger.Random.Cypher" Version="0.1.0" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.1.0" />
-    <PackageReference Include="Terninger" Version="0.1.0" />
-    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.1.0" />
-    <PackageReference Include="Terninger.EntropySources.Network" Version="0.1.0" />
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.2.*" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.2.*" />
+    <PackageReference Include="Terninger" Version="0.2.*" />
+    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.2.*" />
+    <PackageReference Include="Terninger.EntropySources.Network" Version="0.2.*" />
   </ItemGroup>
   
   <ItemGroup>

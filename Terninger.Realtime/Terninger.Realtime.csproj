@@ -4,7 +4,7 @@
     <TargetFrameworks>net452</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
-    <Copyright>Copyright © Murray Grant 2017-2018</Copyright>
+    <Copyright>Copyright © Murray Grant 2017-2019</Copyright>
     <Authors>Murray Grant</Authors>
     <Version>0.1.0</Version>
     <Description>Windows Forms GUI for showing Terninger in action in real time.

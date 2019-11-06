@@ -1,7 +1,7 @@
 rem Rebuild
 dotnet clean -c Release
 
-SET NUGET_VERSION=0.1.1
+SET NUGET_VERSION=0.2.0
 
 rem Build each package. We just use the package which includes debug symbols.
 dotnet pack Terninger.Random.Cypher -c Release /p:RefNugets=True --include-symbols -o ../releases
