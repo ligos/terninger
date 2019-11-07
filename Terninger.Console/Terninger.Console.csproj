@@ -26,6 +26,10 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <DocumentationFile>bin\Release\$(TargetFramework)\Terninger.Console.xml</DocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)'=='net452'">
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+
   <!-- FOR DEVELOPMENT -->
   <ItemGroup Condition="'$(RefNugets)'!='True'">
     <ProjectReference Include="..\Terninger\Terninger.csproj" />

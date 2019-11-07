@@ -135,7 +135,7 @@ namespace MurrayGrant.Terninger.Console
                 _Logger.Info("Terninger CPRNG   © Murray Grant");
 
             // Load and initialise objects.
-            var outStreamAndTarget = GetOutputStream();
+            var (outStream, outName) = GetOutputStream();
             var outputWriter = GetOutputWriter();
             var generatorDetails = CreateRandomGenerator();
             if (!quiet)
@@ -145,7 +145,7 @@ namespace MurrayGrant.Terninger.Console
                 if (!String.IsNullOrEmpty(generatorDetails.ExtraDescription))
                     _Logger.Debug("    " + generatorDetails.ExtraDescription);
                 _Logger.Debug("Seed source: {0}", generatorDetails.SeedDescription);
-                _Logger.Debug("Output target: {0}, style {1}", outStreamAndTarget.Item2, outputStyle);
+                _Logger.Debug("Output target: {0}, style {1}", outName, outputStyle);
                 if (outFile == "")
                     // Stdio output needs extra line here
                     Con.WriteLine();
@@ -156,7 +156,7 @@ namespace MurrayGrant.Terninger.Console
             var sw = Stopwatch.StartNew();      // Start the clock for a basic measure of performance.
             generatorDetails.WaitForGeneratorReady();
             var nextStatusUpdate = sw.Elapsed.Add(StatusUpdatePeriod);
-            using (var outStream = outStreamAndTarget.Item1)
+            using (outStream)
             {
                 long remaining = byteCount <= 0 ? Int64.MaxValue : byteCount;
 
@@ -206,51 +206,49 @@ namespace MurrayGrant.Terninger.Console
             }
         }
 
-        private static Tuple<byte[], string> DeriveSeed()
+        private static (byte[] seed, string description) DeriveSeed()
         {
             var seedLength = GetKeysizeBytesForCryptoPrimitive();
             var sha512 = SHA512.Create();
             if (String.IsNullOrEmpty(seed))
                 // No seed provided: generate one!
-                return Tuple.Create(
-                            sha512.ComputeHash(
-                                StaticLocalEntropy.Get32().GetAwaiter().GetResult().Concat(
-                                    CheapEntropy.Get32()
-                                ).ToArray()
-                            ).EnsureArraySize(seedLength)
-                            , "System environment."
-                        );
+                return (
+                        sha512.ComputeHash(
+                            StaticLocalEntropy.Get32().GetAwaiter().GetResult().Concat(CheapEntropy.Get32()).ToArray()
+                        ).EnsureArraySize(seedLength)
+                        , "System environment."
+                );
             if (seed.IsHexString() && seed.Length == seedLength * 2)
                 // A hex string of required bytes.
-                return Tuple.Create(seed.ParseFromHexString(), $"{seedLength} byte hex seed.");
+                return (seed.ParseFromHexString(), $"{seedLength} byte hex seed.");
             else if (File.Exists(seed))
             {
                 // A file reference: get the SHA512 hash of it as a seed.
                 using (var stream = new FileStream(seed, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024))
-                    return Tuple.Create(
+                    return (
                             sha512.ComputeHash(stream).EnsureArraySize(seedLength), 
                             "SHA512 hash of file."
-                        );
+                    );
             }
             else
-                // Assume a random set of characters: get the SHA256 hash of the UTF8 string as a seed.
-                return Tuple.Create(
+                // Assume a random set of characters: get the SHA512 hash of the UTF8 string as a seed.
+                return (
                         sha512.ComputeHash(Encoding.UTF8.GetBytes(seed)).EnsureArraySize(seedLength),
                         "SHA512 hash of random string / password / passphrase."
-                    );
+                );
         }
 
-        private static Tuple<Stream, string> GetOutputStream()
+        private static (Stream stream, string name) GetOutputStream()
         {
             if (outFile == null)
                 // Null output (mostly for benchmarking).
-                return Tuple.Create(Stream.Null, "Null stream.");
+                return (Stream.Null, "Null stream.");
             else if (outFile == "")
                 // Standard output.
-                return Tuple.Create(Con.OpenStandardOutput(OutBufferSize), "Standard Output.");
+                return (Con.OpenStandardOutput(OutBufferSize), "Standard Output.");
             else
                 // File output.
-                return Tuple.Create((Stream)new FileStream(outFile, FileMode.Create, FileAccess.Write, FileShare.None, OutBufferSize), outFile);
+                return (new FileStream(outFile, FileMode.Create, FileAccess.Write, FileShare.None, OutBufferSize), outFile);
         }
 
         private static Action<Stream, byte[]> GetOutputWriter()
@@ -279,9 +277,9 @@ namespace MurrayGrant.Terninger.Console
             if (generatorType == Generator.StockRandom)
             {
                 result.Description = "deterministic PRNG - " + typeof(Rand).Namespace + "." + typeof(Rand).Name;
-                var seedAndDescription = DeriveSeed();
-                result.SeedDescription = seedAndDescription.Item2;
-                result.Generator = new StandardRandomWrapperGenerator(new Rand(BitConverter.ToInt32(seedAndDescription.Item1, 0)));
+                var (seed, description) = DeriveSeed();
+                result.SeedDescription = description;
+                result.Generator = new StandardRandomWrapperGenerator(new Rand(BitConverter.ToInt32(seed, 0)));
                 result.WaitForGeneratorReady = () => { };
                 result.WaitForGeneratorStopped = () => { };
             }
@@ -299,24 +297,22 @@ namespace MurrayGrant.Terninger.Console
                 var hash = GetHashAlgorithm();
                 var counter = new CypherCounter(primitive.BlockSizeBytes);
                 var entropyGetter = GetEntropyGetter();
-                var seedAndDescription = DeriveSeed();
+                var (seed, description) = DeriveSeed();
                 result.Description = $"{(nonDeterministic ? "non-" : "")}deterministic PRNG - " + typeof(CypherBasedPrngGenerator).Namespace + "." + typeof(CypherBasedPrngGenerator).Name;
                 result.ExtraDescription = $"Using crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
-                result.SeedDescription = seedAndDescription.Item2;
-                result.Generator = CypherBasedPrngGenerator.Create(key: seedAndDescription.Item1, cryptoPrimitive: primitive, hashAlgorithm: hash, initialCounter: counter, additionalEntropyGetter: entropyGetter);
+                result.SeedDescription = description;
+                result.Generator = CypherBasedPrngGenerator.Create(key: seed, cryptoPrimitive: primitive, hashAlgorithm: hash, initialCounter: counter, additionalEntropyGetter: entropyGetter);
                 result.WaitForGeneratorReady = () => { };
                 result.WaitForGeneratorStopped = () => { };
             }
             else if (generatorType == Generator.TerningerPooled)
             {
-                var seedAndDescription = DeriveSeed();
-                result.SeedDescription = seedAndDescription.Item2;
+                var (seed, description) = DeriveSeed();
+                result.SeedDescription = description;
 
                 // Accumulator.
                 var accKey = SHA512.Create().ComputeHash(
-                    StaticLocalEntropy.Get32().GetAwaiter().GetResult().Concat(
-                        CheapEntropy.Get32()
-                    ).ToArray()
+                    StaticLocalEntropy.Get32().GetAwaiter().GetResult().Concat(CheapEntropy.Get32()).ToArray()
                 ).EnsureArraySize(32);
                 var accPrng = CypherBasedPrngGenerator.Create(accKey, CryptoPrimitive.Aes256(), SHA512.Create());
                 var acc = new EntropyAccumulator(linearPools, randomPools, accPrng, SHA512.Create);
@@ -326,7 +322,7 @@ namespace MurrayGrant.Terninger.Console
                 var hash = GetHashAlgorithm();
                 var genPrng = CypherBasedPrngGenerator.Create(new byte[32], primitive, hash);
                 IEnumerable<IEntropySource> sources = new IEntropySource[] {
-                    new UserSuppliedSource(String.IsNullOrEmpty(seed) ? null : seedAndDescription.Item1),
+                    new UserSuppliedSource(seed),
                     new CurrentTimeSource(),
                     new TimerSource(),
                     new GCMemorySource(),
