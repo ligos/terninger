@@ -11,6 +11,11 @@ using BenchmarkDotNet.Code;
 
 namespace MurrayGrant.Terninger.Perf.Benchmarks
 {
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.Net472)]
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.NetCoreApp21)]
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.NetCoreApp30)]
+    [MemoryDiagnoser]
+    [AllStatisticsColumn]
     public class GenerateNumbers
     {
         private static readonly byte[] _ZeroKey32Bytes = new byte[32];

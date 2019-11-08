@@ -9,6 +9,11 @@ using BenchmarkDotNet.Attributes;
 
 namespace MurrayGrant.Terninger.Perf.Benchmarks
 {
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.Net472)]
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.NetCoreApp21)]
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.NetCoreApp30)]
+    [MemoryDiagnoser]
+    [AllStatisticsColumn]
     public class CrypoOperations
     {
         private static readonly Aes _Aes128 = new AesCryptoServiceProvider() { KeySize = 128 };
