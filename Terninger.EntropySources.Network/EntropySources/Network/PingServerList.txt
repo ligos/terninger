@@ -42,10 +42,6 @@
 2001:910:800::12
 2001:910:800::40
 
-# https://freedns.afraid.org/ ??
-37.235.1.174
-37.235.1.177
-
 # https://developers.google.com/speed/public-dns/
 8.8.8.8
 8.8.4.4
@@ -94,7 +90,6 @@
 2a01:4f8:141:4281::999
 188.226.146.136
 2001:470:1f04:ebf::2
-79.124.7.81
 
 # http://servidordenoms.cat/vull-aquest-dns/configuracio-a-windows/windows-7/
 109.69.8.51

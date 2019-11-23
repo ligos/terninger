@@ -4,7 +4,6 @@
 
 https://www.reddit.com/
 https://www.youtube.com/
-http://www.qq.com/
 https://www.amazon.com/
 https://twitter.com/
 https://imgur.com/
@@ -14,7 +13,6 @@ https://www.foxnews.com/
 https://stackoverflow.com/
 http://www.news.com.au/
 https://news.google.com.au/
-https://www.9news.com.au/
 https://www.smh.com.au/
 https://www.bbc.com/news/
 https://edition.cnn.com/
@@ -58,7 +56,6 @@ http://www.chicagotribune.com/
 https://www.ftc.gov/news-events/press-releases            
 https://www.economist.com/
 https://www.thetimes.co.uk/?region=global
-https://www.hc360.com/
 https://www.infoseek.co.jp/
 https://www.meetup.com/en-AU/find/            
 https://www.gizmodo.com.au/
