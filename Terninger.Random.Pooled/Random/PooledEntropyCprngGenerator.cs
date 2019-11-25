@@ -688,9 +688,9 @@ namespace MurrayGrant.Terninger.Random
                                                  : EntropyPriority == EntropyPriority.Low ? Config.PollWaitTimeInLowPriority
                                                  : TimeSpan.FromSeconds(1);     // Impossible case.
 
-        private double ScalingFactorBetweenSyncPolls() => EntropyPriority == EntropyPriority.High ? 1.2
-                                                     : EntropyPriority == EntropyPriority.Normal ? 2.0
-                                                     : EntropyPriority == EntropyPriority.Low ? 3.0
+        private double ScalingFactorBetweenSyncPolls() => EntropyPriority == EntropyPriority.High ? 1.1
+                                                     : EntropyPriority == EntropyPriority.Normal ? 1.4
+                                                     : EntropyPriority == EntropyPriority.Low ? 1.9
                                                      : 2.0;     // Impossible case.
 
         private string WakeReason(int wakeIdx) => wakeIdx == WakeReason_SleepElapsed ? "sleep time elapsed"
