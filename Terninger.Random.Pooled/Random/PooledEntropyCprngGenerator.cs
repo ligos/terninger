@@ -72,7 +72,7 @@ namespace MurrayGrant.Terninger.Random
         /// Event is raised after each time the generator is reseeded.
         /// </summary>
         public event EventHandler<PooledEntropyCprngGenerator> OnReseed;
-
+        private List<(Int128 seedNumber, TaskCompletionSource<Int128> source)> _OnReesedTaskSources = new List<(Int128, TaskCompletionSource<Int128>)>();
 
         public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources) 
             : this(initialisedSources, new EntropyAccumulator(), CypherBasedPrngGenerator.CreateWithCheapKey(), new PooledGeneratorConfig()) { }
@@ -210,9 +210,12 @@ namespace MurrayGrant.Terninger.Random
         /// </summary>
         private async Task WaitForNthSeed(Int128 seedNumber)
         {
-            // TODO: work out how to do this without polling.
-            while (this.ReseedCount < seedNumber)
-                await Task.Delay(100);
+            var reseedSource = new TaskCompletionSource<Int128>();
+            lock (_OnReesedTaskSources)
+            {
+                _OnReesedTaskSources.Add((seedNumber, reseedSource));
+            }
+            await reseedSource.Task;
         }
 
         /// <summary>
@@ -226,11 +229,16 @@ namespace MurrayGrant.Terninger.Random
         /// <summary>
         /// Stop the generator from gathering entropy. A Task is returned when the generator has stopped.
         /// </summary>
-        public async Task Stop()
+        public Task Stop()
         {
             Logger.Debug("Sending stop signal to generator thread.");
             _ShouldStop.Cancel();
-            await _SchedulerTask;
+            return _SchedulerTask
+#if NET452
+                ?? Task.FromResult<object>(null);
+#else
+                ?? Task.CompletedTask;
+#endif
         }
 
         /// <summary>
@@ -350,6 +358,10 @@ namespace MurrayGrant.Terninger.Random
 
                     // Update the priority based on recent data requests.
                     MaybeUpdatePriority(didReseed);
+
+                    // And update any awaiters / event subscribers.
+                    if (didReseed)
+                        RaiseOnReseedEvent();
                 }
 
                 // Wait for some period of time before polling again.
@@ -557,8 +569,16 @@ namespace MurrayGrant.Terninger.Random
                 this._LastReseedUtc = DateTime.UtcNow;
                 this._BytesGeneratedAtLastReseed = this.BytesRequested;
                 Logger.Info("Re-seeded Generator using {0:N0} bytes of entropy from {1:N0} accumulator pool(s).", seedMaterial.Length, _Accumulator.PoolCountUsedInLastSeedGeneration);
+            }
+            return didReseed;
+        }
 
+        private void RaiseOnReseedEvent()
+        {
+            var reseedCount = this.ReseedCount;
 
+            if (this.OnReseed != null)
+            {
                 Logger.Trace("Raising OnReseed event.");
                 try
                 {
@@ -570,7 +590,20 @@ namespace MurrayGrant.Terninger.Random
                     Logger.WarnException("Exception when raising OnReseed event.", ex);
                 }
             }
-            return didReseed;
+
+            if (_OnReesedTaskSources.Any())
+            {
+                lock (_OnReesedTaskSources)
+                {
+                    Logger.Trace("Signaling WaitForNthSeed() awaiters.");
+                    var toSignal = _OnReesedTaskSources.Where(x => x.seedNumber <= reseedCount).ToList();
+                    foreach (var (seedNumber, source) in toSignal)
+                    {
+                        source.SetResult(reseedCount);
+                        _OnReesedTaskSources.Remove((seedNumber, source));
+                    }
+                }
+            }
         }
 
         private void MaybeUpdatePriority(bool didReseed)
