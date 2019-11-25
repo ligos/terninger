@@ -26,12 +26,13 @@ namespace MurrayGrant.Terninger.Random
         private readonly EntropyAccumulator _Accumulator;
         private readonly object _AccumulatorLock = new object();
         // Multiple entropy sources, as specified in section 9.5.1.
-        private readonly List<IEntropySource> _EntropySources;
+        private readonly List<SourceAndMetadata> _EntropySources;
         public int SourceCount => this._EntropySources.Count;
 
         // A task used to schedule reading from entropy sources.
         // TODO: should we have a TaskFactory or TaskScheduler to allow a non-thread pool task?
         private Task _SchedulerTask;
+        private readonly List<Task> _OutstandingEntropySourceTasks = new List<Task>();
 
         private bool _Disposed = false;
         private readonly static ILog Logger = LogProvider.For<PooledEntropyCprngGenerator>();
@@ -95,7 +96,7 @@ namespace MurrayGrant.Terninger.Random
             this.UniqueId = Guid.NewGuid();
             this._Prng = prng;      // Note that this is keyed with a low entropy key.
             this._Accumulator = accumulator;
-            this._EntropySources = new List<IEntropySource>();
+            this._EntropySources = new List<SourceAndMetadata>();
             foreach (var s in initialisedSources.Where(s => s != null))
                 _EntropySources.Add(AssignSourceUniqueName(s));
             this.Config = config ?? new PooledGeneratorConfig();
@@ -125,7 +126,7 @@ namespace MurrayGrant.Terninger.Random
                     _Prng.TryDispose();
                 if (_EntropySources != null)
                     foreach (var s in _EntropySources)
-                        s.TryDispose();
+                        s.Source.TryDispose();
                 _Disposed = true;
             }
         }
@@ -215,7 +216,7 @@ namespace MurrayGrant.Terninger.Random
         }
 
         /// <summary>
-        /// Stop the generater from gathering entropy.
+        /// Stop the generator from gathering entropy.
         /// </summary>
         public void RequestStop()
         {
@@ -223,16 +224,13 @@ namespace MurrayGrant.Terninger.Random
             _ShouldStop.Cancel();
         }
         /// <summary>
-        /// Stop the generater from gathering entropy. A Task is returned when the generator has stopped.
+        /// Stop the generator from gathering entropy. A Task is returned when the generator has stopped.
         /// </summary>
         public async Task Stop()
         {
             Logger.Debug("Sending stop signal to generator thread.");
             _ShouldStop.Cancel();
-            await Task.Delay(1);
-            // TODO: work out how to do this without polling. Thread.Join() perhaps.
-            while (this.IsRunning)
-                await Task.Delay(100);
+            await _SchedulerTask;
         }
 
         /// <summary>
@@ -304,7 +302,7 @@ namespace MurrayGrant.Terninger.Random
                 }
             }
         }
-        private IEntropySource AssignSourceUniqueName(IEntropySource source)
+        private SourceAndMetadata AssignSourceUniqueName(IEntropySource source)
         {
             // Assumption: the caller has a lock on _EntropySources.
 
@@ -319,12 +317,12 @@ namespace MurrayGrant.Terninger.Random
 
             var baseName = candidateName;
             int uniquifier = 1;
-            while (_EntropySources.Any(x => String.Equals(candidateName, x.Name, StringComparison.CurrentCultureIgnoreCase)))
+            while (_EntropySources.Any(x => String.Equals(candidateName, x.Source.Name, StringComparison.CurrentCultureIgnoreCase)))
             {
-                candidateName = baseName + " " + uniquifier;
+                candidateName = baseName + " " + (uniquifier++);
             }
             source.Name = candidateName;
-            return source;
+            return new SourceAndMetadata(source);
         }
 
         private void WorkerLoop()
@@ -333,8 +331,8 @@ namespace MurrayGrant.Terninger.Random
             {
                 Logger.Trace("Running entropy loop.");
 
-                var sources = GetSources();
-                if (sources == null || !sources.Any())
+                var (syncSources, asyncSources) = GetSources();
+                if (!syncSources.Any() && !asyncSources.Any())
                 {
                     // No entropy sources; sleep and try again soon.
                     Logger.Trace("No entropy sources available yet.");
@@ -342,8 +340,8 @@ namespace MurrayGrant.Terninger.Random
                 else
                 {
                     // Poll all sources.
-                    Logger.Trace("Gathering entropy from {0:N0} source(s).", sources.Count());
-                    this.PollSources(sources);
+                    Logger.Trace("Gathering entropy from {0:N0} source(s).", syncSources.Count() + asyncSources.Count());
+                    this.PollSources(syncSources, asyncSources).GetAwaiter().GetResult();
                     Logger.Trace("Accumulator stats (bytes): available entropy = {0}, first pool entropy = {1}, min pool entropy = {2}, max pool entropy = {3}, total entropy ever seen {4}.", _Accumulator.AvailableEntropyBytesSinceLastSeed, _Accumulator.PoolZeroEntropyBytesSinceLastSeed, _Accumulator.MinPoolEntropyBytesSinceLastSeed, _Accumulator.MaxPoolEntropyBytesSinceLastSeed, _Accumulator.TotalEntropyBytes);
 
 
@@ -366,10 +364,10 @@ namespace MurrayGrant.Terninger.Random
             }
         }
 
-        private IEnumerable<IEntropySource> GetSources()
+        private (IEnumerable<SourceAndMetadata> syncSources, IEnumerable<SourceAndMetadata> asyncSource) GetSources()
         {
             // Read and randomise sources.
-            IEntropySource[] sources;
+            SourceAndMetadata[] sources;
             lock (_EntropySources)
             {
                 sources = _EntropySources.ToArray();
@@ -380,7 +378,7 @@ namespace MurrayGrant.Terninger.Random
                 // The thread should be woken on cancellation or external signal.
                 int wakeIdx = WaitHandle.WaitAny(_AllSignals, 100);
                 var wasTimeout = wakeIdx == WaitHandle.WaitTimeout;
-                return null;
+                return (Enumerable.Empty<SourceAndMetadata>(), Enumerable.Empty<SourceAndMetadata>());
             }
             // Note if we could use some more sources.
             if (sources.Length <= 2)
@@ -391,49 +389,149 @@ namespace MurrayGrant.Terninger.Random
                 // Sources are shuffled so the last source isn't easily determined (the last source can bias the accumulator, particularly if malicious).
                 sources.ShuffleInPlace(_Prng);
             }
-            return sources;
+
+            // Identify very likely sync sources.
+            var syncSources = sources.Where(x => x.ExceptionScore > -10
+                                            &&
+                                            ((x.AsyncScore <= -10 && (x.AsyncHint == IsAsync.Never || x.AsyncHint == IsAsync.AfterInit))
+                                            || (x.AsyncScore <= -20 && (x.AsyncHint == IsAsync.Rarely || x.AsyncHint == IsAsync.Unknown))
+                                            ))
+                                    .ToArray();
+            var asyncSources = sources.Where(x => x.ExceptionScore > -10 && !syncSources.Contains(x)).ToArray();
+
+            return (syncSources, asyncSources);
         }
 
-        private void PollSources(IEnumerable<IEntropySource> sources)
+        private async Task PollSources(IEnumerable<SourceAndMetadata> syncSources, IEnumerable<SourceAndMetadata> asyncSources)
         {
             // Poll all sources.
-            // TODO: read up to N in parallel.
-            foreach (var source in sources)
+            if (_OutstandingEntropySourceTasks.Any())
             {
-                byte[] maybeEntropy;
-                try
-                {
-                    // These may come from 3rd parties, use external hardware or do IO: anything could go wrong!
-                    Logger.Trace("Reading entropy from source '{0}' (of type '{1}'.", source.Name, source.GetType().Name);
-                    maybeEntropy = source.GetEntropyAsync(this.EntropyPriority).GetAwaiter().GetResult();
-                    if (maybeEntropy == null || maybeEntropy.Length == 0)
-                        Logger.Trace("Read {0:N0} byte(s) of entropy from source '{1}' (of type '{2}').", 0, source.Name, source.GetType().Name);
-                    else
-                        Logger.Debug("Read {0:N0} byte(s) of entropy from source '{1}' (of type '{2}').", maybeEntropy.Length, source.Name, source.GetType().Name);
-                }
-                catch (Exception ex)
-                {
-                    Logger.ErrorException("Unhandled exception from entropy source '{0}' (of type '{1}').", ex, source.Name, source.GetType().Name);
-                    // TODO: if a particular source keeps throwing, should we ignore it??
-                    maybeEntropy = null;
-                }
+                Logger.Trace("Ensuring previous async sources have completed.");
+                await Task.WhenAll(_OutstandingEntropySourceTasks);
+                _OutstandingEntropySourceTasks.Clear();
+            }
 
+            // Start all likely async sources up front.
+            var asyncTasks = asyncSources.Select(x => ReadAndAccumulate(x)).ToList();
+            Logger.Trace("Reading from {0:N0} async sources.", asyncTasks.Count);
 
-                if (maybeEntropy != null)
-                {
-                    lock (_AccumulatorLock)
-                    {
-                        _Accumulator.Add(new EntropyEvent(maybeEntropy, source));
-                    }
-                }
+            // While the async sources are running, we do a mini-polling loop on the sync ones.
+            Logger.Trace("Reading from {0:N0} sync sources.", syncSources.Count());
+            var loopDelay = Config.MiniPollWaitTime;
+            int loops = 1;
+            do
+            {
+                await PollSyncSources(syncSources, asyncTasks);
+
                 if (_ShouldStop.IsCancellationRequested)
                     break;
-                if (this.EntropyPriority == EntropyPriority.High && this.ShouldReseed())
+
+                if (this.EntropyPriority == EntropyPriority.High
+                    && this.ShouldReseed()
+                    && (asyncTasks.Any(t => t.IsCompleted) || !asyncTasks.Any()))
                 {
                     // Break out of the loop early when in high priority 
                     Logger.Trace("Have gathered a minimal amount of entropy in High priority, ending entropy source loop early.");
                     break;
                 }
+
+                if ((asyncTasks.All(x => x.IsCompleted) || !asyncTasks.Any())
+                    && loops >= 1)
+                {
+                    // Break out of the loop when all async sources have completed.
+                    Logger.Trace("Async entropy sources have completed, and at least one poll of all sync sources. Ending polling loop.");
+                    break;
+                }
+
+                if (asyncTasks.Any())
+                {
+                    Logger.Trace("Mini / synchronous pooling loop #{0} completed. Waiting for {1:N1}ms.", loops, loopDelay.TotalMilliseconds);
+                    await Task.Delay(loopDelay);
+                    loopDelay = new TimeSpan((long)(loopDelay.Ticks * ScalingFactorBetweenSyncPolls()));
+                }
+                loops = loops + 1;
+            } 
+            while (!_ShouldStop.IsCancellationRequested && asyncTasks.Any() && loops < 30);
+
+            await AwaitOrParkUnfinishedAsyncTasks(asyncTasks);
+        }
+
+        private async Task PollSyncSources(IEnumerable<SourceAndMetadata> syncSources, IEnumerable<Task> asyncTasks)
+        {
+            foreach (var sm in syncSources)
+            {
+                await ReadAndAccumulate(sm);
+
+                if (_ShouldStop.IsCancellationRequested)
+                    break;
+
+                if (this.EntropyPriority == EntropyPriority.High
+                    && this.ShouldReseed()
+                    && asyncTasks.Any(t => t.IsCompleted))
+                    break;
+            }
+        }
+        
+        private async Task AwaitOrParkUnfinishedAsyncTasks(IEnumerable<Task> asyncTasks)
+        {
+            if (!asyncTasks.Any())
+                return;
+
+            var unfinishedTasks = asyncTasks.Where(x => !x.IsCompleted).ToList();
+            if (this.EntropyPriority != EntropyPriority.High && unfinishedTasks.Any())
+            {
+                Logger.Trace("Waiting for {0:N0} slow async sources.", unfinishedTasks.Count());
+                await Task.WhenAll(asyncTasks);
+            }
+            else if (this.EntropyPriority == EntropyPriority.High && unfinishedTasks.Any())
+            {
+                Logger.Trace("{0:N0} slow async sources still running; will await on next polling loop.", unfinishedTasks.Count());
+                _OutstandingEntropySourceTasks.AddRange(unfinishedTasks);
+            }
+        }
+
+        private async Task ReadAndAccumulate(SourceAndMetadata sm)
+        {
+            var maybeEntropy = await ReadFromSourceSafely(sm);
+            if (maybeEntropy != null)
+            {
+                lock (_AccumulatorLock)
+                {
+                    _Accumulator.Add(new EntropyEvent(maybeEntropy, sm.Source));
+                }
+            }
+        }
+
+        private async Task<byte[]> ReadFromSourceSafely(SourceAndMetadata sm)
+        {
+            var source = sm.Source;
+            try
+            {
+                // These may come from 3rd parties, use external hardware or do IO: anything could go wrong!
+                Logger.Trace("Reading entropy from source '{0}' (of type '{1}').", source.Name, source.GetType().Name);
+                
+                var t = sm.Source.GetEntropyAsync(this.EntropyPriority);
+                var wasSync = t.IsCompleted;
+                var maybeEntropy = await t;
+                
+                if (maybeEntropy == null || maybeEntropy.Length == 0)
+                    Logger.Trace("Read {0:N0} byte(s) of entropy from source '{1}' (of type '{2}').", 0, source.Name, source.GetType().Name);
+                else
+                    Logger.Debug("Read {0:N0} byte(s) of entropy from source '{1}' (of type '{2}').", maybeEntropy.Length, source.Name, source.GetType().Name);
+                
+                sm.ScoreSuccess();
+                if (wasSync)
+                    sm.ScoreSync();
+                else
+                    sm.ScoreAsync();
+                return maybeEntropy;
+            }
+            catch (Exception ex)
+            {
+                Logger.ErrorException("Unhandled exception from entropy source '{0}' (of type '{1}').", ex, source.Name, source.GetType().Name);
+                sm.ScoreException();
+                return null;
             }
         }
 
@@ -459,7 +557,6 @@ namespace MurrayGrant.Terninger.Random
                 this._LastReseedUtc = DateTime.UtcNow;
                 this._BytesGeneratedAtLastReseed = this.BytesRequested;
                 Logger.Info("Re-seeded Generator using {0:N0} bytes of entropy from {1:N0} accumulator pool(s).", seedMaterial.Length, _Accumulator.PoolCountUsedInLastSeedGeneration);
-
 
 
                 Logger.Trace("Raising OnReseed event.");
@@ -558,6 +655,11 @@ namespace MurrayGrant.Terninger.Random
                                                  : EntropyPriority == EntropyPriority.Low ? Config.PollWaitTimeInLowPriority
                                                  : TimeSpan.FromSeconds(1);     // Impossible case.
 
+        private double ScalingFactorBetweenSyncPolls() => EntropyPriority == EntropyPriority.High ? 1.2
+                                                     : EntropyPriority == EntropyPriority.Normal ? 2.0
+                                                     : EntropyPriority == EntropyPriority.Low ? 3.0
+                                                     : 2.0;     // Impossible case.
+
         private string WakeReason(int wakeIdx) => wakeIdx == WakeReason_SleepElapsed ? "sleep time elapsed"
                                                 : wakeIdx == WakeReason_ExternalReseed ? "external reseed request"
                                                 : wakeIdx == WakeReason_GeneratorStopped ? "generator stopped"
@@ -627,6 +729,12 @@ namespace MurrayGrant.Terninger.Random
             /// Default: 1 min
             /// </summary>
             public TimeSpan PollWaitTimeInLowPriority { get; set; } = TimeSpan.FromSeconds(60);
+
+            /// <summary>
+            /// Time to wait between synchronous source polling in mini-polling loop while waiting for async sources to complete.
+            /// Default: 30ms
+            /// </summary>
+            public TimeSpan MiniPollWaitTime { get; set; } = TimeSpan.FromMilliseconds(30);
 
 
             /// <summary>

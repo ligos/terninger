@@ -17,6 +17,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// <summary>
     /// An entropy source which uses ping timings as input.
     /// </summary>
+    [AsyncHint(IsAsync.Always)]
     public class PingStatsSource : EntropySourceWithPeriod
     {
         public override string Name { get; set; }

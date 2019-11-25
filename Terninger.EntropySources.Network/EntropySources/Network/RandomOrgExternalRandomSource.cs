@@ -19,6 +19,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// Either via a public interface or an API with a key.
     /// Rate limits of ~250k bits or 1000 requests per day, so use large chunks with 8 hour timouts.
     /// </summary>
+    [AsyncHint(IsAsync.Always)]
     public class RandomOrgExternalRandomSource : EntropySourceWithPeriod
     {
         public override string Name { get; set; }

@@ -10,6 +10,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// <summary>
     /// A source of entropy, supplied from an external source.
     /// </summary>
+    [AsyncHint(IsAsync.Never)]
     public class UserSuppliedSource : IEntropySource
     {
         public string Name { get; set; }

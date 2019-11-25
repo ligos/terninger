@@ -10,6 +10,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// <summary>
     /// An entropy source based on the current system date and time.
     /// </summary>
+    [AsyncHint(IsAsync.Never)]
     public class CurrentTimeSource : IEntropySource
     {
         private bool _HasRunOnce = false;

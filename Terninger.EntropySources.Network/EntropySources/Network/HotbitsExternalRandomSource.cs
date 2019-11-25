@@ -19,6 +19,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// Either a pseudorandom source or true random (requires an API key).
     /// No published rate limits, but API uses true random bits so you should be extra cautious when using it.
     /// </summary>
+    [AsyncHint(IsAsync.Always)]
     public class HotbitsExternalRandomSource : EntropySourceWithPeriod
     {
         public override string Name { get; set; }

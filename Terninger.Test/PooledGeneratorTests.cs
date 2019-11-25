@@ -94,7 +94,7 @@ namespace MurrayGrant.Terninger.Test
         }
 
         [TestMethod]
-        public async Task GetFirstSeed()
+        public async Task GetFirstSeed_AllSyncSources()
         {
             var sources = new IEntropySource[] { new CryptoRandomSource(64), new CurrentTimeSource(), new GCMemorySource(), new TimerSource(), new UserSuppliedSource(CypherBasedPrngGenerator.CreateWithCheapKey().GetRandomBytes(2048)) };
             var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
@@ -104,6 +104,48 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(rng.IsRunning, false);
             Assert.AreEqual(rng.EntropyPriority, EntropyPriority.High);
             Assert.AreEqual(rng.SourceCount, 5);
+
+            await rng.StartAndWaitForFirstSeed();
+            Assert.IsTrue(rng.ReseedCount >= 1);
+            Assert.IsTrue(acc.TotalEntropyBytes > 0);
+            System.Threading.Thread.Sleep(1);           // EntropyPriority is only updated after the reseed event, so it might not be current.
+            Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
+
+            await rng.Stop();
+        }
+
+        [TestMethod]
+        public async Task GetFirstSeed_AllAsyncSources()
+        {
+            var sources = new IEntropySource[] { new AsyncCryptoRandomSource(), new ProcessStatsSource(), new NetworkStatsSource() };
+            var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
+            var rng = PooledEntropyCprngGenerator.Create(sources, accumulator: acc, config: Conf());
+            Assert.AreEqual(rng.BytesRequested, 0);
+            Assert.AreEqual(rng.ReseedCount, 0);
+            Assert.AreEqual(rng.IsRunning, false);
+            Assert.AreEqual(rng.EntropyPriority, EntropyPriority.High);
+            Assert.AreEqual(rng.SourceCount, 3);
+
+            await rng.StartAndWaitForFirstSeed();
+            Assert.IsTrue(rng.ReseedCount >= 1);
+            Assert.IsTrue(acc.TotalEntropyBytes > 0);
+            System.Threading.Thread.Sleep(1);           // EntropyPriority is only updated after the reseed event, so it might not be current.
+            Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
+
+            await rng.Stop();
+        }
+
+        [TestMethod]
+        public async Task GetFirstSeed_MixedSyncAndAsyncSources()
+        {
+            var sources = new IEntropySource[] { new CryptoRandomSource(32), new CurrentTimeSource(), new GCMemorySource(), new TimerSource(), new AsyncCryptoRandomSource(), new ProcessStatsSource(), new NetworkStatsSource() };
+            var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
+            var rng = PooledEntropyCprngGenerator.Create(sources, accumulator: acc, config: Conf());
+            Assert.AreEqual(rng.BytesRequested, 0);
+            Assert.AreEqual(rng.ReseedCount, 0);
+            Assert.AreEqual(rng.IsRunning, false);
+            Assert.AreEqual(rng.EntropyPriority, EntropyPriority.High);
+            Assert.AreEqual(rng.SourceCount, 7);
 
             await rng.StartAndWaitForFirstSeed();
             Assert.IsTrue(rng.ReseedCount >= 1);
@@ -217,5 +259,36 @@ namespace MurrayGrant.Terninger.Test
         {
             MinimumTimeBetweenReseeds = TimeSpan.FromTicks(1),
         };
+
+        [AsyncHint(IsAsync.Always)]
+        public class AsyncCryptoRandomSource : IEntropySource
+        {
+            private RandomNumberGenerator _Rng;
+            private int _ResultLength;
+
+            public string Name { get; set; }
+
+            public AsyncCryptoRandomSource() : this(16, RandomNumberGenerator.Create()) { }
+            public AsyncCryptoRandomSource(int resultLength) : this(resultLength, RandomNumberGenerator.Create()) { }
+            public AsyncCryptoRandomSource(int resultLength, RandomNumberGenerator rng)
+            {
+                this._ResultLength = resultLength;
+                this._Rng = rng;
+            }
+
+            public void Dispose()
+            {
+                _Rng.Dispose();
+            }
+
+            public async Task<byte[]> GetEntropyAsync(EntropyPriority priority)
+            {
+                var result = new byte[_ResultLength];
+                _Rng.GetBytes(result);
+                await Task.Delay(50);
+                return result;
+            }
+        }
+
     }
 }

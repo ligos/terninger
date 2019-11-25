@@ -47,6 +47,10 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)'=='net452' or '$(TargetFramework)'=='netstandard1.3'">
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+  
   <!-- FOR DEVELOPMENT -->
   <ItemGroup Condition="'$(RefNugets)'!='True'">
     <ProjectReference Include="..\Terninger.Random.Cypher\Terninger.Random.Cypher.csproj" />

@@ -18,6 +18,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// An entropy source which uses https://qrng.anu.edu.au as input.
     /// This has no publicised rate limit (and boasts gigabit/sec entropy), but we use 12 hours as the normal polling period because we get 1kB each request.
     /// </summary>
+    [AsyncHint(IsAsync.Always)]
     public class AnuExternalRandomSource : EntropySourceWithPeriod
     {
         public override string Name { get; set; }

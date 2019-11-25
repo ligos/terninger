@@ -12,6 +12,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// <summary>
     /// An entropy source which uses RandomNumberGenerator.Create().
     /// </summary>
+    [AsyncHint(IsAsync.Never)]
     public class CryptoRandomSource : IEntropySource
     {
         private RandomNumberGenerator _Rng;

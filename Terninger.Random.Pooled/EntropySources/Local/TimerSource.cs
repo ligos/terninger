@@ -11,6 +11,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// <summary>
     /// Am entropy source based on a high precision timer.
     /// </summary>
+    [AsyncHint(IsAsync.Never)]
     public class TimerSource : IEntropySource
     {
         public string Name { get; set; }

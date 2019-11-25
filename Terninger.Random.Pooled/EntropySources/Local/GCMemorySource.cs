@@ -11,6 +11,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// <summary>
     /// Am entropy source based on managed memory / garbage collector stats.
     /// </summary>
+    [AsyncHint(IsAsync.Never)]
     public class GCMemorySource : IEntropySource
     {
         public string Name { get; set; }

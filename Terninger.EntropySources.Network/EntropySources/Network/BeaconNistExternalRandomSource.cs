@@ -18,6 +18,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// An entropy source which uses https://beacon.nist.gov/ as input.
     /// No published rate limits, but produces new output every 60 seconds and records it.
     /// </summary>
+    [AsyncHint(IsAsync.Always)]
     public class BeaconNistExternalRandomSource : EntropySourceWithPeriod
     {
         public override string Name { get; set; }

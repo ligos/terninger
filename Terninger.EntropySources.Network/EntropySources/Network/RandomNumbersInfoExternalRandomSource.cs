@@ -19,6 +19,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// This has no publicised rate limit so we use 8 hours as the normal polling period, and get chunks of 256 numbers (386 bytes of entropy).
     /// Each number requested is between 0 and 4095, and is equivelent to 12 bits or 1.5 bytes of entropy.
     /// </summary>
+    [AsyncHint(IsAsync.Always)]
     public class RandomNumbersInfoExternalRandomSource : EntropySourceWithPeriod
     {
         public override string Name { get; set; }

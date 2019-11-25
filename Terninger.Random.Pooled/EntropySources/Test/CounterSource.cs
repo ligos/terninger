@@ -11,6 +11,7 @@ namespace MurrayGrant.Terninger.EntropySources.Test
     /// <summary>
     /// An entropy source which returns an incrementing counter.
     /// </summary>
+    [AsyncHint(IsAsync.Never)]
     public class CounterSource : IEntropySource
     {
         private readonly CypherCounter _Counter;

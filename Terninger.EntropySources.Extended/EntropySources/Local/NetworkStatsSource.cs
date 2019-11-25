@@ -17,6 +17,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
     /// An entropy source which uses current network statistics as input.
     /// Polling defaults: 1 minute at normal priority, 5 seconds at high priority, 5 minutes at low priority (5 x normal).
     /// </summary>
+    [AsyncHint(IsAsync.Always)]
     public class NetworkStatsSource : EntropySourceWithPeriod
     {
         public override string Name { get; set; }

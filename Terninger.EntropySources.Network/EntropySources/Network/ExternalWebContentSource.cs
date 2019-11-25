@@ -17,6 +17,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// <summary>
     /// An entropy source which uses external web content as input, usually from social media or news services.
     /// </summary>
+    [AsyncHint(IsAsync.Always)]
     public class ExternalWebContentSource : EntropySourceWithPeriod
     {
         public override string Name { get; set; }

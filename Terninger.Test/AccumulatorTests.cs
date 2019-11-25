@@ -129,7 +129,7 @@ namespace MurrayGrant.Terninger.Test
             Assert.IsFalse(p.GetDigest().All(b => b == 0));
         }
 
-#if NETCOREAPP2_1
+#if NETCOREAPP2_1 || NETCOREAPP3_0
         [TestMethod]
         public void Pool_CanUseIncrementalHash()
         {

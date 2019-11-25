@@ -10,6 +10,7 @@ namespace MurrayGrant.Terninger.EntropySources.Test
     /// <summary>
     /// A null entropy source. Just returns zero byte arrays.
     /// </summary>
+    [AsyncHint(IsAsync.Never)]
     public class NullSource : IEntropySource
     {
         public string Name { get; set; }
