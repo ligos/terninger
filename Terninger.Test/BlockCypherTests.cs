@@ -146,5 +146,43 @@ namespace MurrayGrant.Terninger.Test
             Assert.AreEqual(crng.BytesGenerated, result.Length + 64);
             Assert.AreEqual(crng.BytesRequested, result.Length);
         }
+
+        [TestMethod]
+        public void Reseed()
+        {
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            var preReseedResult = crng.GetRandomBytes(4);
+
+            Assert.IsFalse(preReseedResult.All(b => b == 0));
+            Assert.AreEqual(crng.BytesGenerated, 1024);
+            Assert.AreEqual(crng.BytesRequested, preReseedResult.Length);
+
+            crng.Reseed(_IncrementedKey32Bytes);
+            Assert.AreEqual(crng.BytesGenerated, 2048);
+            Assert.AreEqual(crng.BytesRequested, preReseedResult.Length);
+
+            var postReseedResult = crng.GetRandomBytes(4);
+            Assert.IsFalse(postReseedResult.All(b => b == 0));
+            Assert.IsFalse(preReseedResult.SequenceEqual(postReseedResult));
+            Assert.AreEqual(crng.BytesGenerated, 2048);
+            Assert.AreEqual(crng.BytesRequested, preReseedResult.Length + postReseedResult.Length);
+        }
+
+        [TestMethod]
+        public void ReseedTakesEffectImmediately()
+        {
+            // As the PRNG uses buffering internally, there may be random bytes left over after a reseed.
+            // Those left over bytes must be discarded.
+            var crng1 = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            var crng2 = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            var preReseedResult1 = crng1.GetRandomBytes(64);
+            var preReseedResult2 = crng2.GetRandomBytes(64);
+            Assert.IsTrue(preReseedResult1.SequenceEqual(preReseedResult2));
+
+            crng1.Reseed(_IncrementedKey32Bytes);
+            var postReseedResult1 = crng1.GetRandomBytes(64);
+            var postReseedResult2 = crng2.GetRandomBytes(64);
+            Assert.IsFalse(postReseedResult1.SequenceEqual(postReseedResult2));
+        }
     }
 }

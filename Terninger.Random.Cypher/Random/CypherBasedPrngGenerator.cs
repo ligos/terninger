@@ -124,7 +124,7 @@ namespace MurrayGrant.Terninger.Random
 
 
             // Difference from spec: re key our cypher immediately with the supplied key.
-            Reseed(key);
+            ReseedInternal(key);
         }
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace MurrayGrant.Terninger.Random
             // This ensures you cannot "rewind" the generator if you discover the key.
             // PERF: could generate this random data at the same time as the data we are returning.
 
-            Reseed(randomDataPlusNewKeyMaterial.LastBytes(_RekeyByteCount));
+            ReseedInternal(randomDataPlusNewKeyMaterial.LastBytes(_RekeyByteCount));
         }
         private void FillWithRandomBytes_Buffered(byte[] toFill, int offset, int count)
         {
@@ -252,7 +252,7 @@ namespace MurrayGrant.Terninger.Random
             {
                 // Time to re-seed before copying bytes.
                 ResetOutputBuffer();            // Produce more randomness.
-                Reseed(_OutputBuffer.Take(_RekeyByteCount).ToArray());      // Reseed based on the start of the array.
+                ReseedInternal(_OutputBuffer.Take(_RekeyByteCount).ToArray());      // Reseed based on the start of the array.
                 _OutputBufferIndex = _OutputBufferIndex + _RekeyByteCount;
                 Array.Clear(_OutputBuffer, 0, _RekeyByteCount);             // Destory the re-seed material.
 
@@ -269,6 +269,13 @@ namespace MurrayGrant.Terninger.Random
 
         public void Reseed(byte[] newSeed)
         {
+            ReseedInternal(newSeed);
+
+            // After any external reseed, we ensure the internal buffer has been reset, so the new material takes effect immediately.
+            ResetOutputBuffer();
+        }
+        private void ReseedInternal(byte[] newSeed)
+        {
             // Section 9.4.2 - Reseed
             if (_Disposed) throw new ObjectDisposedException(nameof(CypherBasedPrngGenerator));
             if (newSeed == null) throw new ArgumentNullException(nameof(newSeed));
@@ -281,7 +288,7 @@ namespace MurrayGrant.Terninger.Random
             var additionalEntropy = _AdditionalEntropyGetter();
             if (additionalEntropy != null && additionalEntropy.Length > 0)
                 combinedKeyMaterial = combinedKeyMaterial.Concat(additionalEntropy);
-            
+
             // Spec says SHA 256 should be used as a hash function. We allow any hash function which produces the cypher key length of bytes.
             // We ensure the cypher key is of the correct size (as the hash function may return more bytes than required).
             _CryptoPrimitive.Key = _HashFunction.ComputeHash(combinedKeyMaterial.ToArray()).EnsureArraySize(_KeySizeInBytes);
@@ -289,7 +296,7 @@ namespace MurrayGrant.Terninger.Random
             // As per spec: Increment the counter data.
             _Counter.Increment();
         }
-        
+
         private void ResetOutputBuffer()
         {
             if (_OutputBufferBlockCount > 0)
