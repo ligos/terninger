@@ -15,9 +15,11 @@ namespace MurrayGrant.Terninger.EntropySources
         public bool Equals(IEntropySource x, IEntropySource y) => Object.ReferenceEquals(x, y);
 
         /// <summary>
-        /// GetHasCode is based on Name and Type.
+        /// GetHashCode is based on Name and Type.
         /// </summary>
-        public int GetHashCode(IEntropySource obj) => obj == null ? typeof(IEntropySource).GetHashCode() : (obj.Name ?? "").GetHashCode() ^ obj.GetType().GetHashCode();
+        public int GetHashCode(IEntropySource obj) => 
+            obj == null ? typeof(IEntropySource).GetHashCode() 
+            : (obj.Name ?? "").GetHashCode() ^ obj.GetType().GetHashCode();
 
         /// <summary>
         /// Sorting is based on Name.

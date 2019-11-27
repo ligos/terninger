@@ -325,12 +325,11 @@ namespace MurrayGrant.Terninger.Random
 
             var baseName = candidateName;
             int uniquifier = 1;
-            while (_EntropySources.Any(x => String.Equals(candidateName, x.Source.Name, StringComparison.CurrentCultureIgnoreCase)))
+            while (_EntropySources.Any(x => String.Equals(candidateName, x.UniqueName, StringComparison.CurrentCultureIgnoreCase)))
             {
                 candidateName = baseName + " " + (uniquifier++);
             }
-            source.Name = candidateName;
-            return new SourceAndMetadata(source);
+            return new SourceAndMetadata(source, candidateName);
         }
 
         private void WorkerLoop()
@@ -521,16 +520,16 @@ namespace MurrayGrant.Terninger.Random
             try
             {
                 // These may come from 3rd parties, use external hardware or do IO: anything could go wrong!
-                Logger.Trace("Reading entropy from source '{0}' (of type '{1}').", source.Name, source.GetType().Name);
+                Logger.Trace("Reading entropy from source '{0}' (of type '{1}').", sm.UniqueName, source.GetType().Name);
                 
                 var t = sm.Source.GetEntropyAsync(this.EntropyPriority);
                 var wasSync = t.IsCompleted;
                 var maybeEntropy = await t;
                 
                 if (maybeEntropy == null || maybeEntropy.Length == 0)
-                    Logger.Trace("Read {0:N0} byte(s) of entropy from source '{1}' (of type '{2}').", 0, source.Name, source.GetType().Name);
+                    Logger.Trace("Read {0:N0} byte(s) of entropy from source '{1}' (of type '{2}').", 0, sm.UniqueName, source.GetType().Name);
                 else
-                    Logger.Debug("Read {0:N0} byte(s) of entropy from source '{1}' (of type '{2}').", maybeEntropy.Length, source.Name, source.GetType().Name);
+                    Logger.Debug("Read {0:N0} byte(s) of entropy from source '{1}' (of type '{2}').", maybeEntropy.Length, sm.UniqueName, source.GetType().Name);
                 
                 sm.ScoreSuccess();
                 if (wasSync)
@@ -541,7 +540,7 @@ namespace MurrayGrant.Terninger.Random
             }
             catch (Exception ex)
             {
-                Logger.ErrorException("Unhandled exception from entropy source '{0}' (of type '{1}').", ex, source.Name, source.GetType().Name);
+                Logger.ErrorException("Unhandled exception from entropy source '{0}' (of type '{1}').", ex, sm.UniqueName, source.GetType().Name);
                 sm.ScoreException();
                 return null;
             }
