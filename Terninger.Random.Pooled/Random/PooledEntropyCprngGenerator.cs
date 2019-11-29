@@ -524,18 +524,25 @@ namespace MurrayGrant.Terninger.Random
                 
                 var t = sm.Source.GetEntropyAsync(this.EntropyPriority);
                 var wasSync = t.IsCompleted;
-                var maybeEntropy = await t;
+                byte[] maybeEntropy;
                 
+                if (wasSync)
+                {
+                    maybeEntropy = t.Result;
+                    sm.ScoreSync();
+                }
+                else
+                {
+                    maybeEntropy = await t;
+                    sm.ScoreAsync();
+                }
+                sm.ScoreSuccess();
+
                 if (maybeEntropy == null || maybeEntropy.Length == 0)
                     Logger.Trace("Read {0:N0} byte(s) of entropy from source '{1}' (of type '{2}').", 0, sm.UniqueName, source.GetType().Name);
                 else
                     Logger.Debug("Read {0:N0} byte(s) of entropy from source '{1}' (of type '{2}').", maybeEntropy.Length, sm.UniqueName, source.GetType().Name);
-                
-                sm.ScoreSuccess();
-                if (wasSync)
-                    sm.ScoreSync();
-                else
-                    sm.ScoreAsync();
+
                 return maybeEntropy;
             }
             catch (Exception ex)
