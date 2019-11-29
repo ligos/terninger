@@ -171,7 +171,6 @@ namespace MurrayGrant.Terninger.Test
             await rng.StartAndWaitForFirstSeed();
             Assert.IsTrue(rng.ReseedCount >= 1);
             Assert.IsTrue(acc.TotalEntropyBytes > 0);
-            System.Threading.Thread.Sleep(1);           // EntropyPriority is only updated after the reseed event, so it might not be current.
             Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
 
             var bytes = rng.GetRandomBytes(16);
@@ -195,7 +194,6 @@ namespace MurrayGrant.Terninger.Test
             await rng.StartAndWaitForFirstSeed();
             Assert.IsTrue(rng.ReseedCount >= 1);
             Assert.IsTrue(acc.TotalEntropyBytes > 0);
-            System.Threading.Thread.Sleep(1);           // EntropyPriority is only updated after the reseed event, so it might not be current.
             Assert.AreNotEqual(rng.EntropyPriority, EntropyPriority.High);
 
             var reseedCount = rng.ReseedCount;
@@ -226,6 +224,30 @@ namespace MurrayGrant.Terninger.Test
 
             await rng.Stop();
         }
+
+        [TestMethod]
+        public async Task FirstSeedYieldsDifferentBytes()
+        {
+            var sources = new IEntropySource[] { new CryptoRandomSource(64), new CurrentTimeSource(), new GCMemorySource(), new TimerSource(), new UserSuppliedSource(CypherBasedPrngGenerator.CreateWithCheapKey().GetRandomBytes(2048)) };
+            var acc1 = new EntropyAccumulator(new StandardRandomWrapperGenerator());
+            var rng1 = PooledEntropyCprngGenerator.Create(sources, accumulator: acc1, config: Conf());
+            await rng1.StartAndWaitForFirstSeed();
+
+            var acc2 = new EntropyAccumulator(new StandardRandomWrapperGenerator());
+            var rng2 = PooledEntropyCprngGenerator.Create(sources, accumulator: acc2, config: Conf());
+            await rng2.StartAndWaitForFirstSeed();
+
+            var bytesFrom1 = rng1.GetRandomBytes(64);
+            Assert.IsFalse(bytesFrom1.All(b => b == 0));
+            var bytesFrom2 = rng2.GetRandomBytes(64);
+            Assert.IsFalse(bytesFrom2.All(b => b == 0));
+            // Expect two generates with different inputs will give different bytes from from the start.
+            Assert.IsFalse(bytesFrom1.SequenceEqual(bytesFrom2));
+
+            await rng1.Stop();
+            await rng2.Stop();
+        }
+
 
         [TestMethod]
         public async Task CreatePrngFromPooled()
