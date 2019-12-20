@@ -1,0 +1,2 @@
+http://qrng.ethz.ch/http_api/
+http://qrng.ethz.ch/api/randint?min=0&max=255&size=1024
