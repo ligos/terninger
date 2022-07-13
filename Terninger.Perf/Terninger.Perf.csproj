@@ -4,7 +4,7 @@
     <TargetFrameworks>net60;netcoreapp3.1;net48</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
-    <Copyright>Copyright © Murray Grant 2017-2019</Copyright>
+    <Copyright>Copyright © Murray Grant 2017-2022</Copyright>
     <Authors>Murray Grant</Authors>
     <Version>0.2.0</Version>
     <Description>Console app for benchmarks and performance tests of Terninger.
