@@ -9,16 +9,6 @@ namespace MurrayGrant.Terninger.Helpers
 {
     public static class ByteArrayHelpers
     {
-        public static string ToHexString(this byte[] bytes)
-        {
-            var result = new StringBuilder(bytes.Length * 2, bytes.Length * 2);
-            for (int i = 0; i < bytes.Length; i++)
-            {
-                result.Append(bytes[i].ToString("X2"));
-            }
-            return result.ToString();
-        }
-
         public static byte ToHexAsciiHighNibble(this byte b) => HexToAsciiByteLookup[((b & 0x000000f0) >> 4)];
         public static byte ToHexAsciiLowNibble(this byte b) => HexToAsciiByteLookup[(b & 0x0000000f)];
         private static byte[] HexToAsciiByteLookup = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' }.Select(ch => (byte)ch).ToArray();

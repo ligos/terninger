@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace MurrayGrant.Terninger.Helpers
 {
@@ -39,5 +40,33 @@ namespace MurrayGrant.Terninger.Helpers
             return result;
         }
 
+        /// <summary>
+        /// Compares two byte arrays for equality.
+        /// </summary>
+        public static bool AllEqual(this byte[] bytes, byte[] other)
+        {
+            if (bytes == null) throw new ArgumentNullException(nameof(bytes));
+            if (other == null) throw new ArgumentNullException(nameof(other));
+
+            if (bytes.Length != other.Length)
+                return false;
+            
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                if (bytes[i] != other[i])
+                    return false;   
+            }
+            return true;
+        }
+
+        public static string ToHexString(this byte[] bytes)
+        {
+            var result = new StringBuilder(bytes.Length * 2, bytes.Length * 2);
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                result.Append(bytes[i].ToString("X2"));
+            }
+            return result.ToString();
+        }
     }
 }
