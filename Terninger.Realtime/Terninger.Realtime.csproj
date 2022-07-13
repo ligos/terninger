@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net452</TargetFrameworks>
+    <TargetFrameworks>net48</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2019</Copyright>

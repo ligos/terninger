@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1;net461</TargetFrameworks>
+    <TargetFrameworks>net60;netcoreapp3.1;net48</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2019</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Description>Console app to use Terninger from all .NET command line environments.
 
 To get started, see the MurrayGrant.Terninger.RandomGenerator class.
@@ -26,7 +26,7 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <DocumentationFile>bin\Release\$(TargetFramework)\Terninger.Console.xml</DocumentationFile>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'=='net461'">
+  <ItemGroup Condition="'$(TargetFramework)'=='net48'">
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 
