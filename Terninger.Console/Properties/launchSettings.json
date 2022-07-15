@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Terninger.Console": {
+      "commandName": "Project",
+      "commandLineArgs": "-g TerningerPooled"
+    }
+  }
+}

@@ -40,6 +40,8 @@ namespace MurrayGrant.Terninger.Console
         static int randomPools = 12;
         static bool includeNetworkSources = false;         // If true, includes network entropy sources. This will make network calls.
 
+        static string configFile = "Terninger.Config.json";
+
         static LogLevel _MinLogLevel = LogLevel.Info;
         static ILog _Logger;
 
@@ -146,6 +148,11 @@ namespace MurrayGrant.Terninger.Console
                     _Logger.Debug("    " + generatorDetails.ExtraDescription);
                 _Logger.Debug("Seed source: {0}", generatorDetails.SeedDescription);
                 _Logger.Debug("Output target: {0}, style {1}", outName, outputStyle);
+                if (generatorDetails.ErrorLoadingConfig != null)
+                {
+                    _Logger.Warn("Error loading config file '{0}'; using defaults.", configFile);
+                    _Logger.Warn("  {0} - {1}", generatorDetails.ErrorLoadingConfig.GetType().Name, generatorDetails.ErrorLoadingConfig.Message);
+                }
                 if (outFile == "")
                     // Stdio output needs extra line here
                     Con.WriteLine();
@@ -273,6 +280,7 @@ namespace MurrayGrant.Terninger.Console
 
         private static GeneratorAndDescription CreateRandomGenerator()
         {
+            var (config, configException) = TryLoadConfig();
             var result = new GeneratorAndDescription();
             if (generatorType == Generator.StockRandom)
             {
@@ -326,7 +334,7 @@ namespace MurrayGrant.Terninger.Console
                     new CurrentTimeSource(),
                     new TimerSource(),
                     new GCMemorySource(),
-                    new CryptoRandomSource(),
+                    new CryptoRandomSource(config?.EntropySources?.CryptoRandom),
                     new NetworkStatsSource(),
                     new ProcessStatsSource(),
                 };
@@ -341,13 +349,13 @@ namespace MurrayGrant.Terninger.Console
                             new RandomOrgExternalRandomSource(),
                         });
                 // As the pooled generator will be churning out entropy as fast as it can, we increase the reseed rate by polling faster and forcing reseeds more frequently.
-                var config = new PooledEntropyCprngGenerator.PooledGeneratorConfig()
+                var generatorConfig = new PooledEntropyCprngGenerator.PooledGeneratorConfig()
                 {
                     MaximumBytesGeneratedBeforeReseed = Int32.MaxValue,
                     PollWaitTimeInNormalPriority = TimeSpan.FromSeconds(1),
                     EntropyToTriggerReseedInNormalPriority = 64,
                 };
-                var generator = new PooledEntropyCprngGenerator(sources, acc, genPrng, config);
+                var generator = new PooledEntropyCprngGenerator(sources, acc, genPrng, generatorConfig);
                 result.Generator = generator;
                 result.Description = $"non-deterministic CPRNG - " + typeof(PooledEntropyCprngGenerator).Namespace + "." + typeof(PooledEntropyCprngGenerator).Name;
                 result.ExtraDescription = $"Using {linearPools}+{randomPools} pools (linear+random), {sources.Count()} entropy sources, crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
@@ -360,6 +368,7 @@ namespace MurrayGrant.Terninger.Console
             }
             else
                 throw new Exception("Unexpected Generator type: " + generatorType);
+            result.ErrorLoadingConfig = configException;
             return result;
         }
         private class GeneratorAndDescription
@@ -370,6 +379,7 @@ namespace MurrayGrant.Terninger.Console
             public string SeedDescription { get; set; }
             public Action WaitForGeneratorReady { get; set; }
             public Action WaitForGeneratorStopped { get; set; }
+            public Exception ErrorLoadingConfig { get; set; }
         }
 
         private static ICryptoPrimitive GetCryptoPrimitive()
@@ -432,6 +442,20 @@ namespace MurrayGrant.Terninger.Console
         private static int GetKeysizeBytesForCryptoPrimitive()
         {
             return GetCryptoPrimitive().KeySizeBytes;
+        }
+
+        private static (TerningerConfiguration config, Exception ex) TryLoadConfig()
+        {
+            try
+            {
+                var configJson = File.ReadAllText(configFile);
+                var config = Newtonsoft.Json.JsonConvert.DeserializeObject<TerningerConfiguration>(configJson);
+                return (config, null);
+            }
+            catch (Exception ex)
+            {
+                return (null, ex);
+            }
         }
 
         private static bool ParseCommandLine(string[] args)
@@ -551,6 +575,11 @@ namespace MurrayGrant.Terninger.Console
                     }
                     i++;
                 }
+                else if (arg == "config")
+                {
+                    configFile = args[i+1];
+                    i++;
+                }
                 else if (arg == "h" || arg == "?" || arg == "help")
                 {
                     PrintUsage();
@@ -593,6 +622,7 @@ namespace MurrayGrant.Terninger.Console
             Con.WriteLine("  --native              Uses native crypto modules (default: auto)");
             Con.WriteLine("  -cp --cryptoPrimitive Determines crypto primitive to use (default: AES256)");
             Con.WriteLine("  -ha --hashAlgorithm   Determines hash algorithm to use (default: SHA512)");
+            Con.WriteLine("  --config              Path to config file (default: Terninger.Config.json)");
             Con.WriteLine();
             Con.WriteLine("  -q --quiet            Does not display any status messages (default: {0})", quiet ? "hide" : "show");
             Con.WriteLine("  --debug               Show debug messages");

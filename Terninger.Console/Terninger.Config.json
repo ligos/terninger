@@ -1,0 +1,13 @@
+{
+  // Terninger Configuration File
+
+  // Configuration for standard Entropy Sources
+  "EntropySources": {
+    
+    // OS Crypto Random number generator (eg: /dev/random)
+    "CryptoRandom": {
+      // Bytes returned each time source is sampled. Default: 16, Minimum: 4, Maximum: 64k
+      "SampleSize": 1024
+    }
+  }
+}

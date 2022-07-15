@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26228.4
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32328.378
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger", "Terninger\Terninger.csproj", "{3341DACF-FE94-4497-B71B-AB3326B530FD}"
 EndProject
@@ -13,8 +13,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Realtime", "Terni
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Perf", "Terninger.Perf\Terninger.Perf.csproj", "{D2F06E7B-E840-4693-B991-536A2C4D1A6A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Config", "Terninger.Config\Terninger.Config.csproj", "{A951DB15-27AC-4560-B224-2AA9B0742EE6}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Test.Slow", "Terninger.Test.Slow\Terninger.Test.Slow.csproj", "{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.EntropySources.Network", "Terninger.EntropySources.Network\Terninger.EntropySources.Network.csproj", "{F1BAC12F-9F03-4260-B726-B2EB252EEAD4}"
@@ -23,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.EntropySources.Ex
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Random.Pooled", "Terninger.Random.Pooled\Terninger.Random.Pooled.csproj", "{A0466059-2BC1-4BBE-BDB5-432217A4E300}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terninger.Random.Cypher", "Terninger.Random.Cypher\Terninger.Random.Cypher.csproj", "{61F7D4F4-0C79-4428-9687-CD3C467E8C1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terninger.Random.Cypher", "Terninger.Random.Cypher\Terninger.Random.Cypher.csproj", "{61F7D4F4-0C79-4428-9687-CD3C467E8C1D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,10 +49,6 @@ Global
 		{D2F06E7B-E840-4693-B991-536A2C4D1A6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2F06E7B-E840-4693-B991-536A2C4D1A6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2F06E7B-E840-4693-B991-536A2C4D1A6A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A951DB15-27AC-4560-B224-2AA9B0742EE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A951DB15-27AC-4560-B224-2AA9B0742EE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A951DB15-27AC-4560-B224-2AA9B0742EE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A951DB15-27AC-4560-B224-2AA9B0742EE6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B8FF53D-AEF2-4E6E-9EB2-954E7F98D9C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
