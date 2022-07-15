@@ -46,15 +46,12 @@ namespace MurrayGrant.Terninger.EntropySources.Local
 
         public class Configuration
         {
-            public static readonly Configuration Default = new Configuration()
-            {
-                SampleSize = 16,
-            };
+            public static readonly Configuration Default = new Configuration();
 
             /// <summary>
             /// // Bytes returned each time source is sampled. Default: 16, Minimum: 4, Maximum: 64k
             /// </summary>
-            public int SampleSize { get; set; }
+            public int SampleSize { get; set; } = 16;
         }
     }
 }

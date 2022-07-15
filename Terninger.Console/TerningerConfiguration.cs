@@ -12,5 +12,7 @@ namespace MurrayGrant.Terninger.Console
     public class EntropySourceConfiguration
     {
         public EntropySources.Local.CryptoRandomSource.Configuration CryptoRandom { get; set; }
+
+        public EntropySources.Local.ProcessStatsSource.Configuration ProcessStats { get; set; }
     }
 }

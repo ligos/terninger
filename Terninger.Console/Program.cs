@@ -336,7 +336,7 @@ namespace MurrayGrant.Terninger.Console
                     new GCMemorySource(),
                     new CryptoRandomSource(config?.EntropySources?.CryptoRandom),
                     new NetworkStatsSource(),
-                    new ProcessStatsSource(),
+                    new ProcessStatsSource(config?.EntropySources?.ProcessStats),
                 };
                 if (includeNetworkSources)
                     sources = sources.Concat(new IEntropySource[] {

@@ -3,11 +3,28 @@
 
   // Configuration for standard Entropy Sources
   "EntropySources": {
-    
+
     // OS Crypto Random number generator (eg: /dev/random)
     "CryptoRandom": {
-      // Bytes returned each time source is sampled. Default: 16, Minimum: 4, Maximum: 64k
-      "SampleSize": 1024
+      // Bytes returned each time source is sampled. 
+      // Int32. Default: 16, Minimum: 4, Maximum: 64k
+      "SampleSize": 16
+    },
+
+    // Gather entropy from processes running on computer.
+    "ProcessStats": {
+      // Sample period at normal priority. Default: 10 minutes.
+      "PeriodNormalPriority": "00:10:00",
+
+      // Sample period at high priority. Default: 30 seconds.
+      "PeriodHighPriority": "00:00:30",
+
+      // Sample period at low priority. Default: 50 minutes.
+      "PeriodLowPriority": "00:50:00",
+
+      // Number of items from processes read per sample. There are up to 17 items per process.
+      // Int32. Default: 70. Minimum: 1. Maximum: 10000.
+      "ItemsPerChunk": 70
     }
   }
 }
