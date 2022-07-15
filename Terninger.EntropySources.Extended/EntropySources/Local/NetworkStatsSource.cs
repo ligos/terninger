@@ -49,6 +49,15 @@ namespace MurrayGrant.Terninger.EntropySources.Local
         public NetworkStatsSource() : this(TimeSpan.FromMinutes(1.0), 17) { }
         public NetworkStatsSource(TimeSpan periodNormalPriority) : this(periodNormalPriority, 17) { }
         public NetworkStatsSource(TimeSpan periodNormalPriority, int itemsPerResultChunk) : this(periodNormalPriority, TimeSpan.FromSeconds(5), new TimeSpan(periodNormalPriority.Ticks * 5), itemsPerResultChunk, null) { }
+        public NetworkStatsSource(Configuration config)
+            : this(
+                  periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
+                  periodHighPriority:   config?.PeriodHighPriority   ?? Configuration.Default.PeriodHighPriority,
+                  periodLowPriority:    config?.PeriodLowPriority    ?? Configuration.Default.PeriodLowPriority,
+                  itemsPerResultChunk:  config?.ItemsPerChunk        ?? Configuration.Default.ItemsPerChunk,
+                  rng: null
+            )
+        { }
         public NetworkStatsSource(TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority, int itemsPerResultChunk, IRandomNumberGenerator rng)
             : base(periodNormalPriority, periodHighPriority, periodLowPriority)
         {
@@ -184,6 +193,34 @@ namespace MurrayGrant.Terninger.EntropySources.Local
 
                 return result;
             });
+        }
+
+        public class Configuration
+        {
+            public static readonly Configuration Default = new Configuration();
+
+            /// <summary>
+            /// Sample period at normal priority. Default: 1 minute.
+            /// </summary>
+            public TimeSpan PeriodNormalPriority { get; set; } = TimeSpan.FromMinutes(1.0);
+
+            /// <summary>
+            /// Sample period at high priority. Default: 5 seconds.
+            /// </summary>
+            public TimeSpan PeriodHighPriority { get; set; } = TimeSpan.FromSeconds(3.0);
+
+            /// <summary>
+            /// Sample period at low priority. Default: 5 minutes.
+            /// </summary>
+            public TimeSpan PeriodLowPriority { get; set; } = TimeSpan.FromMinutes(5.0);
+
+            /// <summary>
+            /// Number of network statistics read per sample.
+            /// Default: 17. Minimum: 1. Maximum: 10000.
+            /// </summary>
+            public int ItemsPerChunk { get; set; } = 17;
+
+            // TODO: configure the random generator between StockRandom, TerningerRandom
         }
     }
 }

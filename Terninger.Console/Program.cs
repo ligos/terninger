@@ -335,7 +335,7 @@ namespace MurrayGrant.Terninger.Console
                     new TimerSource(),
                     new GCMemorySource(),
                     new CryptoRandomSource(config?.EntropySources?.CryptoRandom),
-                    new NetworkStatsSource(),
+                    new NetworkStatsSource(config?.EntropySources?.NetworkStats),
                     new ProcessStatsSource(config?.EntropySources?.ProcessStats),
                 };
                 if (includeNetworkSources)

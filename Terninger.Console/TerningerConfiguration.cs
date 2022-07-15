@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MurrayGrant.Terninger.Console
 {
@@ -14,5 +12,7 @@ namespace MurrayGrant.Terninger.Console
         public EntropySources.Local.CryptoRandomSource.Configuration CryptoRandom { get; set; }
 
         public EntropySources.Local.ProcessStatsSource.Configuration ProcessStats { get; set; }
+
+        public EntropySources.Local.NetworkStatsSource.Configuration NetworkStats { get; set; }
     }
 }

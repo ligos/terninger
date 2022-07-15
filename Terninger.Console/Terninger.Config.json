@@ -25,6 +25,22 @@
       // Number of items from processes read per sample. There are up to 17 items per process.
       // Int32. Default: 70. Minimum: 1. Maximum: 10000.
       "ItemsPerChunk": 70
+    },
+
+    // Gather entropy from network statistics (eg: number of bytes / packets sent, MAC address, etc).
+    "NetworkStats": {
+      // Sample period at normal priority. Default: 1 minutes.
+      "PeriodNormalPriority": "00:01:00",
+
+      // Sample period at high priority. Default: 5 seconds.
+      "PeriodHighPriority": "00:00:05",
+
+      // Sample period at low priority. Default: 5 minutes.
+      "PeriodLowPriority": "00:05:00",
+
+      // Number of network statistics read per sample.
+      // Int32. Default: 17. Minimum: 1. Maximum: 10000.
+      "ItemsPerChunk": 17
     }
   }
 }
