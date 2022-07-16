@@ -177,16 +177,28 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ExternalWebContentSource_ConfigPeriod()
         {
-            var source = new ExternalWebContentSource("", null, TimeSpan.FromMinutes(100));
+            var source = new ExternalWebContentSource(periodNormalPriority: TimeSpan.FromMinutes(100));
             Assert.AreEqual(source.PeriodNormalPriority.TotalMinutes, 100.0);
         }
         [TestMethod]
-        public void ExternalWebContentSource_ServersPerSample()
+        public void ExternalWebContentSource_UrlsPerSample()
         {
-            var source = new ExternalWebContentSource("", null, TimeSpan.FromMinutes(100), 20);
-            Assert.AreEqual(source.ServersPerSample, 20);
+            var source = new ExternalWebContentSource(urlsPerSample: 20);
+            Assert.AreEqual(source.UrlsPerSample, 20);
         }
-
+        [TestMethod]
+        public void ExternalWebContentSource_SourcePath()
+        {
+            var source = new ExternalWebContentSource(sourcePath: "urls.txt");
+            Assert.AreEqual(source.SourcePath, "urls.txt");
+            Assert.AreEqual(source.SourceCount, 0);
+        }
+        [TestMethod]
+        public void ExternalWebContentSource_Sources()
+        {
+            var source = new ExternalWebContentSource(sources: new[] { new Uri("http://server.com"), new Uri("https://sample.org") });
+            Assert.AreEqual(source.SourceCount, 2);
+        }
 
         [TestMethod]
         public void ExternalServerRandomSource_RandomNumbersInfo()

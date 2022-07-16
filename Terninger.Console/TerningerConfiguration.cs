@@ -17,6 +17,8 @@ namespace MurrayGrant.Terninger.Console
 
         public EntropySources.Local.NetworkStatsSource.Configuration NetworkStats { get; set; }
 
+        public EntropySources.Network.ExternalWebContentSource.Configuration ExternalWebContent { get; set; }
+
         public EntropySources.Network.AnuExternalRandomSource.Configuration AnuExternal { get; set; }
 
         public EntropySources.Network.BeaconNistExternalRandomSource.Configuration BeaconNistExternal { get; set; }

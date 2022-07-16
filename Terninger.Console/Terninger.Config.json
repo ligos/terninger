@@ -52,6 +52,27 @@
       "ItemsPerChunk": 17
     },
 
+    // Gather entropy from a list of websites, usually news and social media sites which change frequently.
+    // Remove this key to disable source.
+    "ExternalWebContent": {
+      // Path to file containing URL list.
+      // If left blank, an internal list is used.
+      "UrlFilePath": null,
+
+      // Number of URLs to sample from the URL list.
+      // Default: 4. Minimum: 1. Maximum: 100.
+      "UrlsPerSample": 4,
+
+      // Sample period at normal priority. Default: 15 minutes.
+      "PeriodNormalPriority": "00:15:00",
+
+      // Sample period at high priority. Default: 5 minutes.
+      "PeriodHighPriority": "00:05:00",
+
+      // Sample period at low priority. Default: 1 hour.
+      "PeriodLowPriority": "01:00:00"
+    },
+
     // Gather entropy from https://quantumnumbers.anu.edu.au
     // This requires an api key and has a free limit of 100 requests per month.
     // As we get up to 1kB per request, we use 12 hours as the normal polling period.

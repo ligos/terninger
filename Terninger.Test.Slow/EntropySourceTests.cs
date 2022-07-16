@@ -156,13 +156,13 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void ExternalWebContentSource_Network()
         {
-            FuzzEntropySource(10, new ExternalWebContentSource(UnitTestUserAgent(), null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null), "Entropy_" + nameof(ExternalWebContentSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(10, new ExternalWebContentSource(UnitTestUserAgent(), null, null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null), "Entropy_" + nameof(ExternalWebContentSource), DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
         public async Task ExternalWebContentSource_TestAllServers()
         {
-            var urls = await ExternalWebContentSource.LoadInternalServerListAsync();
+            var urls = await ExternalWebContentSource.LoadInternalUrlListAsync();
             var failedUrls = new List<Tuple<Uri, object>>();
             foreach (var url in urls)
             {
