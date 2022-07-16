@@ -90,6 +90,21 @@
       "PeriodLowPriority": "16:00:00"
     },
 
+    // Gather entropy from https://drand.cloudflare.com/
+    // No published rate limits, but produces new output every 60 seconds.
+    // Note that these random number are recorded and public.
+    // Remove this key to disable source.
+    "DrandExternal": {
+      // Sample period at normal priority. Default: 4 hours.
+      "PeriodNormalPriority": "04:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 16 hours.
+      "PeriodLowPriority": "16:00:00"
+    },
+
     // Gather entropy from https://www.fourmilab.ch/hotbits/
     // Either a pseudorandom source (without API key) or true random (requires an API key).
     // No published rate limits, but be cautious when using API key as true random source is used.

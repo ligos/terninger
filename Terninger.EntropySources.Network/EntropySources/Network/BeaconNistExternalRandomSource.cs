@@ -78,7 +78,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                     Log.Warn(ex, "Unable to GET from {0}", apiUri);
                     return null;
                 }
-                Log.Trace("Read {0:N0} characters of html in {1:N2}ms.", response.Length, sw.Elapsed.TotalMilliseconds);
+                Log.Trace("Read {0:N0} characters of xml in {1:N2}ms.", response.Length, sw.Elapsed.TotalMilliseconds);
             }
             else
             {

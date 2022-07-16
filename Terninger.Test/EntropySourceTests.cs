@@ -223,7 +223,11 @@ namespace MurrayGrant.Terninger.Test
         {
             FuzzEntropySource(1, new QrngEthzChExternalRandomSource(true), "Entropy_" + nameof(QrngEthzChExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
         }
-
+        [TestMethod]
+        public void ExternalServerRandomSource_Drand()
+        {
+            FuzzEntropySource(1, new DrandExternalRandomSource(true), "Entropy_" + nameof(DrandExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
+        }
 
         [TestMethod]
         public void TestHttpClientDefaults()
