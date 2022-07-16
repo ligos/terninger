@@ -347,6 +347,7 @@ namespace MurrayGrant.Terninger.Console
                             new AnuExternalRandomSource(userAgent, config?.EntropySources?.AnuExternal),
                             new BeaconNistExternalRandomSource(userAgent, config?.EntropySources?.BeaconNistExternal),
                             new HotbitsExternalRandomSource(userAgent, config?.EntropySources?.HotbitsExternal),
+                            new QrngEthzChExternalRandomSource(userAgent, config?.EntropySources?.QrngEthzChExternal),
                             new RandomNumbersInfoExternalRandomSource(),
                             new RandomOrgExternalRandomSource(),
                         });

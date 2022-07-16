@@ -33,7 +33,7 @@ namespace MurrayGrant.Terninger
             new AnuExternalRandomSource(anuApiKey, userAgent: userAgent),
             new BeaconNistExternalRandomSource(userAgent: userAgent),
             new HotbitsExternalRandomSource(userAgent: userAgent, apiKey: hotBitsApiKey),
-            new RandomNumbersInfoExternalRandomSource(userAgent),
+            new RandomNumbersInfoExternalRandomSource(userAgent: userAgent),
             new RandomOrgExternalRandomSource(userAgent, randomOrgApiKey.GetValueOrDefault()),
         };
 

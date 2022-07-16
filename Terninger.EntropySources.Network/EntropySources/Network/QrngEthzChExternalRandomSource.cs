@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.Net;
-using System.Text;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
 using System.Diagnostics;
 
 using MurrayGrant.Terninger.Random;
@@ -29,18 +25,25 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly bool _UseDiskSourceForUnitTests;
         private readonly int _BytesPerRequest;
 
-        public QrngEthzChExternalRandomSource() : this(HttpClientHelpers.UserAgentString(), 256, TimeSpan.FromHours(8)) { }
-        public QrngEthzChExternalRandomSource(string userAgent) : this (userAgent, 256, TimeSpan.FromHours(8)) { }
-        public QrngEthzChExternalRandomSource(string userAgent, int bytesPerRequest) : this(userAgent, bytesPerRequest, TimeSpan.FromHours(8)) { }
-        public QrngEthzChExternalRandomSource(string userAgent, int bytesPerRequest, TimeSpan periodNormalPriority) : this(userAgent, bytesPerRequest, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
-        public QrngEthzChExternalRandomSource(string userAgent, int bytesPerRequest, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
-            : base(periodNormalPriority, periodHighPriority, periodLowPriority)
+        public QrngEthzChExternalRandomSource(string userAgent, Configuration config)
+            : this(
+                  userAgent: userAgent,
+                  bytesPerRequest: config?.BytesPerRequest ?? Configuration.Default.BytesPerRequest,
+                  periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
+                  periodHighPriority: config?.PeriodHighPriority ?? Configuration.Default.PeriodHighPriority,
+                  periodLowPriority: config?.PeriodLowPriority ?? Configuration.Default.PeriodLowPriority
+            )
+        { }
+        public QrngEthzChExternalRandomSource(string userAgent = null, int? bytesPerRequest = null, TimeSpan? periodNormalPriority = null, TimeSpan? periodHighPriority = null, TimeSpan? periodLowPriority = null)
+            : base(periodNormalPriority.GetValueOrDefault(Configuration.Default.PeriodNormalPriority),
+                  periodHighPriority.GetValueOrDefault(Configuration.Default.PeriodHighPriority),
+                  periodLowPriority.GetValueOrDefault(Configuration.Default.PeriodLowPriority))
         {
-            if (bytesPerRequest < 4 || bytesPerRequest > 2048)      // No published maximum, but we'll be nice.
+            this._BytesPerRequest = bytesPerRequest.GetValueOrDefault(Configuration.Default.BytesPerRequest);
+            if (_BytesPerRequest < 4 || _BytesPerRequest > 2048)      // No published maximum, but we'll be nice.
                 throw new ArgumentOutOfRangeException(nameof(bytesPerRequest), bytesPerRequest, "Bytes per request must be between 4 and 2048");
 
             this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.UserAgentString() : userAgent;
-            this._BytesPerRequest = bytesPerRequest;
         }
         internal QrngEthzChExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
@@ -121,6 +124,32 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             Log.Trace("Read {0:N0} bytes of entropy (including 4 bytes of timing info).", result.Length);
 
             return result;
+        }
+
+        public class Configuration
+        {
+            public static readonly Configuration Default = new Configuration();
+
+            /// <summary>
+            /// Bytes returned per request / sample. 
+            /// Default: 256. Minimum: 4. Maximum: 2048.
+            /// </summary>
+            public int BytesPerRequest { get; set; } = 256;
+
+            /// <summary>
+            /// Sample period at normal priority. Default: 8 hours.
+            /// </summary>
+            public TimeSpan PeriodNormalPriority { get; set; } = TimeSpan.FromHours(8);
+
+            /// <summary>
+            /// Sample period at high priority. Default: 2 minutes.
+            /// </summary>
+            public TimeSpan PeriodHighPriority { get; set; } = TimeSpan.FromMinutes(2);
+
+            /// <summary>
+            /// Sample period at low priority. Default: 32 hours.
+            /// </summary>
+            public TimeSpan PeriodLowPriority { get; set; } = TimeSpan.FromHours(32);
         }
     }
 }
