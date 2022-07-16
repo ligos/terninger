@@ -345,7 +345,7 @@ namespace MurrayGrant.Terninger.Console
                             new PingStatsSource(),
                             new ExternalWebContentSource(),
                             new AnuExternalRandomSource(userAgent, config?.EntropySources?.AnuExternal),
-                            new BeaconNistExternalRandomSource(),
+                            new BeaconNistExternalRandomSource(userAgent, config?.EntropySources?.BeaconNistExternal),
                             new HotbitsExternalRandomSource(),
                             new RandomNumbersInfoExternalRandomSource(),
                             new RandomOrgExternalRandomSource(),
