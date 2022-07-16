@@ -21,6 +21,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         public override string Name { get; set; }
 
         private readonly string _UserAgent;
+        private bool _UnconfiguredUserAgentWarningEmitted;
         private readonly bool _UseDiskSourceForUnitTests;
 
         public BeaconNistExternalRandomSource(string userAgent, Configuration config)
@@ -53,6 +54,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             // Yes, this reduces the effectiveness of this source, but it will still contribute over time.
 
             Log.Trace("Beginning to gather entropy.");
+
+            if (_UserAgent.Contains("Terninger/unconfigured"))
+            {
+                if (!_UnconfiguredUserAgentWarningEmitted)
+                    Log.Warn("No user agent is configured. Please be polite to web services and set a unique user agent identifier for your usage of Terninger.");
+                _UnconfiguredUserAgentWarningEmitted = true;
+            }
 
             // Fetch data.
             var response = "";

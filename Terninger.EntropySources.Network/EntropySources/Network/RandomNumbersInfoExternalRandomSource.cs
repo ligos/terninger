@@ -22,6 +22,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private readonly int _NumberOfNumbers;
         private readonly string _UserAgent;
+        private bool _UnconfiguredUserAgentWarningEmitted;
         private readonly bool _UseDiskSourceForUnitTests;
 
         public RandomNumbersInfoExternalRandomSource(string userAgent, Configuration config)
@@ -54,6 +55,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         protected override async Task<byte[]> GetInternalEntropyAsync(EntropyPriority priority)
         {
             Log.Trace("Beginning to gather entropy.");
+
+            if (_UserAgent.Contains("Terninger/unconfigured"))
+            {
+                if (!_UnconfiguredUserAgentWarningEmitted)
+                    Log.Warn("No user agent is configured. Please be polite to web services and set a unique user agent identifier for your usage of Terninger.");
+                _UnconfiguredUserAgentWarningEmitted = true;
+            }
 
             // This supports SSL, but the cert isn't valid (it's for the uni, rather than the correct domain).
             // http://www.randomnumbers.info/content/Download.htm

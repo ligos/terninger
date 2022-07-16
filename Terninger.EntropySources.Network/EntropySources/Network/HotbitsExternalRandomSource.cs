@@ -25,6 +25,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         public override string Name { get; set; }
 
         private readonly string _UserAgent;
+        private bool _UnconfiguredUserAgentWarningEmitted;
         private readonly string _ApiKey;
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
@@ -70,6 +71,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 if (!_ApiWarningEmitted)
                     Log.Warn("No API Key supplied. Please visit https://www.fourmilab.ch/hotbits/ to obtain a free API key to use true random data from this source.");
                 _ApiWarningEmitted = true;
+            }
+
+            if (_UserAgent.Contains("Terninger/unconfigured"))
+            {
+                if (!_UnconfiguredUserAgentWarningEmitted)
+                    Log.Warn("No user agent is configured. Please be polite to web services and set a unique user agent identifier for your usage of Terninger.");
+                _UnconfiguredUserAgentWarningEmitted = true;
             }
 
             string pseudoSource, apiKey;

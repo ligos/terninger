@@ -31,8 +31,9 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private int _ServersPerSample = 4;                   // This many web requests are made per entropy request.
         public int ServersPerSample => _ServersPerSample;
 
-        private bool _UseRandomSourceForUnitTest;
-        private string _UserAgent;
+        private readonly bool _UseRandomSourceForUnitTest;
+        private readonly string _UserAgent;
+        private bool _UnconfiguredUserAgentWarningEmitted;
 
 
         public ExternalWebContentSource() : this(HttpClientHelpers.UserAgentString(), null, TimeSpan.FromMinutes(15.0), 5) { }
@@ -114,6 +115,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         protected override async Task<byte[]> GetInternalEntropyAsync(EntropyPriority priority)
         {
+            if (_UserAgent.Contains("Terninger/unconfigured"))
+            {
+                if (!_UnconfiguredUserAgentWarningEmitted)
+                    Log.Warn("No user agent is configured. Please be polite to web services and set a unique user agent identifier for your usage of Terninger.");
+                _UnconfiguredUserAgentWarningEmitted = true;
+            }
+
             // Note that many of these servers will have similar content and it is publicly accessible.
             // We must mix in some local entropy to ensure differnt computers end up with different entropy.
             // Yes, this reduces the effectiveness of this source, but it will still contribute over time.

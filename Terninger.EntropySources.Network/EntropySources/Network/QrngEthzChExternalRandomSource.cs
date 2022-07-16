@@ -20,7 +20,8 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     {
         public override string Name { get; set; }
 
-        private string _UserAgent;
+        private readonly string _UserAgent;
+        private bool _UnconfiguredUserAgentWarningEmitted;
 
         private readonly bool _UseDiskSourceForUnitTests;
         private readonly int _BytesPerRequest;
@@ -57,6 +58,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             // http://qrng.ethz.ch/http_api/
 
             Log.Trace("Beginning to gather entropy.");
+
+            if (_UserAgent.Contains("Terninger/unconfigured"))
+            {
+                if (!_UnconfiguredUserAgentWarningEmitted)
+                    Log.Warn("No user agent is configured. Please be polite to web services and set a unique user agent identifier for your usage of Terninger.");
+                _UnconfiguredUserAgentWarningEmitted = true;
+            }
 
             // Fetch data.
             var response = "";

@@ -22,6 +22,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private readonly int _BytesPerRequest;
         private readonly string _UserAgent;
+        private bool _UnconfiguredUserAgentWarningEmitted;
         private readonly string _ApiKey;
         private bool _ApiWarningEmitted;
 
@@ -70,6 +71,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
 
             Log.Trace("Beginning to gather entropy.");
+
+            if (_UserAgent.Contains("Terninger/unconfigured"))
+            {
+                if (!_UnconfiguredUserAgentWarningEmitted)
+                    Log.Warn("No user agent is configured. Please be polite to web services and set a unique user agent identifier for your usage of Terninger.");
+                _UnconfiguredUserAgentWarningEmitted = true;
+            }
 
             // Fetch data.
             var response = "";

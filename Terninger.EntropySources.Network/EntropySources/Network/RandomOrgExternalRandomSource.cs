@@ -22,6 +22,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private readonly string _UserAgent;
         private readonly string _ApiKey;
+        private bool _UnconfiguredUserAgentWarningEmitted;
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
         private bool _ApiWarningEmitted;
@@ -75,6 +76,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 if (!_ApiWarningEmitted)
                     Log.Warn("No API Key supplied. Please visit https://random.org to obtain a free API key for this source.");
                 _ApiWarningEmitted = true;
+            }
+
+            if (_UserAgent.Contains("Terninger/unconfigured"))
+            {
+                if (!_UnconfiguredUserAgentWarningEmitted)
+                    Log.Warn("No user agent is configured. Please be polite to web services and set a unique user agent identifier for your usage of Terninger.");
+                _UnconfiguredUserAgentWarningEmitted = true;
             }
 
             // Fetch data.
