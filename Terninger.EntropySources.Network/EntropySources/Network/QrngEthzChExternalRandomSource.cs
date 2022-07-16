@@ -27,11 +27,11 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         public QrngEthzChExternalRandomSource(string userAgent, Configuration config)
             : this(
-                  userAgent: userAgent,
-                  bytesPerRequest: config?.BytesPerRequest ?? Configuration.Default.BytesPerRequest,
+                  userAgent:            userAgent,
+                  bytesPerRequest:      config?.BytesPerRequest      ?? Configuration.Default.BytesPerRequest,
                   periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
-                  periodHighPriority: config?.PeriodHighPriority ?? Configuration.Default.PeriodHighPriority,
-                  periodLowPriority: config?.PeriodLowPriority ?? Configuration.Default.PeriodLowPriority
+                  periodHighPriority:   config?.PeriodHighPriority   ?? Configuration.Default.PeriodHighPriority,
+                  periodLowPriority:    config?.PeriodLowPriority    ?? Configuration.Default.PeriodLowPriority
             )
         { }
         public QrngEthzChExternalRandomSource(string userAgent = null, int? bytesPerRequest = null, TimeSpan? periodNormalPriority = null, TimeSpan? periodHighPriority = null, TimeSpan? periodLowPriority = null)

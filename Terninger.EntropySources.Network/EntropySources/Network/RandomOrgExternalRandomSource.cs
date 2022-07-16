@@ -24,6 +24,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly string _ApiKey;
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
+        private bool _ApiWarningEmitted;
 
         public RandomOrgExternalRandomSource(string userAgent, Configuration config)
             : this(
@@ -68,6 +69,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             // https://random.org
 
             Log.Trace("Beginning to gather entropy.");
+
+            if (String.IsNullOrEmpty(_ApiKey))
+            {
+                if (!_ApiWarningEmitted)
+                    Log.Warn("No API Key supplied. Please visit https://random.org to obtain a free API key for this source.");
+                _ApiWarningEmitted = true;
+            }
 
             // Fetch data.
             var response = "";

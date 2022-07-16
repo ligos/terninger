@@ -28,6 +28,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly string _ApiKey;
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
+        private bool _ApiWarningEmitted;
 
         public HotbitsExternalRandomSource(string userAgent, Configuration config)
             : this(
@@ -63,6 +64,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         {
             // http://www.fourmilab.ch/hotbits/
             Log.Trace("Beginning to gather entropy.");
+
+            if (String.IsNullOrEmpty(_ApiKey))
+            {
+                if (!_ApiWarningEmitted)
+                    Log.Warn("No API Key supplied. Please visit https://www.fourmilab.ch/hotbits/ to obtain a free API key to use true random data from this source.");
+                _ApiWarningEmitted = true;
+            }
 
             string pseudoSource, apiKey;
             if (String.IsNullOrWhiteSpace(_ApiKey))

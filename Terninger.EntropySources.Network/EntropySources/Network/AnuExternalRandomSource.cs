@@ -64,7 +64,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (String.IsNullOrEmpty(_ApiKey))
             {
                 if (!_ApiWarningEmitted)
-                    Log.Warn("No API Key supplied. Please visit https://quantumnumbers.anu.edu.au/ to obtain a free or paid API key to use this source.");
+                    Log.Warn("No API Key supplied. Please visit https://quantumnumbers.anu.edu.au/ to obtain a free or paid API key to use this source. No entropy will be gathered from this source without an API key.");
                 _ApiWarningEmitted = true;
                 return null;
             }
