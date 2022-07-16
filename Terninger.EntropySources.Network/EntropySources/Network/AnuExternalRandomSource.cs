@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.Net;
-using System.Text;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
 using System.Diagnostics;
 
 using MurrayGrant.Terninger.Random;
@@ -30,6 +26,14 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         public AnuExternalRandomSource() : this(HttpClientHelpers.UserAgentString(), TimeSpan.FromHours(12)) { }
         public AnuExternalRandomSource(string userAgent) : this (userAgent, TimeSpan.FromHours(12)) { }
         public AnuExternalRandomSource(string userAgent, TimeSpan periodNormalPriority) : this(userAgent, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
+        public AnuExternalRandomSource(string userAgent, Configuration config)
+            : this(
+                  userAgent: userAgent,
+                  periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
+                  periodHighPriority:   config?.PeriodHighPriority   ?? Configuration.Default.PeriodHighPriority,
+                  periodLowPriority:    config?.PeriodLowPriority    ?? Configuration.Default.PeriodLowPriority
+            )
+        { }
         public AnuExternalRandomSource(string userAgent, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
             : base(periodNormalPriority, periodHighPriority, periodLowPriority)
         {
@@ -114,6 +118,26 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             Log.Trace("Read {0:N0} bytes of entropy (including 4 bytes of timing info).", randomBytes.Length);
 
             return randomBytes;
+        }
+
+        public class Configuration
+        {
+            public static readonly Configuration Default = new Configuration();
+
+            /// <summary>
+            /// Sample period at normal priority. Default: 12 hours.
+            /// </summary>
+            public TimeSpan PeriodNormalPriority { get; set; } = TimeSpan.FromHours(12);
+
+            /// <summary>
+            /// Sample period at high priority. Default: 2 minutes.
+            /// </summary>
+            public TimeSpan PeriodHighPriority { get; set; } = TimeSpan.FromMinutes(2);
+
+            /// <summary>
+            /// Sample period at low priority. Default: 48 hours.
+            /// </summary>
+            public TimeSpan PeriodLowPriority { get; set; } = TimeSpan.FromHours(48.0);
         }
     }
 }

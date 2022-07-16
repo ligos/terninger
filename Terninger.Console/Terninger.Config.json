@@ -1,6 +1,13 @@
 {
   // Terninger Configuration File
 
+  // Identifier to use as a user agent in all web requests.
+  // Recommend using an email address, DNS name, or URL.
+  // Default: "unconfigured"
+  // User agent appears as:
+  //   Mozilla/5.0 (Microsoft.NET; {Environment.Version}; github.com/ligos/terninger) Terninger/{NetworkUserAgentIdentifier}
+  "NetworkUserAgentIdentifier": null,
+
   // Configuration for standard Entropy Sources
   "EntropySources": {
 
@@ -41,6 +48,20 @@
       // Number of network statistics read per sample.
       // Int32. Default: 17. Minimum: 1. Maximum: 10000.
       "ItemsPerChunk": 17
+    },
+
+    // Gather entropy from https://qrng.anu.edu.au.
+    // Reads 1kB with each request.
+    // This has no publicised rate limit (and boasts gigabit/sec entropy).
+    "AnuExternal": {
+      // Sample period at normal priority. Default: 12 hours.
+      "PeriodNormalPriority": "12:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 48 hours.
+      "PeriodLowPriority": "48:00:00"
     }
   }
 }

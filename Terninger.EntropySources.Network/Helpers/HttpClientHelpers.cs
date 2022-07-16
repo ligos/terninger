@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -33,7 +30,7 @@ namespace MurrayGrant.Terninger.Helpers
         /// Creates a UserAgent string for HttpClient.
         /// It is recommended to pass a usage identifier such as a website or email address.
         /// </summary>
-        public static string UserAgentString(string usageIdentifier = "unconfigured") => $"Mozilla/5.0 (Microsoft.NET; {Environment.Version}; bitbucket.org/ligos/Terninger) Terninger/{usageIdentifier}";
+        public static string UserAgentString(string usageIdentifier = "unconfigured") => $"Mozilla/5.0 (Microsoft.NET; {Environment.Version}; github.com/ligos/terninger) Terninger/{usageIdentifier}";
 
         /// <summary>
         /// Create an HttpClient with parameters or sane defaults.
@@ -45,9 +42,11 @@ namespace MurrayGrant.Terninger.Helpers
 
             var handler = new HttpClientHandler();
             handler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-#if !NET452
+#if NETSTANDARD2_0
             // TLS1.0+ by default, or whatever the user provides.
             handler.SslProtocols = sslProtocols == SslProtocols.None ? SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12 : sslProtocols;
+#elif NET6_0
+            handler.SslProtocols = sslProtocols == SslProtocols.None ? SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12 | SslProtocols.Tls13 : sslProtocols;
 #endif
             if (handlerCustomisation != null)
                 handlerCustomisation(handler);

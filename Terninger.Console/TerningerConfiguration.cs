@@ -4,6 +4,8 @@ namespace MurrayGrant.Terninger.Console
 {
     public class TerningerConfiguration
     {
+        public string NetworkUserAgentIdentifier { get; set; }
+
         public EntropySourceConfiguration EntropySources { get; set; }
     }
 
@@ -14,5 +16,7 @@ namespace MurrayGrant.Terninger.Console
         public EntropySources.Local.ProcessStatsSource.Configuration ProcessStats { get; set; }
 
         public EntropySources.Local.NetworkStatsSource.Configuration NetworkStats { get; set; }
+
+        public EntropySources.Network.AnuExternalRandomSource.Configuration AnuExternal { get; set; }
     }
 }

@@ -339,15 +339,18 @@ namespace MurrayGrant.Terninger.Console
                     new ProcessStatsSource(config?.EntropySources?.ProcessStats),
                 };
                 if (includeNetworkSources)
+                {
+                    var userAgent = NetworkSources.UserAgent(config?.NetworkUserAgentIdentifier ?? "unconfigured-consoleapp");
                     sources = sources.Concat(new IEntropySource[] {
                             new PingStatsSource(),
                             new ExternalWebContentSource(),
-                            new AnuExternalRandomSource(),
+                            new AnuExternalRandomSource(userAgent, config?.EntropySources?.AnuExternal),
                             new BeaconNistExternalRandomSource(),
                             new HotbitsExternalRandomSource(),
                             new RandomNumbersInfoExternalRandomSource(),
                             new RandomOrgExternalRandomSource(),
                         });
+                }
                 // As the pooled generator will be churning out entropy as fast as it can, we increase the reseed rate by polling faster and forcing reseeds more frequently.
                 var generatorConfig = new PooledEntropyCprngGenerator.PooledGeneratorConfig()
                 {
