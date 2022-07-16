@@ -20,5 +20,7 @@ namespace MurrayGrant.Terninger.Console
         public EntropySources.Network.AnuExternalRandomSource.Configuration AnuExternal { get; set; }
 
         public EntropySources.Network.BeaconNistExternalRandomSource.Configuration BeaconNistExternal { get; set; }
+
+        public EntropySources.Network.HotbitsExternalRandomSource.Configuration HotbitsExternal { get; set; }
     }
 }
