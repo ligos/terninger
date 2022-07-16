@@ -138,7 +138,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void NetworkStatsSource_MaxStatCount()
         {
-            var source = new NetworkStatsSource(TimeSpan.FromMinutes(1), 10000);
+            var source = new NetworkStatsSource(itemsPerResultChunk: 10000);
             Assert.AreEqual(source.StatsPerChunk, 10000);
             var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
             Assert.AreEqual(result.Length, 32);

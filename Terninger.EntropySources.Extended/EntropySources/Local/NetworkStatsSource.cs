@@ -46,9 +46,6 @@ namespace MurrayGrant.Terninger.EntropySources.Local
         // This logs the raw stat long array to Trace. Only for testing.
         internal bool LogRawStats { get; set; }
 
-        public NetworkStatsSource() : this(TimeSpan.FromMinutes(1.0), 17) { }
-        public NetworkStatsSource(TimeSpan periodNormalPriority) : this(periodNormalPriority, 17) { }
-        public NetworkStatsSource(TimeSpan periodNormalPriority, int itemsPerResultChunk) : this(periodNormalPriority, TimeSpan.FromSeconds(5), new TimeSpan(periodNormalPriority.Ticks * 5), itemsPerResultChunk, null) { }
         public NetworkStatsSource(Configuration config)
             : this(
                   periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
@@ -58,13 +55,15 @@ namespace MurrayGrant.Terninger.EntropySources.Local
                   rng: null
             )
         { }
-        public NetworkStatsSource(TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority, int itemsPerResultChunk, IRandomNumberGenerator rng)
-            : base(periodNormalPriority, periodHighPriority, periodLowPriority)
+        public NetworkStatsSource(TimeSpan? periodNormalPriority = null, TimeSpan? periodHighPriority = null, TimeSpan? periodLowPriority = null, int? itemsPerResultChunk = null, IRandomNumberGenerator rng = null)
+            : base(periodNormalPriority.GetValueOrDefault(Configuration.Default.PeriodNormalPriority), 
+                  periodHighPriority.GetValueOrDefault(Configuration.Default.PeriodHighPriority), 
+                  periodLowPriority.GetValueOrDefault(Configuration.Default.PeriodLowPriority))
         {
-            if (itemsPerResultChunk < 1 || itemsPerResultChunk > 10000)
+            this._ItemsPerResultChunk = itemsPerResultChunk.GetValueOrDefault(Configuration.Default.ItemsPerChunk);
+            if (_ItemsPerResultChunk < 1 || _ItemsPerResultChunk > 10000)
                 throw new ArgumentOutOfRangeException(nameof(itemsPerResultChunk), itemsPerResultChunk, "Items per chunck must be between 1 and 10000");
 
-            this._ItemsPerResultChunk = itemsPerResultChunk;
             this._Rng = rng ?? StandardRandomWrapperGenerator.StockRandom();
         }
 
@@ -207,7 +206,7 @@ namespace MurrayGrant.Terninger.EntropySources.Local
             /// <summary>
             /// Sample period at high priority. Default: 5 seconds.
             /// </summary>
-            public TimeSpan PeriodHighPriority { get; set; } = TimeSpan.FromSeconds(3.0);
+            public TimeSpan PeriodHighPriority { get; set; } = TimeSpan.FromSeconds(5.0);
 
             /// <summary>
             /// Sample period at low priority. Default: 5 minutes.
