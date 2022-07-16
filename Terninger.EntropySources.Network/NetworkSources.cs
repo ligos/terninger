@@ -22,14 +22,16 @@ namespace MurrayGrant.Terninger
         /// An additional set of sources which gather entropy from external network sources such as ping timings, web content and 3rd party entropy generators.
         /// </summary>
         /// <param name="userAgent">A user agent string to include in web requests. Highly recommended to identify yourself in case of problems. See MurrayGrant.Terninger.Helpers.WebClientHelpers.DefaultUserAgent for an example.</param>
+        /// <param name="anuApiKey">API key for true random source at https://quantumnumbers.anu.edu.au </param>
         /// <param name="hotBitsApiKey">API key for true random source at https://www.fourmilab.ch/hotbits </param>
         /// <param name="randomOrgApiKey">API for https://api.random.org </param>
-        public static IEnumerable<IEntropySource> All(string userAgent = null, string hotBitsApiKey = null, Guid? randomOrgApiKey = null) => new IEntropySource[]
+        public static IEnumerable<IEntropySource> All(string userAgent = null, string anuApiKey = null, string hotBitsApiKey = null, Guid? randomOrgApiKey = null)
+            => new IEntropySource[]
         {
             new PingStatsSource(),
             new ExternalWebContentSource(userAgent),
-            new AnuExternalRandomSource(userAgent),
-            new BeaconNistExternalRandomSource(userAgent),
+            new AnuExternalRandomSource(anuApiKey, userAgent: userAgent),
+            new BeaconNistExternalRandomSource(userAgent: userAgent),
             new HotbitsExternalRandomSource(userAgent, hotBitsApiKey),
             new RandomNumbersInfoExternalRandomSource(userAgent),
             new RandomOrgExternalRandomSource(userAgent, randomOrgApiKey.GetValueOrDefault()),
