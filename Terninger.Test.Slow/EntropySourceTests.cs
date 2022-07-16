@@ -237,19 +237,19 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void RandomOrgExternalRandomSourcePublic_Network()
         {
-            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, Guid.Empty, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, String.Empty, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
         public void RandomOrgExternalRandomSourceApi_Network()
         {
             var maybeApiKey = Environment.GetEnvironmentVariable("Terninger_UnitTest_RandomOrgApiKey") ?? "";
-            if (!Guid.TryParse(maybeApiKey, out var apiKey))
+            if (String.IsNullOrEmpty(maybeApiKey))
             {
                 Assert.Inconclusive("No API key available: get one from https://api.random.org and set it in the 'Terninger_UnitTest_RandomOrgApiKey' environment variable.");
                 return;
             }
-            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, apiKey, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Api", Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, maybeApiKey, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Api", Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]

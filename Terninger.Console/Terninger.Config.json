@@ -136,6 +136,27 @@
 
       // Sample period at low priority. Default: 32 hours.
       "PeriodLowPriority": "32:00:00"
+    },
+
+    /// Gather entropy from https://www.random.org/
+    /// True random source with optional, free API key.
+    /// No published rate limits.
+    "RandomOrgExternal": {
+      // Optional free API key to access service.
+      "ApiKey": "",
+
+      // Bytes returned per request / sample. 
+      // Default: 128. Minimum: 4. Maximum: 4096.
+      "BytesPerRequest": 128,
+
+      // Sample period at normal priority. Default: 8 hours.
+      "PeriodNormalPriority": "08:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 32 hours.
+      "PeriodLowPriority": "32:00:00"
     }
   }
 }

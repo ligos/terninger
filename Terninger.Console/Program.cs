@@ -349,7 +349,7 @@ namespace MurrayGrant.Terninger.Console
                             new HotbitsExternalRandomSource(userAgent, config?.EntropySources?.HotbitsExternal),
                             new QrngEthzChExternalRandomSource(userAgent, config?.EntropySources?.QrngEthzChExternal),
                             new RandomNumbersInfoExternalRandomSource(userAgent, config?.EntropySources?.RandomNumbersInfoExternal),
-                            new RandomOrgExternalRandomSource(),
+                            new RandomOrgExternalRandomSource(userAgent, config?.EntropySources?.RandomOrgExternal),
                         });
                 }
                 // As the pooled generator will be churning out entropy as fast as it can, we increase the reseed rate by polling faster and forcing reseeds more frequently.

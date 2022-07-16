@@ -211,12 +211,12 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ExternalServerRandomSource_RandomOrgPublic()
         {
-            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, Guid.Empty), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, String.Empty), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_RandomOrgApi()
         {
-            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, Guid.NewGuid()), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, "FakeApiKey"), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_QrngEthzCh()
