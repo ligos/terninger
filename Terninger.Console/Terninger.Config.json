@@ -52,7 +52,7 @@
       "ItemsPerChunk": 17
     },
 
-    // Gather entropy from a list of websites, usually news and social media sites which change frequently.
+    // Gather entropy from the content of a list of websites, usually news and social media sites which change frequently.
     // Remove this key to disable source.
     "ExternalWebContent": {
       // Path to file containing URL list.
@@ -62,6 +62,34 @@
       // Number of URLs to sample from the URL list.
       // Default: 4. Minimum: 1. Maximum: 100.
       "UrlsPerSample": 4,
+
+      // Sample period at normal priority. Default: 15 minutes.
+      "PeriodNormalPriority": "00:15:00",
+
+      // Sample period at high priority. Default: 5 minutes.
+      "PeriodHighPriority": "00:05:00",
+
+      // Sample period at low priority. Default: 1 hour.
+      "PeriodLowPriority": "01:00:00"
+    },
+
+    // Gather entropy from timing of pings to a list of servers.
+    // Remove this key to disable source.
+    "PingStats": {
+      // Path to file containing server list.
+      // If left blank, an internal list is used.
+      "ServerFilePath": null,
+
+      // Number of servers to ping from the list each sample.
+      // Default: 8. Minimum: 1. Maximum: 100.
+      "ServersPerSample": 8,
+
+      // Number of times to ping each server per sample.
+      // Default: 6. Minimum: 1. Maximum: 100.
+      "PingsPerSample": 6,
+
+      // Timeout to use for ping requests. Default: 5 seconds.
+      "Timeout": "00:00:05",
 
       // Sample period at normal priority. Default: 15 minutes.
       "PeriodNormalPriority": "00:15:00",

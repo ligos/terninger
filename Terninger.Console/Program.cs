@@ -345,7 +345,8 @@ namespace MurrayGrant.Terninger.Console
                 if (includeNetworkSources)
                 {
                     var userAgent = NetworkSources.UserAgent(config?.NetworkUserAgentIdentifier ?? "unconfigured-consoleapp");
-                    sources.Add(new PingStatsSource());
+                    if (config?.EntropySources?.PingStats != null)
+                        sources.Add(new PingStatsSource(config?.EntropySources?.PingStats));
                     if (config?.EntropySources?.ExternalWebContent != null)
                         sources.Add(new ExternalWebContentSource(userAgent, config?.EntropySources?.ExternalWebContent));
                     if (config?.EntropySources?.AnuExternal != null)

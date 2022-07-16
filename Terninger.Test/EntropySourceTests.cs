@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Security.Cryptography;
 using System.Linq;
+using System.Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using MurrayGrant.Terninger.Helpers;
@@ -159,14 +159,26 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void PingStatsSource_ServersPerSample()
         {
-            var source = new PingStatsSource(TimeSpan.FromMinutes(1), null, 10, 20);
+            var source = new PingStatsSource(serversPerSample: 20);
             Assert.AreEqual(source.ServersPerSample, 20);
         }
         [TestMethod]
         public void PingStatsSource_PingsPerSample()
         {
-            var source = new PingStatsSource(TimeSpan.FromMinutes(1), null, 1000, 20);
+            var source = new PingStatsSource(pingsPerSample: 1000);
             Assert.AreEqual(source.PingsPerSample, 1000);
+        }
+        [TestMethod]
+        public void PingStatsSource_SourcePath()
+        {
+            var source = new PingStatsSource(sourcePath: "path.txt");
+            Assert.AreEqual(source.SourcePath, "path.txt");
+        }
+        [TestMethod]
+        public void PingStatsSource_Servers()
+        {
+            var source = new PingStatsSource(servers: new[] { IPAddress.Parse("127.0.0.1"), IPAddress.Parse("1.1.1.1") });
+            Assert.AreEqual(source.ServerCount, 2);
         }
 
         [TestMethod]

@@ -140,17 +140,20 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             if (!_SourcesInitialised && !_UseRandomSourceForUnitTest)
             {
+                Log.Debug("Initialising source list.");
                 try
                 {
-                    if (!String.IsNullOrEmpty(SourcePath) && File.Exists(SourcePath))
+                    if (!String.IsNullOrEmpty(SourcePath))
                         _Sources.AddRange(await LoadUrlListAsync(SourcePath));
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, "Unable to open URL Source File '{0}'. This source will be disabled.", SourcePath);
+                    Log.Error(ex, "Unable to open URL Source File '{0}'.", SourcePath);
                 }
                 if (String.IsNullOrEmpty(SourcePath) && _Sources.Count == 0)
                     _Sources.AddRange(await LoadInternalUrlListAsync());
+                if (_Sources.Count == 0)
+                    Log.Error("No URLs are available. This entropy source will be disabled.");
 
                 this._UrlsPerSample = Math.Min(_UrlsPerSample, _Sources.Count);
                 _Sources.ShuffleInPlace(_Rng);

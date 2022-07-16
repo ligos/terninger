@@ -114,7 +114,7 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void PingStatsSource_Network()
         {
-            FuzzEntropySource(10, new PingStatsSource(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, 6, 8, null), "Entropy_" + nameof(PingStatsSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(10, new PingStatsSource(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, null, 6, 8, null, null), "Entropy_" + nameof(PingStatsSource), DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
