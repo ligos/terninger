@@ -119,6 +119,23 @@
 
       // Sample period at low priority. Default: 32 hours.
       "PeriodLowPriority": "32:00:00"
+    },
+
+    // Gather entropy from http://www.randomnumbers.info/
+    // No published rate limits. Uses a true random source with speed of 64Mbps.
+    "RandomNumbersInfoExternal": {
+      // Numbers (0..4095) returned per request / sample. 
+      // Default: 256. Minimum: 1. Maximum: 1000.
+      "NumbersPerRequest": 256,
+
+      // Sample period at normal priority. Default: 8 hours.
+      "PeriodNormalPriority": "08:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 32 hours.
+      "PeriodLowPriority": "32:00:00"
     }
   }
 }
