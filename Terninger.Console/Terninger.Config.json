@@ -19,6 +19,7 @@
     },
 
     // Gather entropy from processes running on computer.
+    // Remove this key to disable source.
     "ProcessStats": {
       // Sample period at normal priority. Default: 10 minutes.
       "PeriodNormalPriority": "00:10:00",
@@ -35,6 +36,7 @@
     },
 
     // Gather entropy from network statistics (eg: number of bytes / packets sent, MAC address, etc).
+    // Remove this key to disable source.
     "NetworkStats": {
       // Sample period at normal priority. Default: 1 minutes.
       "PeriodNormalPriority": "00:01:00",
@@ -53,6 +55,7 @@
     // Gather entropy from https://quantumnumbers.anu.edu.au
     // This requires an api key and has a free limit of 100 requests per month.
     // As we get up to 1kB per request, we use 12 hours as the normal polling period.
+    // Remove this key to disable source.
     "AnuExternal": {
       // API key required to access service.
       // If not set, the source will be disabled.
@@ -75,6 +78,7 @@
     // Gather entropy from https://beacon.nist.gov/
     // No published rate limits, but produces new output every 60 seconds.
     // Note that these random number are recorded and public.
+    // Remove this key to disable source.
     "BeaconNistExternal": {
       // Sample period at normal priority. Default: 4 hours.
       "PeriodNormalPriority": "04:00:00",
@@ -86,9 +90,10 @@
       "PeriodLowPriority": "16:00:00"
     },
 
-    /// Gather entropy from https://www.fourmilab.ch/hotbits/
-    /// Either a pseudorandom source (without API key) or true random (requires an API key).
-    /// No published rate limits, but be cautious when using API key as true random source is used.
+    // Gather entropy from https://www.fourmilab.ch/hotbits/
+    // Either a pseudorandom source (without API key) or true random (requires an API key).
+    // No published rate limits, but be cautious when using API key as true random source is used.
+    // Remove this key to disable source.
     "HotbitsExternal": {
       // API key required to access service.
       // If not set, the source will use a pseudorandom source rather than true random.
@@ -110,6 +115,7 @@
 
     // Gather entropy from http://qrng.ethz.ch/
     // No published rate limits. Uses a true random source with speed of 64Mbps.
+    // Remove this key to disable source.
     "QrngEthzChExternal": {
       // Sample period at normal priority. Default: 8 hours.
       "PeriodNormalPriority": "08:00:00",
@@ -122,7 +128,8 @@
     },
 
     // Gather entropy from http://www.randomnumbers.info/
-    // No published rate limits. Uses a true random source with speed of 64Mbps.
+    // No published rate limits. Uses a true random source with speed of 16Mbps.
+    // Remove this key to disable source.
     "RandomNumbersInfoExternal": {
       // Numbers (0..4095) returned per request / sample. 
       // Default: 256. Minimum: 1. Maximum: 1000.
@@ -138,9 +145,10 @@
       "PeriodLowPriority": "32:00:00"
     },
 
-    /// Gather entropy from https://www.random.org/
-    /// True random source with optional, free API key.
-    /// No published rate limits.
+    // Gather entropy from https://www.random.org/
+    // True random source with optional, free API key.
+    // No published rate limits.
+    // Remove this key to disable source.
     "RandomOrgExternal": {
       // Optional free API key to access service.
       "ApiKey": "",

@@ -329,28 +329,36 @@ namespace MurrayGrant.Terninger.Console
                 var primitive = GetCryptoPrimitive();
                 var hash = GetHashAlgorithm();
                 var genPrng = CypherBasedPrngGenerator.Create(new byte[32], primitive, hash);
-                IEnumerable<IEntropySource> sources = new IEntropySource[] {
+                var sources = new List<IEntropySource>(new IEntropySource[]
+                {
                     new UserSuppliedSource(seed),
                     new CurrentTimeSource(),
                     new TimerSource(),
                     new GCMemorySource(),
                     new CryptoRandomSource(config?.EntropySources?.CryptoRandom),
-                    new NetworkStatsSource(config?.EntropySources?.NetworkStats),
-                    new ProcessStatsSource(config?.EntropySources?.ProcessStats),
-                };
+                });
+
+                if (config?.EntropySources?.NetworkStats != null)
+                    sources.Add(new NetworkStatsSource(config?.EntropySources?.NetworkStats));
+                if (config?.EntropySources?.ProcessStats != null)
+                    sources.Add(new ProcessStatsSource(config?.EntropySources?.ProcessStats));
                 if (includeNetworkSources)
                 {
                     var userAgent = NetworkSources.UserAgent(config?.NetworkUserAgentIdentifier ?? "unconfigured-consoleapp");
-                    sources = sources.Concat(new IEntropySource[] {
-                            new PingStatsSource(),
-                            new ExternalWebContentSource(),
-                            new AnuExternalRandomSource(userAgent, config?.EntropySources?.AnuExternal),
-                            new BeaconNistExternalRandomSource(userAgent, config?.EntropySources?.BeaconNistExternal),
-                            new HotbitsExternalRandomSource(userAgent, config?.EntropySources?.HotbitsExternal),
-                            new QrngEthzChExternalRandomSource(userAgent, config?.EntropySources?.QrngEthzChExternal),
-                            new RandomNumbersInfoExternalRandomSource(userAgent, config?.EntropySources?.RandomNumbersInfoExternal),
-                            new RandomOrgExternalRandomSource(userAgent, config?.EntropySources?.RandomOrgExternal),
-                        });
+                    sources.Add(new PingStatsSource());
+                    sources.Add(new ExternalWebContentSource());
+                    if (config?.EntropySources?.AnuExternal != null)
+                        sources.Add(new AnuExternalRandomSource(userAgent, config?.EntropySources?.AnuExternal));
+                    if (config?.EntropySources?.BeaconNistExternal != null)
+                        sources.Add(new BeaconNistExternalRandomSource(userAgent, config?.EntropySources?.BeaconNistExternal));
+                    if (config?.EntropySources?.HotbitsExternal != null)
+                        sources.Add(new HotbitsExternalRandomSource(userAgent, config?.EntropySources?.HotbitsExternal));
+                    if (config?.EntropySources?.QrngEthzChExternal != null)
+                        sources.Add(new QrngEthzChExternalRandomSource(userAgent, config?.EntropySources?.QrngEthzChExternal));
+                    if (config?.EntropySources?.RandomNumbersInfoExternal != null)
+                        sources.Add(new RandomNumbersInfoExternalRandomSource(userAgent, config?.EntropySources?.RandomNumbersInfoExternal));
+                    if (config?.EntropySources?.RandomOrgExternal != null)
+                        sources.Add(new RandomOrgExternalRandomSource(userAgent, config?.EntropySources?.RandomOrgExternal));
                 }
                 // As the pooled generator will be churning out entropy as fast as it can, we increase the reseed rate by polling faster and forcing reseeds more frequently.
                 var generatorConfig = new PooledEntropyCprngGenerator.PooledGeneratorConfig()
