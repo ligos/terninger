@@ -31,9 +31,6 @@ namespace MurrayGrant.Terninger.EntropySources.Local
 
         // Polling defaults: 10 minutes at normal priority, 30 seconds at high priority, 50 minutes at low priority (5 x normal).
 
-        public ProcessStatsSource() : this(TimeSpan.FromMinutes(10.0), 70) { }
-        public ProcessStatsSource(TimeSpan periodNormalPriority) : this(periodNormalPriority, 70) { }
-        public ProcessStatsSource(TimeSpan periodNormalPriority, int itemsPerResultChunk) : this(periodNormalPriority, TimeSpan.FromSeconds(30), new TimeSpan(periodNormalPriority.Ticks * 5), itemsPerResultChunk, null) { }
         public ProcessStatsSource(Configuration config)
             : this(
                   periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
@@ -43,13 +40,15 @@ namespace MurrayGrant.Terninger.EntropySources.Local
                   rng: null
             )
         { }
-        public ProcessStatsSource(TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority, int itemsPerResultChunk, IRandomNumberGenerator rng)
-            : base (periodNormalPriority, periodHighPriority, periodLowPriority)
+        public ProcessStatsSource(TimeSpan? periodNormalPriority = null, TimeSpan? periodHighPriority = null, TimeSpan? periodLowPriority = null, int? itemsPerResultChunk = null, IRandomNumberGenerator rng = null)
+            : base (periodNormalPriority.GetValueOrDefault(Configuration.Default.PeriodNormalPriority),
+                  periodHighPriority.GetValueOrDefault(Configuration.Default.PeriodHighPriority), 
+                  periodLowPriority.GetValueOrDefault(Configuration.Default.PeriodLowPriority))
         {
-            if (itemsPerResultChunk < 1 || itemsPerResultChunk > 10000)
+            this._ItemsPerResultChunk = itemsPerResultChunk.GetValueOrDefault(Configuration.Default.ItemsPerChunk);
+            if (_ItemsPerResultChunk < 1 || _ItemsPerResultChunk > 10000)
                 throw new ArgumentOutOfRangeException(nameof(itemsPerResultChunk), itemsPerResultChunk, "Items per chunk must be between 1 and 10000");
 
-            this._ItemsPerResultChunk = itemsPerResultChunk > 0 ? itemsPerResultChunk : 70;
             this._Rng = rng ?? StandardRandomWrapperGenerator.StockRandom();
         }
 

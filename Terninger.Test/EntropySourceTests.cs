@@ -123,7 +123,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ProcessStatsSource_MaxStatCount()
         {
-            var source = new ProcessStatsSource(TimeSpan.FromMinutes(1), 10000);
+            var source = new ProcessStatsSource(itemsPerResultChunk: 10000);
             Assert.AreEqual(source.StatsPerChunk, 10000);
             var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
             Assert.AreEqual(result.Length, 32);
