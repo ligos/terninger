@@ -195,7 +195,13 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void AnuExternalRandomSource_Network()
         {
-            FuzzEntropySource(5, new AnuExternalRandomSource(UnitTestUserAgent(), TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(AnuExternalRandomSource), Sleep500).GetAwaiter().GetResult();
+            var maybeApiKey = Environment.GetEnvironmentVariable("Terninger_UnitTest_AnuApiKey") ?? "";
+            if (String.IsNullOrEmpty(maybeApiKey))
+            {
+                Assert.Inconclusive("No API key available: get one from https://quantumnumbers.anu.edu.au and set it in the 'Terninger_UnitTest_AnuApiKey' environment variable.");
+                return;
+            }
+            FuzzEntropySource(5, new AnuExternalRandomSource(maybeApiKey, UnitTestUserAgent(), 1024, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(AnuExternalRandomSource), Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]

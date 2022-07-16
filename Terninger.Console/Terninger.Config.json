@@ -50,10 +50,18 @@
       "ItemsPerChunk": 17
     },
 
-    // Gather entropy from https://qrng.anu.edu.au.
-    // Reads 1kB with each request.
-    // This has no publicised rate limit (and boasts gigabit/sec entropy).
+    // Gather entropy from https://quantumnumbers.anu.edu.au
+    // This requires an api key and has a free limit of 100 requests per month.
+    // As we get up to 1kB per request, we use 12 hours as the normal polling period.
     "AnuExternal": {
+      // API key required to access service.
+      // If not set, the source will be disabled.
+      "ApiKey": "",
+
+      // Bytes returned per request / sample. 
+      // Default: 1024. Minimum: 1. Maximum: 1024.
+      "BytesPerRequest": 1024,
+
       // Sample period at normal priority. Default: 12 hours.
       "PeriodNormalPriority": "12:00:00",
 
