@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.Net;
-using System.Text;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
 using System.Diagnostics;
 
 using MurrayGrant.Terninger.Random;
@@ -15,47 +11,82 @@ using MurrayGrant.Terninger.LibLog;
 namespace MurrayGrant.Terninger.EntropySources.Network
 {
     /// <summary>
-    /// An entropy source which uses https://qrng.anu.edu.au as input.
-    /// This has no publicised rate limit (and boasts gigabit/sec entropy), but we use 12 hours as the normal polling period because we get 1kB each request.
+    /// An entropy source which uses https://quantumnumbers.anu.edu.au as input.
+    /// This requires an api key and has a free limit of 100 requests per month.
+    /// As we get up to 1kB per request, we use 12 hours as the normal polling period.
     /// </summary>
     [AsyncHint(IsAsync.Always)]
     public class AnuExternalRandomSource : EntropySourceWithPeriod
     {
         public override string Name { get; set; }
 
-        private string _UserAgent;
+        private readonly int _BytesPerRequest;
+        private readonly string _UserAgent;
+        private bool _UnconfiguredUserAgentWarningEmitted;
+        private readonly string _ApiKey;
+        private bool _ApiWarningEmitted;
 
         private readonly bool _UseDiskSourceForUnitTests;
 
-        public AnuExternalRandomSource() : this(HttpClientHelpers.UserAgentString(), TimeSpan.FromHours(12)) { }
-        public AnuExternalRandomSource(string userAgent) : this (userAgent, TimeSpan.FromHours(12)) { }
-        public AnuExternalRandomSource(string userAgent, TimeSpan periodNormalPriority) : this(userAgent, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
-        public AnuExternalRandomSource(string userAgent, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
-            : base(periodNormalPriority, periodHighPriority, periodLowPriority)
+        public AnuExternalRandomSource(string userAgent, Configuration config)
+            : this(
+                  userAgent:            userAgent,
+                  apiKey:               config?.ApiKey,
+                  bytesPerRequest:      config?.BytesPerRequest      ?? Configuration.Default.BytesPerRequest,
+                  periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
+                  periodHighPriority:   config?.PeriodHighPriority   ?? Configuration.Default.PeriodHighPriority,
+                  periodLowPriority:    config?.PeriodLowPriority    ?? Configuration.Default.PeriodLowPriority
+            )
+        { }
+        public AnuExternalRandomSource(string apiKey, string userAgent = null, int? bytesPerRequest = null, TimeSpan? periodNormalPriority = null, TimeSpan? periodHighPriority = null, TimeSpan? periodLowPriority = null)
+            : base(periodNormalPriority.GetValueOrDefault(Configuration.Default.PeriodNormalPriority), 
+                  periodHighPriority.GetValueOrDefault(Configuration.Default.PeriodHighPriority), 
+                  periodLowPriority.GetValueOrDefault(Configuration.Default.PeriodLowPriority))
         {
+            this._BytesPerRequest = bytesPerRequest.GetValueOrDefault(Configuration.Default.BytesPerRequest);
+            if (_BytesPerRequest < 1 || _BytesPerRequest > 1024)
+                throw new ArgumentOutOfRangeException(nameof(bytesPerRequest), bytesPerRequest, "Bytes per request must be between 1 and 1024");
+
             this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.UserAgentString() : userAgent;
+            this._ApiKey = apiKey;
         }
         internal AnuExternalRandomSource(bool useDiskSourceForUnitTests)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
+            this._ApiKey = "FakeApiKey";
             this._UserAgent = HttpClientHelpers.UserAgentString();
             this._UseDiskSourceForUnitTests = useDiskSourceForUnitTests;
         }
 
         protected override async Task<byte[]> GetInternalEntropyAsync(EntropyPriority priority)
         {
-            // http://qrng.anu.edu.au/index.php
+            // https://quantumnumbers.anu.edu.au/
+
+            if (String.IsNullOrEmpty(_ApiKey))
+            {
+                if (!_ApiWarningEmitted)
+                    Log.Warn("No API Key supplied. Please visit https://quantumnumbers.anu.edu.au/ to obtain a free or paid API key to use this source. No entropy will be gathered from this source without an API key.");
+                _ApiWarningEmitted = true;
+                return null;
+            }
 
             Log.Trace("Beginning to gather entropy.");
 
+            if (_UserAgent.Contains("Terninger/unconfigured"))
+            {
+                if (!_UnconfiguredUserAgentWarningEmitted)
+                    Log.Warn("No user agent is configured. Please be polite to web services and set a unique user agent identifier for your usage of Terninger.");
+                _UnconfiguredUserAgentWarningEmitted = true;
+            }
+
             // Fetch data.
-            // This always returns 1024 bytes!!
             var response = "";
             var sw = Stopwatch.StartNew();
             if (!_UseDiskSourceForUnitTests)
             {
-                var apiUri = new Uri("https://qrng.anu.edu.au/RawHex.php");
+                var apiUri = new Uri($"https://api.quantumnumbers.anu.edu.au?length={_BytesPerRequest}&type=hex8&size=1");
                 var hc = HttpClientHelpers.Create(userAgent: _UserAgent);
+                hc.DefaultRequestHeaders.Add("x-api-key", _ApiKey);
                 try
                 {
                     response = await hc.GetStringAsync(apiUri);
@@ -65,55 +96,88 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                     Log.Warn(ex, "Unable to GET from {0}", apiUri);
                     return null;
                 }
-                Log.Trace("Read {0:N0} characters of html in {1:N2}ms.", response.Length, sw.Elapsed.TotalMilliseconds);
+                Log.Trace("Read {0:N0} characters of json in {1:N2}ms.", response.Length, sw.Elapsed.TotalMilliseconds);
             }
             else
             {
-                using (var stream = File.OpenRead(HttpClientHelpers._BasePathToUnitTestData + "qrng.anu.edu.au-RawHex.php.html"))
+                using (var stream = File.OpenRead(HttpClientHelpers._BasePathToUnitTestData + "api.quantumnumbers.anu.edu.au.json"))
                 {
                     response = await new StreamReader(stream).ReadToEndAsync();
                 }
             }
             sw.Stop();
 
+            // To avoid using dynamic or a Json library, we do hacky string parsing!
 
-            // Locate some pretty clear boundaries around the random numbers returned.
-            var startIdxString = "1024 bytes of randomness in hexadecimal form";
-            var startIdx = response.IndexOf(startIdxString, StringComparison.OrdinalIgnoreCase);
-            if (startIdx == -1)
+            // Check for error.
+            response = response.Replace("\r", "").Replace("\n", "").Replace(" ", "").Trim();
+            if (response.IndexOf("\"success\":true") == -1)
             {
-                Log.Error("Cannot locate start string in html of anu result: source will return nothing. Looking for '{0}', actual result in next message.", startIdxString);
+                Log.Error("ANU API returned error result. Full result in next message.");
                 Log.Error(response);
                 return null;
             }
-
-            var startIdxString2 = "<td>";
-            startIdx = response.IndexOf(startIdxString2, startIdx, StringComparison.OrdinalIgnoreCase) + startIdxString2.Length;
-            if (startIdx == -1)
+            // Locate data.
+            int dataIdx = response.IndexOf("\"data\":[\"");
+            if (dataIdx == -1)
             {
-                Log.Error("Cannot locate start string in html of anu result: source will return nothing. Looking for '{0}', actual result in next message.", startIdxString2);
+                Log.Error("Cannot locate random result in ANU API result: source will return nothing. Actual result in next message.");
                 Log.Error(response);
                 return null;
             }
-
-            var endIdxString = "</td>";
-            var endIdx = response.IndexOf(endIdxString, startIdx, StringComparison.OrdinalIgnoreCase);
+            dataIdx = dataIdx + "\"data\":[\"".Length;
+            int endIdx = response.IndexOf("\"]", dataIdx);
             if (endIdx == -1)
             {
-                Log.Error("Cannot locate end string in html of anu result: source will return nothing. Looking for '{0}', actual result in next message.", endIdxString);
+                Log.Error("Cannot locate end of random result in ANU API result: source will return nothing. Actual result in next message.");
                 Log.Error(response);
                 return null;
             }
-            Log.Trace("Parsed beginning and end of useful entropy.");
+            Log.Trace("Parsed Json result.");
 
             // Trim and parse.
-            var randomString = response.Substring(startIdx, endIdx - startIdx).Trim();
+            var randomString = response.Substring(dataIdx, endIdx - dataIdx)
+                                .Replace("\"", "")
+                                .Replace(",", "")
+                                .Trim();
             var randomBytes = randomString.ParseFromHexString()
                                 .Concat(BitConverter.GetBytes(unchecked((uint)sw.Elapsed.Ticks)))      // Don't forget to include network timing!
                                 .ToArray();
             Log.Trace("Read {0:N0} bytes of entropy (including 4 bytes of timing info).", randomBytes.Length);
 
             return randomBytes;
+        }
+
+        public class Configuration
+        {
+            public static readonly Configuration Default = new Configuration();
+
+            /// <summary>
+            /// API key required to access service.
+            /// If not set, the source will be disabled.
+            /// </summary>
+            public string ApiKey { get; set; }
+
+            /// <summary>
+            /// Bytes returned per request / sample. 
+            /// Default: 1024. Minimum: 1. Maximum: 1024.
+            /// </summary>
+            public int BytesPerRequest { get; set; } = 1024;
+
+            /// <summary>
+            /// Sample period at normal priority. Default: 12 hours.
+            /// </summary>
+            public TimeSpan PeriodNormalPriority { get; set; } = TimeSpan.FromHours(12);
+
+            /// <summary>
+            /// Sample period at high priority. Default: 2 minutes.
+            /// </summary>
+            public TimeSpan PeriodHighPriority { get; set; } = TimeSpan.FromMinutes(2);
+
+            /// <summary>
+            /// Sample period at low priority. Default: 48 hours.
+            /// </summary>
+            public TimeSpan PeriodLowPriority { get; set; } = TimeSpan.FromHours(48.0);
         }
     }
 }

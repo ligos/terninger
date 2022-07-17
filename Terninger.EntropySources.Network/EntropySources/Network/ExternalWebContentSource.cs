@@ -24,40 +24,46 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private IRandomNumberGenerator _Rng;
 
-        private List<Uri> _Sources;
+        public string SourcePath { get; private set; }
+        private readonly List<Uri> _Sources = new List<Uri>();
         public int SourceCount => _Sources.Count;
         private int _NextSource;
+        private bool _SourcesInitialised;
 
-        private int _ServersPerSample = 4;                   // This many web requests are made per entropy request.
-        public int ServersPerSample => _ServersPerSample;
+        private int _UrlsPerSample;                   // This many web requests are made per entropy request.
+        public int UrlsPerSample => _UrlsPerSample;
 
-        private bool _UseRandomSourceForUnitTest;
-        private string _UserAgent;
+        private readonly bool _UseRandomSourceForUnitTest;
+        private readonly string _UserAgent;
+        private bool _UnconfiguredUserAgentWarningEmitted;
 
-
-        public ExternalWebContentSource() : this(HttpClientHelpers.UserAgentString(), null, TimeSpan.FromMinutes(15.0), 5) { }
-        public ExternalWebContentSource(string userAgent) : this(userAgent, null, TimeSpan.FromMinutes(15.0), 5) { }
-        public ExternalWebContentSource(string userAgent, IEnumerable<Uri> sources) : this(userAgent, sources, TimeSpan.FromMinutes(5.0), 5) { }
-        public ExternalWebContentSource(string userAgent, IEnumerable<Uri> sources, TimeSpan periodNormalPriority) : this(userAgent, sources, periodNormalPriority, 4) { }
-        public ExternalWebContentSource(string userAgent, IEnumerable<Uri> sources, TimeSpan periodNormalPriority, int serversPerSample) : this(userAgent, sources, periodNormalPriority, TimeSpan.FromSeconds(10), new TimeSpan(periodNormalPriority.Ticks * 5), serversPerSample, null) { }
-        public ExternalWebContentSource(string userAgent, IEnumerable<Uri> sources, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority, int serversPerSample, IRandomNumberGenerator rng)
-            : base(periodNormalPriority, periodHighPriority, periodLowPriority)
+        public ExternalWebContentSource(string userAgent, Configuration config)
+            : this(
+                  userAgent: userAgent,
+                  sourcePath: config?.UrlFilePath,
+                  urlsPerSample: config?.UrlsPerSample ?? Configuration.Default.UrlsPerSample,
+                  periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
+                  periodHighPriority: config?.PeriodHighPriority ?? Configuration.Default.PeriodHighPriority,
+                  periodLowPriority: config?.PeriodLowPriority ?? Configuration.Default.PeriodLowPriority
+            )
+        { }
+        public ExternalWebContentSource(string userAgent = null, string sourcePath = null, IEnumerable<Uri> sources = null, TimeSpan? periodNormalPriority = null, TimeSpan? periodHighPriority = null, TimeSpan? periodLowPriority = null, int? urlsPerSample = null, IRandomNumberGenerator rng = null)
+            : base(periodNormalPriority.GetValueOrDefault(Configuration.Default.PeriodNormalPriority), 
+                  periodHighPriority.GetValueOrDefault(Configuration.Default.PeriodHighPriority), 
+                  periodLowPriority.GetValueOrDefault(Configuration.Default.PeriodLowPriority))
         {
-            if (serversPerSample <= 0)
-                throw new ArgumentOutOfRangeException(nameof(serversPerSample), serversPerSample, "Servers per sample must be at least one.");
+            this._UrlsPerSample = urlsPerSample.GetValueOrDefault(Configuration.Default.UrlsPerSample);
+            if (_UrlsPerSample <= 0)
+                throw new ArgumentOutOfRangeException(nameof(urlsPerSample), urlsPerSample, "URLs per sample must be at least one.");
 
+            this.SourcePath = sourcePath;
+            if (sources != null)
+                this._Sources.AddRange(sources);
             this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.UserAgentString() : userAgent;
-            this._Sources = (sources ?? LoadInternalServerList()).ToList();
-            if (_Sources.Count <= 0)
-                throw new ArgumentOutOfRangeException(nameof(sources), sources, "At least one source URL must be provided.");
-
-            this._ServersPerSample = serversPerSample > 0 ? serversPerSample : 4;
-            this._ServersPerSample = Math.Min(_ServersPerSample, _Sources.Count);
             this._Rng = rng ?? StandardRandomWrapperGenerator.StockRandom();
-            _Sources.ShuffleInPlace(_Rng);
         }
         internal ExternalWebContentSource(bool useDiskSourceForUnitTests)
-            : this(HttpClientHelpers.UserAgentString(), null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null)
+            : this(HttpClientHelpers.UserAgentString(), null, null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null)
         {
             this._UseRandomSourceForUnitTest = useDiskSourceForUnitTests;
         }
@@ -72,15 +78,30 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
         }
 
-
-        public static async Task<List<Uri>> LoadInternalServerListAsync()
+        public static Task<IReadOnlyCollection<Uri>> LoadInternalUrlListAsync()
         {
             var log = LibLog.LogProvider.For<ExternalWebContentSource>();
             log.Debug("Loading internal source URL list...");
+            using (var stream = typeof(ExternalWebContentSource).Assembly.GetManifestResourceStream(typeof(ExternalWebContentSource), "ExternalWebServerList.txt"))
+            {
+                return LoadUrlListAsync(stream);
+            }
+        }
+        public static Task<IReadOnlyCollection<Uri>> LoadUrlListAsync(string path)
+        {
+            var log = LibLog.LogProvider.For<ExternalWebContentSource>();
+            log.Debug("Loading source URL list from '{0}'...", path);
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 32 * 1024, FileOptions.SequentialScan))
+            {
+                return LoadUrlListAsync(stream);
+            }
+        }
+        public static async Task<IReadOnlyCollection<Uri>> LoadUrlListAsync(Stream stream)
+        {
+            var log = LibLog.LogProvider.For<ExternalWebContentSource>();
 
             var sources = new List<Uri>();
-            using (var stream = typeof(ExternalWebContentSource).Assembly.GetManifestResourceStream(typeof(ExternalWebContentSource), "ExternalWebServerList.txt"))
-            using (var reader = new StreamReader(stream, Encoding.UTF8))
+            using (var reader = new StreamReader(stream, Encoding.UTF8, false, 32 * 1024, true))
             {
                 int lineNum = 0;
                 while (!reader.EndOfStream)
@@ -104,24 +125,53 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
                 }
             }
-            log.Debug("Loaded {0:N0} source URLs from internal list.", sources.Count);
+            log.Debug("Loaded {0:N0} source URLs.", sources.Count);
             return sources;
-        }
-        public static List<Uri> LoadInternalServerList()
-        {
-            return LoadInternalServerListAsync().GetAwaiter().GetResult();
         }
 
         protected override async Task<byte[]> GetInternalEntropyAsync(EntropyPriority priority)
         {
+            if (_UserAgent.Contains("Terninger/unconfigured"))
+            {
+                if (!_UnconfiguredUserAgentWarningEmitted)
+                    Log.Warn("No user agent is configured. Please be polite to web services and set a unique user agent identifier for your usage of Terninger.");
+                _UnconfiguredUserAgentWarningEmitted = true;
+            }
+
+            if (!_SourcesInitialised && !_UseRandomSourceForUnitTest)
+            {
+                Log.Debug("Initialising source list.");
+                try
+                {
+                    if (!String.IsNullOrEmpty(SourcePath))
+                        _Sources.AddRange(await LoadUrlListAsync(SourcePath));
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Unable to open URL Source File '{0}'.", SourcePath);
+                }
+                if (String.IsNullOrEmpty(SourcePath) && _Sources.Count == 0)
+                    _Sources.AddRange(await LoadInternalUrlListAsync());
+                if (_Sources.Count == 0)
+                    Log.Error("No URLs are available. This entropy source will be disabled.");
+
+                this._UrlsPerSample = Math.Min(_UrlsPerSample, _Sources.Count);
+                _Sources.ShuffleInPlace(_Rng);
+                _SourcesInitialised = true;
+            }
+            if (_Sources.Count == 0)
+            {
+                return null;
+            }
+
             // Note that many of these servers will have similar content and it is publicly accessible.
             // We must mix in some local entropy to ensure differnt computers end up with different entropy.
             // Yes, this reduces the effectiveness of this source, but it will still contribute over time.
             var localEntropy = (await StaticLocalEntropy.Get32()).Concat(CheapEntropy.Get16()).ToArray();
 
             // Select the servers we will fetch from.
-            var serversToSample = new List<ServerFetcher>(_ServersPerSample);
-            for (int i = 0; i < _ServersPerSample; i++)
+            var serversToSample = new List<ServerFetcher>(_UrlsPerSample);
+            for (int i = 0; i < _UrlsPerSample; i++)
             {
                 if (_NextSource >= _Sources.Count)
                     _NextSource = 0;
@@ -142,7 +192,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             else
             {
                 // For unit tests, we just get random bytes.
-                response = _Rng.GetRandomBytes(_ServersPerSample * 32);
+                response = _Rng.GetRandomBytes(_UrlsPerSample * 32);
             }
 
             return response;
@@ -188,6 +238,38 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                     return null;
                 }
             }
+        }
+
+        public class Configuration
+        {
+            public static readonly Configuration Default = new Configuration();
+
+            /// <summary>
+            /// Number of URLs to sample from the URL list.
+            /// Default: 4. Minimum: 1. Maximum: 100.
+            /// </summary>
+            public int UrlsPerSample { get; set; } = 4;
+
+            /// <summary>
+            /// Path to file containing URL list.
+            /// If left blank, an internal list is used.
+            /// </summary>
+            public string UrlFilePath { get; set; }
+
+            /// <summary>
+            /// Sample period at normal priority. Default: 15 minutes.
+            /// </summary>
+            public TimeSpan PeriodNormalPriority { get; set; } = TimeSpan.FromMinutes(15);
+
+            /// <summary>
+            /// Sample period at high priority. Default: 5 minutes.
+            /// </summary>
+            public TimeSpan PeriodHighPriority { get; set; } = TimeSpan.FromMinutes(5);
+
+            /// <summary>
+            /// Sample period at low priority. Default: 1 hour.
+            /// </summary>
+            public TimeSpan PeriodLowPriority { get; set; } = TimeSpan.FromHours(1);
         }
     }
 }

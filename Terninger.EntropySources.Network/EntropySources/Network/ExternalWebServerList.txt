@@ -35,7 +35,7 @@ https://www.telegraph.co.uk/
 https://www.yelp.com/sydney            
 http://news.mit.edu/
 http://www.time.com/            
-https://bj.baiyewang.com/      
+https://www.baiyewang.com/      
 https://www.nbcnews.com/
 http://www.dailymail.co.uk/home/index.html            
 https://www.wired.com/
@@ -51,9 +51,9 @@ https://www.kickstarter.com/discover
 https://www.nature.com/news/
 http://www.cbc.ca/            
 https://news.un.org/en/
-https://www.zdnet.com/au/
+https://www.zdnet.com/
 http://www.chicagotribune.com/            
-https://www.ftc.gov/news-events/press-releases            
+https://www.ftc.gov/news-events/news/press-releases
 https://www.economist.com/
 https://www.thetimes.co.uk/?region=global
 https://www.infoseek.co.jp/

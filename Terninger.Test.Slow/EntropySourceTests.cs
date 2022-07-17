@@ -114,7 +114,7 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void PingStatsSource_Network()
         {
-            FuzzEntropySource(10, new PingStatsSource(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, 6, 8, null), "Entropy_" + nameof(PingStatsSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(10, new PingStatsSource(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, null, 6, 8, null, null), "Entropy_" + nameof(PingStatsSource), DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
@@ -156,13 +156,13 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void ExternalWebContentSource_Network()
         {
-            FuzzEntropySource(10, new ExternalWebContentSource(UnitTestUserAgent(), null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null), "Entropy_" + nameof(ExternalWebContentSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(10, new ExternalWebContentSource(UnitTestUserAgent(), null, null, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 5, null), "Entropy_" + nameof(ExternalWebContentSource), DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
         public async Task ExternalWebContentSource_TestAllServers()
         {
-            var urls = await ExternalWebContentSource.LoadInternalServerListAsync();
+            var urls = await ExternalWebContentSource.LoadInternalUrlListAsync();
             var failedUrls = new List<Tuple<Uri, object>>();
             foreach (var url in urls)
             {
@@ -195,7 +195,13 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void AnuExternalRandomSource_Network()
         {
-            FuzzEntropySource(5, new AnuExternalRandomSource(UnitTestUserAgent(), TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(AnuExternalRandomSource), Sleep500).GetAwaiter().GetResult();
+            var maybeApiKey = Environment.GetEnvironmentVariable("Terninger_UnitTest_AnuApiKey") ?? "";
+            if (String.IsNullOrEmpty(maybeApiKey))
+            {
+                Assert.Inconclusive("No API key available: get one from https://quantumnumbers.anu.edu.au and set it in the 'Terninger_UnitTest_AnuApiKey' environment variable.");
+                return;
+            }
+            FuzzEntropySource(5, new AnuExternalRandomSource(maybeApiKey, UnitTestUserAgent(), 1024, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(AnuExternalRandomSource), Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
@@ -231,19 +237,19 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void RandomOrgExternalRandomSourcePublic_Network()
         {
-            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, Guid.Empty, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, String.Empty, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
         public void RandomOrgExternalRandomSourceApi_Network()
         {
             var maybeApiKey = Environment.GetEnvironmentVariable("Terninger_UnitTest_RandomOrgApiKey") ?? "";
-            if (!Guid.TryParse(maybeApiKey, out var apiKey))
+            if (String.IsNullOrEmpty(maybeApiKey))
             {
                 Assert.Inconclusive("No API key available: get one from https://api.random.org and set it in the 'Terninger_UnitTest_RandomOrgApiKey' environment variable.");
                 return;
             }
-            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, apiKey, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Api", Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, maybeApiKey, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Api", Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
@@ -251,7 +257,12 @@ namespace MurrayGrant.Terninger.Test.Slow
         {
             FuzzEntropySource(5, new QrngEthzChExternalRandomSource(UnitTestUserAgent(), 32, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(QrngEthzChExternalRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
         }
-
+        [TestMethod]
+        [TestCategory("Network")]
+        public void DrandExternalRandomSourcePublic_Network()
+        {
+            FuzzEntropySource(5, new DrandExternalRandomSource(UnitTestUserAgent(), TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(DrandExternalRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
+        }
 
         private async Task FuzzEntropySource(int iterations, IEntropySource source, string filename, Action extra)
         {

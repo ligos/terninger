@@ -55,12 +55,12 @@ namespace MurrayGrant.Terninger
         /// The basic standard set of entropy sources, local to this computer.
         /// These are included by default in RandomNumberGenerator.CreateFortuna() and RandomNumberGenerator.CreateTerninger(). 
         /// </summary>
-        public static IEnumerable<IEntropySource> BasicSources() => new IEntropySource[]
+        public static IEnumerable<IEntropySource> BasicSources(CryptoRandomSource.Configuration cryptoRandomConfig = null) => new IEntropySource[]
         {
             new CurrentTimeSource(),
             new GCMemorySource(),
             new TimerSource(),
-            new CryptoRandomSource(),
+            new CryptoRandomSource(cryptoRandomConfig),
         };
 
 

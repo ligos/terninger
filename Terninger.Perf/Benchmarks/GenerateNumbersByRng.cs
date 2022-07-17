@@ -12,9 +12,9 @@ using BenchmarkDotNet.Code;
 
 namespace MurrayGrant.Terninger.Perf.Benchmarks
 {
-    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.Net472)]
-    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.NetCoreApp21)]
-    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.NetCoreApp30)]
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.Net48)]
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.NetCoreApp31)]
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.Net60)]
     [MemoryDiagnoser]
     [AllStatisticsColumn]
     public class GenerateNumbersByRng

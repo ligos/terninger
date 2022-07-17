@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.Net;
-using System.Text;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
 using System.Diagnostics;
 
 using MurrayGrant.Terninger.Random;
@@ -16,7 +12,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 {
     /// <summary>
     /// An entropy source which uses https://random.org as input.
-    /// Either via a public interface or an API with a key.
+    /// Either via a public interface or an API with a free key.
     /// Rate limits of ~250k bits or 1000 requests per day, so use large chunks with 8 hour timouts.
     /// </summary>
     [AsyncHint(IsAsync.Always)]
@@ -25,27 +21,35 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         public override string Name { get; set; }
 
         private readonly string _UserAgent;
-        private readonly Guid _ApiKey;
+        private readonly string _ApiKey;
+        private bool _UnconfiguredUserAgentWarningEmitted;
         private readonly int _BytesPerRequest;
         private readonly bool _UseDiskSourceForUnitTests;
+        private bool _ApiWarningEmitted;
 
-        public RandomOrgExternalRandomSource() : this(HttpClientHelpers.UserAgentString(), 128, TimeSpan.FromHours(8)) { }
-        public RandomOrgExternalRandomSource(string userAgent, Guid apiKey) : this(userAgent, 128, apiKey, TimeSpan.FromHours(8)) { }
-        public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest) : this (userAgent, bytesPerRequest, TimeSpan.FromHours(8)) { }
-        public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest, Guid apiKey) : this(userAgent, bytesPerRequest, apiKey, TimeSpan.FromHours(8)) { }
-        public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest, TimeSpan periodNormalPriority) : this(userAgent, bytesPerRequest, Guid.Empty, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
-        public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest, Guid apiKey, TimeSpan periodNormalPriority) : this(userAgent, bytesPerRequest, apiKey, periodNormalPriority, TimeSpan.FromMinutes(2), new TimeSpan(periodNormalPriority.Ticks * 4)) { }
-        public RandomOrgExternalRandomSource(string userAgent, int bytesPerRequest, Guid apiKey, TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority)
-            : base(periodNormalPriority, periodHighPriority, periodLowPriority)
+        public RandomOrgExternalRandomSource(string userAgent, Configuration config)
+            : this(
+                  userAgent:            userAgent,
+                  apiKey:               config?.ApiKey,
+                  bytesPerRequest:      config?.BytesPerRequest      ?? Configuration.Default.BytesPerRequest,
+                  periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
+                  periodHighPriority:   config?.PeriodHighPriority   ?? Configuration.Default.PeriodHighPriority,
+                  periodLowPriority:    config?.PeriodLowPriority    ?? Configuration.Default.PeriodLowPriority
+            )
+        { }
+        public RandomOrgExternalRandomSource(string userAgent = null, int? bytesPerRequest = null, string apiKey = null, TimeSpan? periodNormalPriority = null, TimeSpan? periodHighPriority = null, TimeSpan? periodLowPriority = null)
+            : base(periodNormalPriority.GetValueOrDefault(Configuration.Default.PeriodNormalPriority), 
+                  periodHighPriority.GetValueOrDefault(Configuration.Default.PeriodHighPriority), 
+                  periodLowPriority.GetValueOrDefault(Configuration.Default.PeriodLowPriority))
         {
+            this._BytesPerRequest = bytesPerRequest.GetValueOrDefault(Configuration.Default.BytesPerRequest);
             if (bytesPerRequest < 4 || bytesPerRequest > 4096)
                 throw new ArgumentOutOfRangeException(nameof(bytesPerRequest), bytesPerRequest, "Bytes per request must be between 4 and 4096");
 
             this._UserAgent = String.IsNullOrWhiteSpace(userAgent) ? HttpClientHelpers.UserAgentString() : userAgent;
-            this._BytesPerRequest = bytesPerRequest;
             this._ApiKey = apiKey;
         }
-        internal RandomOrgExternalRandomSource(bool useDiskSourceForUnitTests, Guid apiKey)
+        internal RandomOrgExternalRandomSource(bool useDiskSourceForUnitTests, string apiKey)
             : base(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero)
         {
             this._UserAgent = HttpClientHelpers.UserAgentString();
@@ -55,7 +59,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         protected override Task<byte[]> GetInternalEntropyAsync(EntropyPriority priority)
         {
-            if (_ApiKey == Guid.Empty)
+            if (String.IsNullOrEmpty(_ApiKey))
                 return GetPublicEntropyAsync(priority);
             else
                 return GetApiEntropyAsync(priority);
@@ -66,6 +70,20 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             // https://random.org
 
             Log.Trace("Beginning to gather entropy.");
+
+            if (String.IsNullOrEmpty(_ApiKey))
+            {
+                if (!_ApiWarningEmitted)
+                    Log.Warn("No API Key supplied. Please visit https://random.org to obtain a free API key for this source.");
+                _ApiWarningEmitted = true;
+            }
+
+            if (_UserAgent.Contains("Terninger/unconfigured"))
+            {
+                if (!_UnconfiguredUserAgentWarningEmitted)
+                    Log.Warn("No user agent is configured. Please be polite to web services and set a unique user agent identifier for your usage of Terninger.");
+                _UnconfiguredUserAgentWarningEmitted = true;
+            }
 
             // Fetch data.
             var response = "";
@@ -121,7 +139,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             {
                 var apiUri = new Uri("https://api.random.org/json-rpc/2/invoke");
                 var hc = HttpClientHelpers.Create(userAgent: _UserAgent);
-                var requestBody = "{\"jsonrpc\":\"2.0\",\"method\":\"generateBlobs\",\"params\":{\"apiKey\":\"" + _ApiKey.ToString("D") + "\",\"n\":1,\"size\":" + (_BytesPerRequest * 8) + ",\"format\":\"base64\"},\"id\":1}";
+                var requestBody = "{\"jsonrpc\":\"2.0\",\"method\":\"generateBlobs\",\"params\":{\"apiKey\":\"" + _ApiKey + "\",\"n\":1,\"size\":" + (_BytesPerRequest * 8) + ",\"format\":\"base64\"},\"id\":1}";
                 try
                 {
                     response = await hc.PostStringAsync(apiUri, requestBody, "application/json");
@@ -176,6 +194,37 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             Log.Trace("Read {0:N0} bytes of entropy (including 4 bytes of timing info).", randomBytes.Length);
 
             return randomBytes;
+        }
+
+        public class Configuration
+        {
+            public static readonly Configuration Default = new Configuration();
+
+            /// <summary>
+            /// Optional API key for the service.
+            /// </summary>
+            public string ApiKey { get; set; }
+
+            /// <summary>
+            /// Bytes returned per request / sample. 
+            /// Default: 128. Minimum: 4. Maximum: 4096.
+            /// </summary>
+            public int BytesPerRequest { get; set; } = 128;
+
+            /// <summary>
+            /// Sample period at normal priority. Default: 8 hours.
+            /// </summary>
+            public TimeSpan PeriodNormalPriority { get; set; } = TimeSpan.FromHours(8);
+
+            /// <summary>
+            /// Sample period at high priority. Default: 2 minutes.
+            /// </summary>
+            public TimeSpan PeriodHighPriority { get; set; } = TimeSpan.FromMinutes(2);
+
+            /// <summary>
+            /// Sample period at low priority. Default: 32 hours.
+            /// </summary>
+            public TimeSpan PeriodLowPriority { get; set; } = TimeSpan.FromHours(32);
         }
     }
 }

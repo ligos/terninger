@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 
@@ -20,12 +18,16 @@ namespace MurrayGrant.Terninger.EntropySources.Local
 
         public string Name { get; set; }
 
-        public CryptoRandomSource() : this(16, RandomNumberGenerator.Create()) { }
-        public CryptoRandomSource(int resultLength) : this(resultLength, RandomNumberGenerator.Create()) { }
-        public CryptoRandomSource(int resultLength, RandomNumberGenerator rng)
+        public CryptoRandomSource(Configuration config) 
+            : this(
+                resultLength: config?.SampleSize ?? Configuration.Default.SampleSize
+            ) 
+        { }
+
+        public CryptoRandomSource(int resultLength = 16, RandomNumberGenerator rng = null)
         {
-            this._ResultLength = resultLength;
-            this._Rng = rng;
+            this._ResultLength = Math.Max(4, Math.Min(64 * 1024, resultLength));
+            this._Rng = rng ?? RandomNumberGenerator.Create();
         }
 
         public void Dispose()
@@ -40,6 +42,16 @@ namespace MurrayGrant.Terninger.EntropySources.Local
             var result = new byte[length];
             _Rng.GetBytes(result);
             return Task.FromResult(result);
+        }
+
+        public class Configuration
+        {
+            public static readonly Configuration Default = new Configuration();
+
+            /// <summary>
+            /// // Bytes returned each time source is sampled. Default: 16, Minimum: 4, Maximum: 64k
+            /// </summary>
+            public int SampleSize { get; set; } = 16;
         }
     }
 }

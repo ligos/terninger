@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
-using System.Security.Cryptography;
 
 using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.Helpers;
@@ -32,18 +29,26 @@ namespace MurrayGrant.Terninger.EntropySources.Local
         // This logs the raw stat long array to Trace. Only for testing.
         internal bool LogRawStats { get; set; }
 
-        // Polling defaults: 10 minutes at normal priority, 30 seconds at high priority, 40 minutes at low priority (4 x normal).
+        // Polling defaults: 10 minutes at normal priority, 30 seconds at high priority, 50 minutes at low priority (5 x normal).
 
-        public ProcessStatsSource() : this(TimeSpan.FromMinutes(10.0), 70) { }
-        public ProcessStatsSource(TimeSpan periodNormalPriority) : this(periodNormalPriority, 70) { }
-        public ProcessStatsSource(TimeSpan periodNormalPriority, int itemsPerResultChunk) : this(periodNormalPriority, TimeSpan.FromSeconds(30), new TimeSpan(periodNormalPriority.Ticks * 5), itemsPerResultChunk, null) { }
-        public ProcessStatsSource(TimeSpan periodNormalPriority, TimeSpan periodHighPriority, TimeSpan periodLowPriority, int itemsPerResultChunk, IRandomNumberGenerator rng)
-            : base (periodNormalPriority, periodHighPriority, periodLowPriority)
+        public ProcessStatsSource(Configuration config)
+            : this(
+                  periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
+                  periodHighPriority:   config?.PeriodHighPriority   ?? Configuration.Default.PeriodHighPriority,
+                  periodLowPriority:    config?.PeriodLowPriority    ?? Configuration.Default.PeriodLowPriority,
+                  itemsPerResultChunk:  config?.ItemsPerChunk        ?? Configuration.Default.ItemsPerChunk,
+                  rng: null
+            )
+        { }
+        public ProcessStatsSource(TimeSpan? periodNormalPriority = null, TimeSpan? periodHighPriority = null, TimeSpan? periodLowPriority = null, int? itemsPerResultChunk = null, IRandomNumberGenerator rng = null)
+            : base (periodNormalPriority.GetValueOrDefault(Configuration.Default.PeriodNormalPriority),
+                  periodHighPriority.GetValueOrDefault(Configuration.Default.PeriodHighPriority), 
+                  periodLowPriority.GetValueOrDefault(Configuration.Default.PeriodLowPriority))
         {
-            if (itemsPerResultChunk < 1 || itemsPerResultChunk > 10000)
-                throw new ArgumentOutOfRangeException(nameof(itemsPerResultChunk), itemsPerResultChunk, "Items per chunck must be between 1 and 10000");
+            this._ItemsPerResultChunk = itemsPerResultChunk.GetValueOrDefault(Configuration.Default.ItemsPerChunk);
+            if (_ItemsPerResultChunk < 1 || _ItemsPerResultChunk > 10000)
+                throw new ArgumentOutOfRangeException(nameof(itemsPerResultChunk), itemsPerResultChunk, "Items per chunk must be between 1 and 10000");
 
-            this._ItemsPerResultChunk = itemsPerResultChunk > 0 ? itemsPerResultChunk : 70;
             this._Rng = rng ?? StandardRandomWrapperGenerator.StockRandom();
         }
 
@@ -108,6 +113,34 @@ namespace MurrayGrant.Terninger.EntropySources.Local
 
                 return result;
             });
+        }
+
+        public class Configuration
+        {
+            public static readonly Configuration Default = new Configuration();
+
+            /// <summary>
+            /// Sample period at normal priority. Default: 10 minutes.
+            /// </summary>
+            public TimeSpan PeriodNormalPriority { get; set; } = TimeSpan.FromMinutes(10.0);
+
+            /// <summary>
+            /// Sample period at high priority. Default: 30 seconds.
+            /// </summary>
+            public TimeSpan PeriodHighPriority { get; set; } = TimeSpan.FromSeconds(30.0);
+
+            /// <summary>
+            /// Sample period at low priority. Default: 50 minutes.
+            /// </summary>
+            public TimeSpan PeriodLowPriority { get; set; } = TimeSpan.FromMinutes(50.0);
+
+            /// <summary>
+            /// Number of items from processes read per sample. There are up to 17 items per process.
+            /// Default: 70. Minimum: 1. Maximum: 10000.
+            /// </summary>
+            public int ItemsPerChunk { get; set; } = 70;
+
+            // TODO: configure the random generator between StockRandom, TerningerRandom
         }
     }
 }

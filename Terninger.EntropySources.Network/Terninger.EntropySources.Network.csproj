@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net452</TargetFrameworks>
+    <TargetFrameworks>net60;netstandard2.0;net452</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2022</Copyright>
@@ -35,7 +35,7 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="System.Net.Http" Version="4.3.3" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
 
   <!-- FOR DEVELOPMENT -->

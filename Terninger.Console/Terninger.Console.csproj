@@ -26,10 +26,6 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <DocumentationFile>bin\Release\$(TargetFramework)\Terninger.Console.xml</DocumentationFile>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'=='net48'">
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-  </ItemGroup>
-
   <!-- FOR DEVELOPMENT -->
   <ItemGroup Condition="'$(RefNugets)'!='True'">
     <ProjectReference Include="..\Terninger\Terninger.csproj" />
@@ -47,13 +43,16 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <PackageReference Include="Terninger.EntropySources.Extended" Version="0.2.*" />
     <PackageReference Include="Terninger.EntropySources.Network" Version="0.2.*" />
   </ItemGroup>
-
+	
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Readme.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Terninger.Config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -1,0 +1,293 @@
+{
+  // Terninger Configuration File
+
+  // Identifier to use as a user agent in all web requests.
+  // Recommend using an email address, DNS name, or URL.
+  // Default: "unconfigured"
+  // User agent appears as:
+  //   Mozilla/5.0 (Microsoft.NET; {Environment.Version}; github.com/ligos/terninger) Terninger/{NetworkUserAgentIdentifier}
+  "NetworkUserAgentIdentifier": null,
+
+  // Configuration for standard Entropy Sources
+  "EntropySources": {
+
+    // OS Crypto Random number generator (eg: /dev/random)
+    "CryptoRandom": {
+      // Bytes returned each time source is sampled. 
+      // Default: 16, Minimum: 4, Maximum: 64k
+      "SampleSize": 16
+    },
+
+    // Gather entropy from processes running on computer.
+    // Remove this key to disable source.
+    "ProcessStats": {
+      // Sample period at normal priority. Default: 10 minutes.
+      "PeriodNormalPriority": "00:10:00",
+
+      // Sample period at high priority. Default: 30 seconds.
+      "PeriodHighPriority": "00:00:30",
+
+      // Sample period at low priority. Default: 50 minutes.
+      "PeriodLowPriority": "00:50:00",
+
+      // Number of items from processes read per sample. There are up to 17 items per process.
+      // Default: 70. Minimum: 1. Maximum: 10000.
+      "ItemsPerChunk": 70
+    },
+
+    // Gather entropy from network statistics (eg: number of bytes / packets sent, MAC address, etc).
+    // Remove this key to disable source.
+    "NetworkStats": {
+      // Sample period at normal priority. Default: 1 minutes.
+      "PeriodNormalPriority": "00:01:00",
+
+      // Sample period at high priority. Default: 5 seconds.
+      "PeriodHighPriority": "00:00:05",
+
+      // Sample period at low priority. Default: 5 minutes.
+      "PeriodLowPriority": "00:05:00",
+
+      // Number of network statistics read per sample.
+      // Default: 17. Minimum: 1. Maximum: 10000.
+      "ItemsPerChunk": 17
+    },
+
+    // Gather entropy from the content of a list of websites, usually news and social media sites which change frequently.
+    // Remove this key to disable source.
+    "ExternalWebContent": {
+      // Path to file containing URL list.
+      // If left blank, an internal list is used.
+      "UrlFilePath": null,
+
+      // Number of URLs to sample from the URL list.
+      // Default: 4. Minimum: 1. Maximum: 100.
+      "UrlsPerSample": 4,
+
+      // Sample period at normal priority. Default: 15 minutes.
+      "PeriodNormalPriority": "00:15:00",
+
+      // Sample period at high priority. Default: 5 minutes.
+      "PeriodHighPriority": "00:05:00",
+
+      // Sample period at low priority. Default: 1 hour.
+      "PeriodLowPriority": "01:00:00"
+    },
+
+    // Gather entropy from timing of pings to a list of servers.
+    // Remove this key to disable source.
+    "PingStats": {
+      // Path to file containing server list.
+      // If left blank, an internal list is used.
+      "ServerFilePath": null,
+
+      // Number of servers to ping from the list each sample.
+      // Default: 8. Minimum: 1. Maximum: 100.
+      "ServersPerSample": 8,
+
+      // Number of times to ping each server per sample.
+      // Default: 6. Minimum: 1. Maximum: 100.
+      "PingsPerSample": 6,
+
+      // Timeout to use for ping requests. Default: 5 seconds.
+      "Timeout": "00:00:05",
+
+      // Sample period at normal priority. Default: 15 minutes.
+      "PeriodNormalPriority": "00:15:00",
+
+      // Sample period at high priority. Default: 5 minutes.
+      "PeriodHighPriority": "00:05:00",
+
+      // Sample period at low priority. Default: 1 hour.
+      "PeriodLowPriority": "01:00:00"
+    },
+
+    // Gather entropy from https://quantumnumbers.anu.edu.au
+    // This requires an api key and has a free limit of 100 requests per month.
+    // As we get up to 1kB per request, we use 12 hours as the normal polling period.
+    // Remove this key to disable source.
+    "AnuExternal": {
+      // API key required to access service.
+      // If not set, the source will be disabled.
+      "ApiKey": "",
+
+      // Bytes returned per request / sample. 
+      // Default: 1024. Minimum: 1. Maximum: 1024.
+      "BytesPerRequest": 1024,
+
+      // Sample period at normal priority. Default: 12 hours.
+      "PeriodNormalPriority": "12:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 48 hours.
+      "PeriodLowPriority": "48:00:00"
+    },
+
+    // Gather entropy from https://beacon.nist.gov/
+    // No published rate limits, but produces new output every 60 seconds.
+    // Note that these random number are recorded and public.
+    // Remove this key to disable source.
+    "BeaconNistExternal": {
+      // Sample period at normal priority. Default: 4 hours.
+      "PeriodNormalPriority": "04:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 16 hours.
+      "PeriodLowPriority": "16:00:00"
+    },
+
+    // Gather entropy from https://drand.cloudflare.com/
+    // No published rate limits, but produces new output every 60 seconds.
+    // Note that these random number are recorded and public.
+    // Remove this key to disable source.
+    "DrandExternal": {
+      // Sample period at normal priority. Default: 4 hours.
+      "PeriodNormalPriority": "04:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 16 hours.
+      "PeriodLowPriority": "16:00:00"
+    },
+
+    // Gather entropy from https://www.fourmilab.ch/hotbits/
+    // Either a pseudorandom source (without API key) or true random (requires an API key).
+    // No published rate limits, but be cautious when using API key as true random source is used.
+    // Remove this key to disable source.
+    "HotbitsExternal": {
+      // API key required to access service.
+      // If not set, the source will use a pseudorandom source rather than true random.
+      "ApiKey": "",
+
+      // Bytes returned per request / sample. 
+      // Default: 128. Minimum: 4. Maximum: 2048.
+      "BytesPerRequest": 128,
+
+      // Sample period at normal priority. Default: 8 hours.
+      "PeriodNormalPriority": "08:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 32 hours.
+      "PeriodLowPriority": "32:00:00"
+    },
+
+    // Gather entropy from http://qrng.ethz.ch/
+    // No published rate limits. Uses a true random source with speed of 64Mbps.
+    // Remove this key to disable source.
+    "QrngEthzChExternal": {
+      // Sample period at normal priority. Default: 8 hours.
+      "PeriodNormalPriority": "08:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 32 hours.
+      "PeriodLowPriority": "32:00:00"
+    },
+
+    // Gather entropy from http://www.randomnumbers.info/
+    // No published rate limits. Uses a true random source with speed of 16Mbps.
+    // Remove this key to disable source.
+    "RandomNumbersInfoExternal": {
+      // Numbers (0..4095) returned per request / sample. 
+      // Default: 256. Minimum: 1. Maximum: 1000.
+      "NumbersPerRequest": 256,
+
+      // Sample period at normal priority. Default: 8 hours.
+      "PeriodNormalPriority": "08:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 32 hours.
+      "PeriodLowPriority": "32:00:00"
+    },
+
+    // Gather entropy from https://www.random.org/
+    // True random source with optional, free API key.
+    // No published rate limits.
+    // Remove this key to disable source.
+    "RandomOrgExternal": {
+      // Optional free API key to access service.
+      "ApiKey": "",
+
+      // Bytes returned per request / sample. 
+      // Default: 128. Minimum: 4. Maximum: 4096.
+      "BytesPerRequest": 128,
+
+      // Sample period at normal priority. Default: 8 hours.
+      "PeriodNormalPriority": "08:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 32 hours.
+      "PeriodLowPriority": "32:00:00"
+    }
+  },
+
+  // Low level configuration for the TerningerPooled generator.
+  // These settings have no effect on other generators.
+  // Changes to these setting may compromise the security of the generator.
+  "TerningerPooledGeneratorConfig": {
+    // Minimum time between reseed events.
+    // Default: 100ms (according to Fortuna spec).
+    "MinimumTimeBetweenReseeds": "00:00:00.100",
+    // After this time, a reseed will be required.
+    // Default: 12 hours.
+    "MaximumTimeBeforeReseed": "12:00:00",
+
+    // After this many bytes of entropy are produced, a reseed will be triggered.
+    // Default: 16MB.
+    // This is increased to 16GB as the console app is continually reading from the generator.
+    "MaximumBytesGeneratedBeforeReseed": 17179869184,
+
+    // Number of bytes of entropy in first pool to trigger a reseed when in High priority.
+    // Note that entropy is distributed between all pools equally. 
+    // The default 32 pools means 32 * 48 bytes of entropy are required before the generator can begin producing random bytes.
+    // This number determines how quickly the generator can begin producing random bytes.
+    // Smaller numbers will start faster, but may have an easily guessable initial seed. Higher numbers are more secure.
+    // Reducing this below 32 bytes is not recommended.
+    // Increasing this number may require enabling network sources, or increasing TimeToWaitForFirstSeed.
+    // Default: 48 bytes.
+    "EntropyToTriggerReseedInHighPriority": 48,
+    // Number of bytes of entropy in first pool to trigger a reseed when in Normal priority.
+    // Default: 128 bytes. (Reduced to 64 to re-seed more often in console app).
+    "EntropyToTriggerReseedInNormalPriority": 64,
+    // Number of bytes of entropy in first pool to trigger a reseed when in Idle priority.
+    // Default: 128 bytes.
+    "EntropyToTriggerReseedInLowPriority": 128,
+
+    // Time to wait between entropy polls when in High priority.
+    // Default: 1 ms
+    "PollWaitTimeInHighPriority": "00:00:00.001",
+    // Time to wait between entropy polls when in Normal priority.
+    // Default: 10 sec
+    // This is reduced as the console app is continually reading from the generator.
+    "PollWaitTimeInNormalPriority": "00:00:02",
+    // Time to wait between entropy polls when in Low priority.
+    // Default: 1 min
+    "PollWaitTimeInLowPriority": "00:01:00",
+
+    // Time to wait between synchronous source polling in mini-polling loop while waiting for async sources to complete.
+    // Default: 30ms
+    "MiniPollWaitTime": "00:00:00.030",
+
+    // Number of reseeds at Normal priority without any further random requests before generator will drop to Low priority.
+    // Default: 10.
+    "ReseedCountBeforeSwitchToLowPriority": 10,
+    // Time at Normal priority without any further random requests before generator will drop to Low priority.
+    // Default: 2 hours.
+    "TimeBeforeSwitchToLowPriority": "02:00:00"
+  },
+
+  // Time to wait until first seed. 
+  // Default: 1 minute
+  "TimeToWaitForFirstSeed": "00:01:00"
+}

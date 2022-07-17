@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Security.Cryptography;
 using System.Linq;
+using System.Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using MurrayGrant.Terninger.Helpers;
@@ -123,7 +123,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ProcessStatsSource_MaxStatCount()
         {
-            var source = new ProcessStatsSource(TimeSpan.FromMinutes(1), 10000);
+            var source = new ProcessStatsSource(itemsPerResultChunk: 10000);
             Assert.AreEqual(source.StatsPerChunk, 10000);
             var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
             Assert.AreEqual(result.Length, 32);
@@ -138,7 +138,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void NetworkStatsSource_MaxStatCount()
         {
-            var source = new NetworkStatsSource(TimeSpan.FromMinutes(1), 10000);
+            var source = new NetworkStatsSource(itemsPerResultChunk: 10000);
             Assert.AreEqual(source.StatsPerChunk, 10000);
             var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
             Assert.AreEqual(result.Length, 32);
@@ -159,14 +159,26 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void PingStatsSource_ServersPerSample()
         {
-            var source = new PingStatsSource(TimeSpan.FromMinutes(1), null, 10, 20);
+            var source = new PingStatsSource(serversPerSample: 20);
             Assert.AreEqual(source.ServersPerSample, 20);
         }
         [TestMethod]
         public void PingStatsSource_PingsPerSample()
         {
-            var source = new PingStatsSource(TimeSpan.FromMinutes(1), null, 1000, 20);
+            var source = new PingStatsSource(pingsPerSample: 1000);
             Assert.AreEqual(source.PingsPerSample, 1000);
+        }
+        [TestMethod]
+        public void PingStatsSource_SourcePath()
+        {
+            var source = new PingStatsSource(sourcePath: "path.txt");
+            Assert.AreEqual(source.SourcePath, "path.txt");
+        }
+        [TestMethod]
+        public void PingStatsSource_Servers()
+        {
+            var source = new PingStatsSource(servers: new[] { IPAddress.Parse("127.0.0.1"), IPAddress.Parse("1.1.1.1") });
+            Assert.AreEqual(source.ServerCount, 2);
         }
 
         [TestMethod]
@@ -177,16 +189,28 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ExternalWebContentSource_ConfigPeriod()
         {
-            var source = new ExternalWebContentSource("", null, TimeSpan.FromMinutes(100));
+            var source = new ExternalWebContentSource(periodNormalPriority: TimeSpan.FromMinutes(100));
             Assert.AreEqual(source.PeriodNormalPriority.TotalMinutes, 100.0);
         }
         [TestMethod]
-        public void ExternalWebContentSource_ServersPerSample()
+        public void ExternalWebContentSource_UrlsPerSample()
         {
-            var source = new ExternalWebContentSource("", null, TimeSpan.FromMinutes(100), 20);
-            Assert.AreEqual(source.ServersPerSample, 20);
+            var source = new ExternalWebContentSource(urlsPerSample: 20);
+            Assert.AreEqual(source.UrlsPerSample, 20);
         }
-
+        [TestMethod]
+        public void ExternalWebContentSource_SourcePath()
+        {
+            var source = new ExternalWebContentSource(sourcePath: "urls.txt");
+            Assert.AreEqual(source.SourcePath, "urls.txt");
+            Assert.AreEqual(source.SourceCount, 0);
+        }
+        [TestMethod]
+        public void ExternalWebContentSource_Sources()
+        {
+            var source = new ExternalWebContentSource(sources: new[] { new Uri("http://server.com"), new Uri("https://sample.org") });
+            Assert.AreEqual(source.SourceCount, 2);
+        }
 
         [TestMethod]
         public void ExternalServerRandomSource_RandomNumbersInfo()
@@ -211,19 +235,23 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void ExternalServerRandomSource_RandomOrgPublic()
         {
-            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, Guid.Empty), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, String.Empty), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_RandomOrgApi()
         {
-            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, Guid.NewGuid()), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, "FakeApiKey"), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         public void ExternalServerRandomSource_QrngEthzCh()
         {
             FuzzEntropySource(1, new QrngEthzChExternalRandomSource(true), "Entropy_" + nameof(QrngEthzChExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
         }
-
+        [TestMethod]
+        public void ExternalServerRandomSource_Drand()
+        {
+            FuzzEntropySource(1, new DrandExternalRandomSource(true), "Entropy_" + nameof(DrandExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();
+        }
 
         [TestMethod]
         public void TestHttpClientDefaults()

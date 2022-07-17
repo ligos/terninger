@@ -43,8 +43,8 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.12.0" />
-    <PackageReference Include="System.Security.Cryptography.Cng" Version="4.5.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+    <PackageReference Include="System.Security.Cryptography.Cng" Version="5.0.0" />
   </ItemGroup>
 
 </Project>

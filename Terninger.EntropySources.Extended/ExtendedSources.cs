@@ -18,10 +18,13 @@ namespace MurrayGrant.Terninger
         /// <summary>
         /// Additional entropy sources, local to this computer.
         /// </summary>
-        public static IEnumerable<IEntropySource> All() => new IEntropySource[]
+        public static IEnumerable<IEntropySource> All(
+            NetworkStatsSource.Configuration networkConfig = null,
+            ProcessStatsSource.Configuration processConfig = null) 
+        => new IEntropySource[]
         {
-            new NetworkStatsSource(),
-            new ProcessStatsSource(),
+            new NetworkStatsSource(networkConfig),
+            new ProcessStatsSource(processConfig),
         };
     }
 }

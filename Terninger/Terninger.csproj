@@ -30,7 +30,7 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
 
   <ItemGroup>
     <!-- LibLog uses dynamic -->
-    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
   </ItemGroup>
 
