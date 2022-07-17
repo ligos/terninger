@@ -17,7 +17,7 @@ namespace MurrayGrant.Terninger.PersistentState
     ///    magic number, version number, base64(sha256 checksum of file), count of items (lines)
     /// Each line looks like
     ///    namespace, key, base64(value)
-    /// The "Record Separator" (U+001F) is used as the default delimiter.
+    /// Tabs (U+0009) are used as the default delimiter.
     /// Newlines may be any combination of \r and \n (just \n is emitted by default).
     /// All write operations write the entire file to disk, even for a single record.
     /// Any seekable stream can be used.
@@ -27,7 +27,7 @@ namespace MurrayGrant.Terninger.PersistentState
     /// </remarks>
     public sealed class TextFileReaderWriter : IPersistentStateReader, IPersistentStateWriter
     {
-        public const string DefaultSeparator = "\u001F";
+        public const string DefaultSeparator = "\t";
         public static readonly Encoding DefaultEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
         public const string MagicString = "TngrData";       // Keep to 8 characters to fit in a UInt64
