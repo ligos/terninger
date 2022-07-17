@@ -14,7 +14,7 @@
     // OS Crypto Random number generator (eg: /dev/random)
     "CryptoRandom": {
       // Bytes returned each time source is sampled. 
-      // Int32. Default: 16, Minimum: 4, Maximum: 64k
+      // Default: 16, Minimum: 4, Maximum: 64k
       "SampleSize": 16
     },
 
@@ -31,7 +31,7 @@
       "PeriodLowPriority": "00:50:00",
 
       // Number of items from processes read per sample. There are up to 17 items per process.
-      // Int32. Default: 70. Minimum: 1. Maximum: 10000.
+      // Default: 70. Minimum: 1. Maximum: 10000.
       "ItemsPerChunk": 70
     },
 
@@ -48,7 +48,7 @@
       "PeriodLowPriority": "00:05:00",
 
       // Number of network statistics read per sample.
-      // Int32. Default: 17. Minimum: 1. Maximum: 10000.
+      // Default: 17. Minimum: 1. Maximum: 10000.
       "ItemsPerChunk": 17
     },
 
@@ -230,5 +230,64 @@
       // Sample period at low priority. Default: 32 hours.
       "PeriodLowPriority": "32:00:00"
     }
-  }
+  },
+
+  // Low level configuration for the TerningerPooled generator.
+  // These settings have no effect on other generators.
+  // Changes to these setting may compromise the security of the generator.
+  "TerningerPooledGeneratorConfig": {
+    // Minimum time between reseed events.
+    // Default: 100ms (according to Fortuna spec).
+    "MinimumTimeBetweenReseeds": "00:00:00.100",
+    // After this time, a reseed will be required.
+    // Default: 12 hours.
+    "MaximumTimeBeforeReseed": "12:00:00",
+
+    // After this many bytes of entropy are produced, a reseed will be triggered.
+    // Default: 16MB.
+    // This is increased to 16GB as the console app is continually reading from the generator.
+    "MaximumBytesGeneratedBeforeReseed": 17179869184,
+
+    // Number of bytes of entropy in first pool to trigger a reseed when in High priority.
+    // Note that entropy is distributed between all pools equally. 
+    // The default 32 pools means 32 * 48 bytes of entropy are required before the generator can begin producing random bytes.
+    // This number determines how quickly the generator can begin producing random bytes.
+    // Smaller numbers will start faster, but may have an easily guessable initial seed. Higher numbers are more secure.
+    // Reducing this below 32 bytes is not recommended.
+    // Increasing this number may require enabling network sources, or increasing TimeToWaitForFirstSeed.
+    // Default: 48 bytes.
+    "EntropyToTriggerReseedInHighPriority": 48,
+    // Number of bytes of entropy in first pool to trigger a reseed when in Normal priority.
+    // Default: 128 bytes. (Reduced to 64 to re-seed more often in console app).
+    "EntropyToTriggerReseedInNormalPriority": 64,
+    // Number of bytes of entropy in first pool to trigger a reseed when in Idle priority.
+    // Default: 128 bytes.
+    "EntropyToTriggerReseedInLowPriority": 128,
+
+    // Time to wait between entropy polls when in High priority.
+    // Default: 1 ms
+    "PollWaitTimeInHighPriority": "00:00:00.001",
+    // Time to wait between entropy polls when in Normal priority.
+    // Default: 10 sec
+    // This is reduced as the console app is continually reading from the generator.
+    "PollWaitTimeInNormalPriority": "00:00:02",
+    // Time to wait between entropy polls when in Low priority.
+    // Default: 1 min
+    "PollWaitTimeInLowPriority": "00:01:00",
+
+    // Time to wait between synchronous source polling in mini-polling loop while waiting for async sources to complete.
+    // Default: 30ms
+    "MiniPollWaitTime": "00:00:00.030",
+
+    // Number of reseeds at Normal priority without any further random requests before generator will drop to Low priority.
+    // Default: 10.
+    "ReseedCountBeforeSwitchToLowPriority": 10,
+    // Time at Normal priority without any further random requests before generator will drop to Low priority.
+    // Default: 2 hours.
+    "TimeBeforeSwitchToLowPriority": "02:00:00"
+  },
+
+  // Time to wait until first seed. 
+  // Default: 1 minute
+  "TimeToWaitForFirstSeed": "00:01:00"
 }

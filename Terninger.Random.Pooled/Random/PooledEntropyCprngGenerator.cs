@@ -710,7 +710,7 @@ namespace MurrayGrant.Terninger.Random
 
             /// <summary>
             /// Minimum time between reseed events.
-            /// Deafult: 100ms (according to Fortuna spec).
+            /// Default: 100ms (according to Fortuna spec).
             /// </summary>
             public TimeSpan MinimumTimeBetweenReseeds { get; set; } = TimeSpan.FromMilliseconds(100);
             /// <summary>

@@ -7,6 +7,10 @@ namespace MurrayGrant.Terninger.Console
         public string NetworkUserAgentIdentifier { get; set; }
 
         public EntropySourceConfiguration EntropySources { get; set; }
+
+        public Random.PooledEntropyCprngGenerator.PooledGeneratorConfig TerningerPooledGeneratorConfig { get; set; }
+
+        public TimeSpan TimeToWaitForFirstSeed { get; set; }
     }
 
     public class EntropySourceConfiguration

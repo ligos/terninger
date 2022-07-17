@@ -365,10 +365,10 @@ namespace MurrayGrant.Terninger.Console
                         sources.Add(new RandomOrgExternalRandomSource(userAgent, config?.EntropySources?.RandomOrgExternal));
                 }
                 // As the pooled generator will be churning out entropy as fast as it can, we increase the reseed rate by polling faster and forcing reseeds more frequently.
-                var generatorConfig = new PooledEntropyCprngGenerator.PooledGeneratorConfig()
+                var generatorConfig = config?.TerningerPooledGeneratorConfig ?? new PooledEntropyCprngGenerator.PooledGeneratorConfig()
                 {
-                    MaximumBytesGeneratedBeforeReseed = Int32.MaxValue,
-                    PollWaitTimeInNormalPriority = TimeSpan.FromSeconds(1),
+                    MaximumBytesGeneratedBeforeReseed = 1024L * 1024L * 1024L * 16L,  // 16GB
+                    PollWaitTimeInNormalPriority = TimeSpan.FromSeconds(2),
                     EntropyToTriggerReseedInNormalPriority = 64,
                 };
                 var generator = new PooledEntropyCprngGenerator(sources, acc, genPrng, generatorConfig);
@@ -376,7 +376,7 @@ namespace MurrayGrant.Terninger.Console
                 result.Description = $"non-deterministic CPRNG - " + typeof(PooledEntropyCprngGenerator).Namespace + "." + typeof(PooledEntropyCprngGenerator).Name;
                 result.ExtraDescription = $"Using {linearPools}+{randomPools} pools (linear+random), {sources.Count()} entropy sources, crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
                 result.WaitForGeneratorReady = () => {
-                    generator.StartAndWaitForFirstSeed().Wait(TimeSpan.FromSeconds(60));
+                    generator.StartAndWaitForFirstSeed().Wait(config.TimeToWaitForFirstSeed);
                 };
                 result.WaitForGeneratorStopped = () => {
                     generator.Stop().Wait(TimeSpan.FromSeconds(60));
