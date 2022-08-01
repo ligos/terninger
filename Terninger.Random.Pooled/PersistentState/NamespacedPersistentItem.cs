@@ -15,14 +15,22 @@ namespace MurrayGrant.Terninger.PersistentState
     {
         public readonly string Namespace { get; }
         public readonly string Key { get; }
+        public readonly ValueEncoding ValueEncoding { get; }
         public readonly byte[] Value { get; }
         public string ValueAsBase64 => Convert.ToBase64String(Value);
         public string ValueAsHex => Value.ToHexString();
+        public string ValueAsUtf8Text => Encoding.UTF8.GetString(Value);
+        public string ValueAsEncodedString
+            => ValueEncoding == ValueEncoding.Base64 ? ValueAsBase64
+              : ValueEncoding == ValueEncoding.Hex ? ValueAsHex
+              : ValueEncoding == ValueEncoding.Utf8Text ? ValueAsUtf8Text
+              : ValueAsHex;
 
-        public NamespacedPersistentItem(string theNamespace, string key, byte[] value)
+        public NamespacedPersistentItem(string theNamespace, string key, ValueEncoding valueEncoding, byte[] value)
         {
             this.Namespace = theNamespace;
             this.Key = key;
+            this.ValueEncoding = valueEncoding;
             this.Value = value;
         }
 
@@ -33,6 +41,7 @@ namespace MurrayGrant.Terninger.PersistentState
         public bool Equals(NamespacedPersistentItem other)
             => Namespace == other.Namespace
             && Key == other.Key 
+            && ValueEncoding == other.ValueEncoding
             && Value.AllEqual(other.Value);
 
         public override int GetHashCode()
@@ -48,6 +57,13 @@ namespace MurrayGrant.Terninger.PersistentState
         }
 
         public override string ToString()
-            => Namespace + "." + Key + ": " + ValueAsHex;
+            => Namespace + "." + Key + ": " + ValueAsEncodedString;
+    }
+
+    public enum ValueEncoding
+    {
+        Base64,
+        Hex,
+        Utf8Text,
     }
 }

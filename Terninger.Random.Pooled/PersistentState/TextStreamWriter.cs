@@ -54,7 +54,7 @@ namespace MurrayGrant.Terninger.PersistentState
                 // Write body.
                 foreach (var item in items)
                 {
-                    var line = $"{item.Namespace}{Separator}{item.Key}{Separator}{item.ValueAsBase64}";
+                    var line = $"{item.Namespace}{Separator}{item.Key}{Separator}{item.ValueEncoding}{Separator}{item.ValueAsEncodedString}";
                     await writer.WriteLineAsync(line);
                 }
             }

@@ -119,8 +119,8 @@ namespace MurrayGrant.Terninger.PersistentState
         private NamespacedPersistentItem ParseDataLine(string line, int lineNumber, int fileVersion)
         {
             var parts = line.Split(this.Separators, StringSplitOptions.None);
-            if (parts.Length < 3)
-                throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': at least 3 items expected, but found {parts.Length}.");
+            if (parts.Length < 4)
+                throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': at least 4 items expected, but found {parts.Length}.");
 
             var itemNamespace = parts[0];
             if (!PersistentItemCollection.ValidKey(itemNamespace))
@@ -128,17 +128,49 @@ namespace MurrayGrant.Terninger.PersistentState
             var key = parts[1];
             if (!PersistentItemCollection.ValidKey(key))
                 throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': key '{key}' contains invalid characters in the range {PersistentItemCollection.InvalidKeyUnicodeRanges}.");
+
+            var encodingString = parts[2];
+            ValueEncoding encoding;
             byte[] data;
-            try
+            if (String.Equals(encodingString, nameof(ValueEncoding.Base64), StringComparison.OrdinalIgnoreCase))
             {
-                data = Convert.FromBase64String(parts[2]);
+                try
+                {
+                    data = Convert.FromBase64String(parts[3]);
+                    encoding = ValueEncoding.Base64;
+                }
+                catch (FormatException ex)
+                {
+                    throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': could not parse base64 value '{parts[3]}'.", ex);
+                }
             }
-            catch (FormatException ex)
+            else if (String.Equals(encodingString, nameof(ValueEncoding.Hex), StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': could not parse checksum '{parts[2]}'.", ex);
+                try
+                {
+                    data = ByteArrayExtensions.ParseHexString(parts[3]);
+                    encoding = ValueEncoding.Hex;
+                }
+                catch (IndexOutOfRangeException ex)
+                {
+                    throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': could not parse hex value '{parts[3]}'.", ex);
+                }
+                catch (FormatException ex)
+                {
+                    throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': could not parse hex value '{parts[3]}'.", ex);
+                }
+            }
+            else if (String.Equals(encodingString, nameof(ValueEncoding.Utf8Text), StringComparison.OrdinalIgnoreCase))
+            {
+                data = Encoding.UTF8.GetBytes(parts[3]);
+                encoding = ValueEncoding.Utf8Text;
+            }
+            else
+            {
+                throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': unknown value encoding '{parts[2]}'.");
             }
 
-            return new NamespacedPersistentItem(itemNamespace, key, data);
+            return new NamespacedPersistentItem(itemNamespace, key, encoding, data);
         }
 
         private void AssertFileChecksum(Stream stream, byte[] checksumFromHeader)
