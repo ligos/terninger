@@ -68,5 +68,15 @@ namespace MurrayGrant.Terninger.Helpers
             }
             return result.ToString();
         }
+
+        public static byte[] ParseHexString(this string hex)
+        {
+            var result = new byte[hex.Length / 2];
+            for (int i = 0; i < hex.Length / 2; i++)
+            {
+                result[i] = byte.Parse(hex.Substring(i*2, 2), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            return result;
+        }
     }
 }

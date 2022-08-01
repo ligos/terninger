@@ -84,13 +84,31 @@ namespace MurrayGrant.Terninger.PersistentState
                 throw new InvalidDataException($"Unable to parse header line of '{TextFileReaderWriter.StreamName(Stream)}': could not parse file version '{parts[1]}'.");
 
             byte[] sha256Checksum;
-            try
+            if (parts[2].Length == 64)
             {
-                sha256Checksum = Convert.FromBase64String(parts[2]);
+                try
+                {
+                    sha256Checksum = ByteArrayExtensions.ParseHexString(parts[2]);
+                }
+                catch (IndexOutOfRangeException ex)
+                {
+                    throw new InvalidDataException($"Unable to parse header line of '{TextFileReaderWriter.StreamName(Stream)}': could not parse checksum '{parts[2]}'.", ex);
+                }
+                catch (FormatException ex)
+                {
+                    throw new InvalidDataException($"Unable to parse header line of '{TextFileReaderWriter.StreamName(Stream)}': could not parse checksum '{parts[2]}'.", ex);
+                }
             }
-            catch (FormatException ex)
+            else
             {
-                throw new InvalidDataException($"Unable to parse header line of '{TextFileReaderWriter.StreamName(Stream)}': could not parse checksum '{parts[2]}'.", ex);
+                try
+                {
+                    sha256Checksum = Convert.FromBase64String(parts[2]);
+                }
+                catch (FormatException ex)
+                {
+                    throw new InvalidDataException($"Unable to parse header line of '{TextFileReaderWriter.StreamName(Stream)}': could not parse checksum '{parts[2]}'.", ex);
+                }
             }
             if (!Int32.TryParse(parts[3], out var itemCount))
                 itemCount = -1;     // Item count is a hint anyway, if we can't parse it no big deal.

@@ -14,13 +14,14 @@ namespace MurrayGrant.Terninger.PersistentState
     /// </summary>
     /// <remarks>
     /// The first line is a header:
-    ///    magic number, version number, base64(sha256 checksum of file), count of items (lines)
+    ///    magic number, version number, binary(sha256 checksum of file), count of items (lines)
     /// Each line looks like
     ///    namespace, key, base64(value)
     /// Tabs (U+0009) are used as the default delimiter.
     /// Newlines may be any combination of \r and \n (just \n is emitted by default).
     /// All write operations write the entire file to disk, even for a single record.
     /// Any seekable stream can be used.
+    /// Binary data may be stored as base64 or hex.
     ///
     /// This works pretty well for ~100 items, each of ~64 bytes each.
     /// But isn't so great for more items or larger items.
