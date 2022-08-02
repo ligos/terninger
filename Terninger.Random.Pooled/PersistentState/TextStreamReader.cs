@@ -124,10 +124,10 @@ namespace MurrayGrant.Terninger.PersistentState
 
             var itemNamespace = parts[0];
             if (!PersistentItemCollection.ValidKey(itemNamespace))
-                throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': namespace '{itemNamespace}' contains invalid characters in the range {PersistentItemCollection.InvalidKeyUnicodeRanges}.");
+                throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': namespace '{itemNamespace}' is blank or contains invalid characters in the range {PersistentItemCollection.InvalidKeyUnicodeRanges}.");
             var key = parts[1];
             if (!PersistentItemCollection.ValidKey(key))
-                throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': key '{key}' contains invalid characters in the range {PersistentItemCollection.InvalidKeyUnicodeRanges}.");
+                throw new InvalidDataException($"Unable to read data line {lineNumber:N0} of '{TextFileReaderWriter.StreamName(Stream)}': key '{key}' is blank or contains invalid characters in the range {PersistentItemCollection.InvalidKeyUnicodeRanges}.");
 
             var encodingString = parts[2];
             ValueEncoding encoding;

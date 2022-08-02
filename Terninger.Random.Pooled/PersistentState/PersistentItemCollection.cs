@@ -89,7 +89,7 @@ namespace MurrayGrant.Terninger.PersistentState
             if (!ValidKey(keyOrNamespace))
                 throw new ArgumentException($"Key or Namespace '{keyOrNamespace}' contains invalid character. {InvalidKeyUnicodeRanges} are not valid.", parmName);
         }
-        public const string InvalidKeyUnicodeRanges = "U+0000-U+001F,U+0080-U+009F.";
+        public const string InvalidKeyUnicodeRanges = "U+0000-U+001F,U+0080-U+009F";
         public static bool ValidKey(string keyOrNamespace)
             // TODO: cope with surrogate pairs correctly.
             => !String.IsNullOrEmpty(keyOrNamespace)
