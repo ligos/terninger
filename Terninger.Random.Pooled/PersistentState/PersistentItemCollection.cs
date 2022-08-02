@@ -14,11 +14,11 @@ namespace MurrayGrant.Terninger.PersistentState
     /// </remarks>
     public sealed class PersistentItemCollection : IReadOnlyCollection<NamespacedPersistentItem>
     {
-        private static readonly Dictionary<string, (ValueEncoding encoding, byte[] value)> _EmptyResult 
-            = new Dictionary<string, (ValueEncoding encoding, byte[] bytes)>();
+        private static readonly Dictionary<string, NamespacedPersistentItem> _EmptyResult 
+            = new Dictionary<string, NamespacedPersistentItem>();
 
-        private readonly Dictionary<string, Dictionary<string, (ValueEncoding encoding, byte[] bytes)>> _ItemLookup 
-            = new Dictionary<string, Dictionary<string, (ValueEncoding encoding, byte[] bytes)>>();
+        private readonly Dictionary<string, Dictionary<string, NamespacedPersistentItem>> _ItemLookup 
+            = new Dictionary<string, Dictionary<string, NamespacedPersistentItem>>();
 
         public int Count => this._ItemLookup.Values.Sum(x => x.Count);
 
@@ -27,7 +27,7 @@ namespace MurrayGrant.Terninger.PersistentState
         IEnumerator IEnumerable.GetEnumerator()
             => Items.GetEnumerator();
         IEnumerable<NamespacedPersistentItem> Items
-            => _ItemLookup.SelectMany(x => x.Value, (ns, kvp) => new NamespacedPersistentItem(ns.Key, kvp.Key, kvp.Value.encoding, kvp.Value.bytes));
+            => _ItemLookup.SelectMany(x => x.Value, (ns, kvp) => kvp.Value);
 
         public PersistentItemCollection() : this(Enumerable.Empty<NamespacedPersistentItem>()) { }
         public PersistentItemCollection(IEnumerable<NamespacedPersistentItem> items)
@@ -36,7 +36,9 @@ namespace MurrayGrant.Terninger.PersistentState
                 SetItem(item);
         }
 
-        public IDictionary<string, (ValueEncoding encoding, byte[] bytes)> Get(string itemNamespace)
+        public IDictionary<string, NamespacedPersistentItem> this[string itemNamespace]
+            => Get(itemNamespace);
+        public IDictionary<string, NamespacedPersistentItem> Get(string itemNamespace)
         {
             if (_ItemLookup.TryGetValue(itemNamespace, out var result))
                 return result;
@@ -44,13 +46,13 @@ namespace MurrayGrant.Terninger.PersistentState
                 return _EmptyResult;
         }
 
-        public void SetNamespaceItems(string itemNamespace, IDictionary<string, (ValueEncoding encoding, byte[] bytes)> items)
+        public void SetNamespaceItems(string itemNamespace, IDictionary<string, NamespacedPersistentItem> items)
         {
             AssertValidKey(itemNamespace, nameof(itemNamespace));
             foreach (var kvp in items)
                 AssertValidKey(kvp.Key, nameof(items));
 
-            if (items is Dictionary<string, (ValueEncoding encoding, byte[] bytes)> d)
+            if (items is Dictionary<string, NamespacedPersistentItem> d)
                 _ItemLookup[itemNamespace] = d;
             else
                 _ItemLookup[itemNamespace] = items.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -64,8 +66,8 @@ namespace MurrayGrant.Terninger.PersistentState
             AssertValidKey(key, nameof(key));
 
             if (!_ItemLookup.TryGetValue(itemNamespace, out var items))
-                items = new Dictionary<string, (ValueEncoding encoding, byte[] bytes)>();
-            items[key] = (encoding, bytes);
+                items = new Dictionary<string, NamespacedPersistentItem>();
+            items[key] = new NamespacedPersistentItem(itemNamespace, key, encoding, bytes);
             _ItemLookup[itemNamespace] = items;
         }
 
