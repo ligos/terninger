@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.Accumulator;
 using MurrayGrant.Terninger.EntropySources;
+using MurrayGrant.Terninger.PersistentState;
 using MurrayGrant.Terninger.LibLog;
 
 using BigMath;
@@ -57,6 +58,9 @@ namespace MurrayGrant.Terninger.Random
         /// </summary>
         public EntropyPriority EntropyPriority { get; private set; }
 
+        private IPersistentStateReader _PersistentStateReader;
+        private IPersistentStateWriter _PersistentStateWriter;
+
         /// <summary>
         /// True if the generator is currently gathering entropy.
         /// </summary>
@@ -93,7 +97,6 @@ namespace MurrayGrant.Terninger.Random
             if (accumulator == null) throw new ArgumentNullException(nameof(accumulator));
             if (prng == null) throw new ArgumentNullException(nameof(prng));
 
-            this.UniqueId = Guid.NewGuid();
             this._Prng = prng;      // Note that this is keyed with a low entropy key.
             this._Accumulator = accumulator;
             this._EntropySources = new List<SourceAndMetadata>();
@@ -171,14 +174,21 @@ namespace MurrayGrant.Terninger.Random
         {
             if (this._SchedulerTask == null)
             {
-                Logger.Info("Starting Terninger pooling loop for generator {0}.", UniqueId);
+                Logger.Debug("Starting Terninger worker task.");
                 _LastRandomRequestUtc = DateTime.UtcNow;
                 _LastReseedUtc = DateTime.UtcNow;
                 this._SchedulerTask = Task.Run(() =>
                 {
                     try
                     {
-                        WorkerLoop();
+                        Logger.Debug("Begin initialisation.");
+                        var persistentState = TryLoadPersistentState().GetAwaiter().GetResult();
+                        if (persistentState?.Count > 0)
+                            InitialiseInternalObjectsFromPersistentState(persistentState);
+                        Logger.Debug("Initialisation complete.");
+
+                        Logger.Info("Starting Terninger worker loop for generator {0}.", UniqueId);
+                        WorkerLoop(persistentState);
                         Logger.Info("Stopped Terninger pooling loop for generator {0}.", UniqueId);
                     }
                     catch (Exception ex)
@@ -332,7 +342,7 @@ namespace MurrayGrant.Terninger.Random
             return new SourceAndMetadata(source, candidateName);
         }
 
-        private void WorkerLoop()
+        private void WorkerLoop(PersistentItemCollection loadedPersistentState)
         {
             while (!_ShouldStop.IsCancellationRequested)
             {
@@ -346,6 +356,9 @@ namespace MurrayGrant.Terninger.Random
                 }
                 else
                 {
+                    // Initialise any entropy sources from persistent state.
+                    InitialiseEntropySourcesFromPersistentState(loadedPersistentState);
+
                     // Poll all sources.
                     Logger.Trace("Gathering entropy from {0:N0} source(s).", syncSources.Count() + asyncSources.Count());
                     this.PollSources(syncSources, asyncSources).GetAwaiter().GetResult();
@@ -361,6 +374,10 @@ namespace MurrayGrant.Terninger.Random
                     // And update any awaiters / event subscribers.
                     if (didReseed)
                         RaiseOnReseedEvent();
+
+                    // Gather state to save and write.
+                    var writeEvent = didReseed ? WritePersistentEvent.Reseed : WritePersistentEvent.Periodic;
+                    GatherAndWritePeristentStateIfRequired(writeEvent).GetAwaiter().GetResult();
                 }
 
                 // Wait for some period of time before polling again.
@@ -373,6 +390,9 @@ namespace MurrayGrant.Terninger.Random
                     Logger.Trace("Entropy loop woken up, reason: {0}", WakeReason(wakeIdx));
                 }
             }
+
+            // When the generator stops, we write state one last time.
+            GatherAndWritePeristentStateIfRequired(WritePersistentEvent.Stopping).GetAwaiter().GetResult();
         }
 
         private (IEnumerable<SourceAndMetadata> syncSources, IEnumerable<SourceAndMetadata> asyncSource) GetSources()
@@ -636,6 +656,71 @@ namespace MurrayGrant.Terninger.Random
             }
 
             Logger.Trace("MaybeUpdatePriority(): priority was {0}, is now {1}.", originalPriority, this.EntropyPriority);
+        }
+
+        private async Task<PersistentItemCollection> TryLoadPersistentState()
+        {
+            if (_PersistentStateReader == null)
+                return null;
+
+            Logger.Trace("Loading persistent state from '{0}'", _PersistentStateReader.GetType().Name);
+            try
+            {
+                var result = await _PersistentStateReader.ReadAsync();
+                Logger.Debug("Loaded {0:N0} key-value-pairs from persistent state '{1}'.", result.Count, _PersistentStateReader.GetType().Name);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Logger.ErrorException("Unable to load persistent state from '{0}'.", ex, _PersistentStateReader.GetType().Name);
+                return null;
+            }
+        }
+
+        private void InitialiseInternalObjectsFromPersistentState(PersistentItemCollection persistentState)
+        {
+            Logger.Trace("Initialising internal Terninger objects from persistent state.");
+            // TODO: logging.
+
+            // this
+            // _Prng
+            // _Accumulator
+
+            // Remove each namespace from collection so entropy sources cannot observe internal state.
+        }
+
+        private void InitialiseEntropySourcesFromPersistentState(PersistentItemCollection persistentState)
+        {
+            Logger.Trace("Initialising entropy sources from persistent state.");
+            // Only entropy sources at the moment
+            // After we reseed for the second time, we stop bothering with this (on the assumption any sources would be added by then).
+
+            // Remove each namespace from collection after a source is initialised.
+            // TODO: logging.
+        }
+
+        private async Task GatherAndWritePeristentStateIfRequired(WritePersistentEvent eventType)
+        {
+            if (_PersistentStateWriter == null)
+                return;
+
+            // If any source has updates, or we just reseeded.
+
+            // Accumulate state from all sources.
+            var persistentState = new PersistentItemCollection();
+
+            // Always accumulate internal objects last, so anyone trying to impersonate global namespaces gets overwritten.
+
+            // Save.
+            await _PersistentStateWriter.WriteAsync(persistentState);
+
+            // TODO: logging.
+        }
+        enum WritePersistentEvent
+        {
+            Reseed = 1,
+            Periodic = 2,
+            Stopping = 3,
         }
 
         private bool ShouldReseed()
