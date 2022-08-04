@@ -56,18 +56,22 @@ namespace MurrayGrant.Terninger.PersistentState
             this.Encoding = encoding ?? DefaultEncoding;
         }
 
-        public Task<PersistentItemCollection> ReadAsync()
+        public async Task<PersistentItemCollection> ReadAsync()
         {
             if (!File.Exists(this.FilePath))
-                return Task.FromResult<PersistentItemCollection>(null);
+                return null;
 
             using var stream = new FileStream(this.FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            return new TextStreamReader(stream, Separator, Encoding).ReadAsync();
+            var result = await new TextStreamReader(stream, Separator, Encoding).ReadAsync();
+            return result;
         }
 
         public async Task WriteAsync(PersistentItemCollection items)
         {
             _ = items ?? throw new ArgumentNullException(nameof(items));
+
+            // Ensure directory exists first.
+            Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath));
 
             // Write to temp file.
             var tempPath = this.FilePath + ".tmp";

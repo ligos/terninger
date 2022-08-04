@@ -192,6 +192,7 @@ namespace MurrayGrant.Terninger.Random
                         var persistentState = TryLoadPersistentState().GetAwaiter().GetResult();
                         if (persistentState?.Count > 0)
                             InitialiseInternalObjectsFromPersistentState(persistentState);
+                        InitialiseInternalObjects();
                         Logger.Debug("Initialisation complete.");
 
                         Logger.Info("Starting Terninger worker loop for generator {0}.", UniqueId);
@@ -674,7 +675,7 @@ namespace MurrayGrant.Terninger.Random
             try
             {
                 var result = await _PersistentStateReader.ReadAsync();
-                Logger.Debug("Loaded {0:N0} key-value-pairs from persistent state '{1}⁞{2}'.", result.Count, _PersistentStateReader.GetType().Name, _PersistentStateReader.Location);
+                Logger.Debug("Loaded {0:N0} key-value-pairs from persistent state '{1}⁞{2}'.", result?.Count ?? 0, _PersistentStateReader.GetType().Name, _PersistentStateReader.Location);
                 return result;
             }
             catch (Exception ex)
@@ -694,6 +695,12 @@ namespace MurrayGrant.Terninger.Random
             // _Accumulator
 
             // Remove each namespace from collection so entropy sources cannot observe internal state.
+        }
+
+        private void InitialiseInternalObjects()
+        {
+            if (UniqueId == Guid.Empty)
+                UniqueId = Guid.NewGuid();
         }
 
         private void InitialiseEntropySourcesFromPersistentState(PersistentItemCollection persistentState)
