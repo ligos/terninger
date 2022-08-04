@@ -65,7 +65,7 @@ namespace MurrayGrant.Terninger.Test.Slow
         {
             var sources = new IEntropySource[] { new CryptoRandomSource(64), new CurrentTimeSource(), new GCMemorySource(), new NetworkStatsSource(), new ProcessStatsSource(), new TimerSource() };
             var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
-            var rng = new PooledEntropyCprngGenerator(sources, acc);
+            var rng = PooledEntropyCprngGenerator.Create(initialisedSources: sources, accumulator: acc);
 
             await rng.StartAndWaitForFirstSeed();
 

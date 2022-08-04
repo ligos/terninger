@@ -77,21 +77,18 @@ namespace MurrayGrant.Terninger.Random
         /// </summary>
         public event EventHandler<PooledEntropyCprngGenerator> OnReseed;
         private List<(Int128 seedNumber, TaskCompletionSource<Int128> source)> _OnReesedTaskSources = new List<(Int128, TaskCompletionSource<Int128>)>();
-
-        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources) 
-            : this(initialisedSources, new EntropyAccumulator(), CypherBasedPrngGenerator.CreateWithCheapKey(), new PooledGeneratorConfig()) { }
-        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, EntropyAccumulator accumulator)
-            : this(initialisedSources, accumulator, CypherBasedPrngGenerator.CreateWithCheapKey(), new PooledGeneratorConfig()) { }
-        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, IReseedableRandomNumberGenerator prng)
-            : this(initialisedSources, new EntropyAccumulator(), prng, new PooledGeneratorConfig()) { }
-        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, EntropyAccumulator accumulator, IReseedableRandomNumberGenerator prng)
-            : this(initialisedSources, accumulator, prng, new PooledGeneratorConfig()) { }
-
+        
         /// <summary>
-        /// Initialise the CPRNG with the given PRNG, accumulator, entropy sources and thread.
+        /// Initialise the CPRNG with the given PRNG, accumulator, entropy sources and persistent state reader / writer.
         /// This does not start the generator.
         /// </summary>
-        public PooledEntropyCprngGenerator(IEnumerable<IEntropySource> initialisedSources, EntropyAccumulator accumulator, IReseedableRandomNumberGenerator prng, PooledGeneratorConfig config)
+        private PooledEntropyCprngGenerator(
+            IEnumerable<IEntropySource> initialisedSources, 
+            EntropyAccumulator accumulator, 
+            IReseedableRandomNumberGenerator prng, 
+            PooledGeneratorConfig config, 
+            IPersistentStateReader persistentStateReader, 
+            IPersistentStateWriter persistentStateWriter)
         {
             if (initialisedSources == null) throw new ArgumentNullException(nameof(initialisedSources));
             if (accumulator == null) throw new ArgumentNullException(nameof(accumulator));
@@ -106,16 +103,26 @@ namespace MurrayGrant.Terninger.Random
             this.EntropyPriority = EntropyPriority.High;        // A new generator must reseed as quickly as possible.
             // Important, the index of these are used in WakeReason()
             _AllSignals = new[] { _WakeSignal, _ShouldStop.Token.WaitHandle };
+            this._PersistentStateReader = persistentStateReader;
+            this._PersistentStateWriter = persistentStateWriter;
         }
 
+        /// <summary>
+        /// Initialise the CPRNG with the given PRNG, accumulator, entropy sources and persistent state reader / writer.
+        /// This does not start the generator.
+        /// </summary>
         public static PooledEntropyCprngGenerator Create(IEnumerable<IEntropySource> initialisedSources = null
                             , EntropyAccumulator accumulator = null
                             , IReseedableRandomNumberGenerator prng = null
-                            , PooledGeneratorConfig config = null)
+                            , PooledGeneratorConfig config = null
+                            , IPersistentStateReader persistentStateReader = null
+                            , IPersistentStateWriter persistentStateWriter = null)
             => new PooledEntropyCprngGenerator(initialisedSources ?? Enumerable.Empty<IEntropySource>()
                                             , accumulator ?? new EntropyAccumulator()
                                             , prng ?? CypherBasedPrngGenerator.CreateWithCheapKey()
-                                            , config ?? new PooledGeneratorConfig());
+                                            , config ?? new PooledGeneratorConfig()
+                                            , persistentStateReader
+                                            , persistentStateWriter);
 
         public void Dispose()
         {

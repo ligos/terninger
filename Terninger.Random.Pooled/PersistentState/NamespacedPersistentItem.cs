@@ -26,6 +26,12 @@ namespace MurrayGrant.Terninger.PersistentState
               : ValueEncoding == ValueEncoding.Utf8Text ? ValueAsUtf8Text
               : ValueAsHex;
 
+        public static NamespacedPersistentItem CreateText(string key, string value, string theNamespace = "")
+            => new NamespacedPersistentItem(theNamespace, key, ValueEncoding.Utf8Text, Encoding.UTF8.GetBytes(value));
+
+        public static NamespacedPersistentItem CreateBinary(string key, byte[] value, string theNamespace = "")
+            => new NamespacedPersistentItem(theNamespace, key, value.Length <= 64 ? ValueEncoding.Hex : ValueEncoding.Base64, value);
+
         public NamespacedPersistentItem(string theNamespace, string key, ValueEncoding valueEncoding, byte[] value)
         {
             this.Namespace = theNamespace;
