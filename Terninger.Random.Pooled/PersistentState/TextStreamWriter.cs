@@ -22,6 +22,8 @@ namespace MurrayGrant.Terninger.PersistentState
         public Encoding Encoding { get; }
         public Stream Stream { get; }
 
+        public string Location => TextFileReaderWriter.StreamName(Stream);
+
         public TextStreamWriter(Stream stream, string separator = TextFileReaderWriter.DefaultSeparator, Encoding encoding = null)
         {
             _ = stream ?? throw new ArgumentNullException(nameof(stream));

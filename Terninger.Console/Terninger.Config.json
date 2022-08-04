@@ -8,6 +8,20 @@
   //   Mozilla/5.0 (Microsoft.NET; {Environment.Version}; github.com/ligos/terninger) Terninger/{NetworkUserAgentIdentifier}
   "NetworkUserAgentIdentifier": null,
 
+  // Configuration for persistent state file
+  "PersistentState": {
+    // Persistent state is enabled when true (default).
+    // When true, a state file will be loaded on startup of a TerningerPooled generator.
+    // And saved on completion.
+    // This state allows the generator to save internal generated entropy between runs.
+    // Some entropy sources may also save and load state.
+    "Enabled": true,
+
+    // Absolute or relative path to a file where state will be saved.
+    // ~ is expanded to your home folder.
+    "Path": "~/.terninger/terninger.console.state"
+  },
+
   // Configuration for standard Entropy Sources
   "EntropySources": {
 

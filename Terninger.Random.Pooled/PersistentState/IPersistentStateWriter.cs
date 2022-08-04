@@ -11,6 +11,11 @@ namespace MurrayGrant.Terninger.PersistentState
     public interface IPersistentStateWriter
     {
         /// <summary>
+        /// Details of the location where state will be written to.
+        /// </summary>
+        public string Location { get; }
+
+        /// <summary>
         /// Writes all items to the store.
         /// </summary>
         Task WriteAsync(PersistentItemCollection items);

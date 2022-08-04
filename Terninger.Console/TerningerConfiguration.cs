@@ -6,11 +6,19 @@ namespace MurrayGrant.Terninger.Console
     {
         public string NetworkUserAgentIdentifier { get; set; }
 
+        public PersistentStateConfiguration PersistentState { get; set; }
+
         public EntropySourceConfiguration EntropySources { get; set; }
 
         public Random.PooledEntropyCprngGenerator.PooledGeneratorConfig TerningerPooledGeneratorConfig { get; set; }
 
         public TimeSpan TimeToWaitForFirstSeed { get; set; }
+    }
+
+    public class PersistentStateConfiguration
+    {
+        public bool Enabled { get; set; } = true;
+        public string Path { get; set; }
     }
 
     public class EntropySourceConfiguration

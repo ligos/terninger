@@ -371,7 +371,17 @@ namespace MurrayGrant.Terninger.Console
                     PollWaitTimeInNormalPriority = TimeSpan.FromSeconds(2),
                     EntropyToTriggerReseedInNormalPriority = 64,
                 };
-                var generator = new PooledEntropyCprngGenerator(sources, acc, genPrng, generatorConfig);
+                var persistentState = config?.PersistentState?.Enabled == true && !string.IsNullOrEmpty(config?.PersistentState?.Path)
+                        ? new Terninger.PersistentState.TextFileReaderWriter(ExpandPersistentStatePath(config.PersistentState.Path)) 
+                        : null;
+                var generator = PooledEntropyCprngGenerator.Create(
+                    initialisedSources: sources, 
+                    accumulator: acc, 
+                    prng: genPrng, 
+                    config: generatorConfig,
+                    persistentStateReader: persistentState,
+                    persistentStateWriter: persistentState
+                );
                 result.Generator = generator;
                 result.Description = $"non-deterministic CPRNG - " + typeof(PooledEntropyCprngGenerator).Namespace + "." + typeof(PooledEntropyCprngGenerator).Name;
                 result.ExtraDescription = $"Using {linearPools}+{randomPools} pools (linear+random), {sources.Count()} entropy sources, crypto primitive: {cryptoPrimitive}, hash: {hashAlgorithm}";
@@ -472,6 +482,13 @@ namespace MurrayGrant.Terninger.Console
             {
                 return (null, ex);
             }
+        }
+
+        private static string ExpandPersistentStatePath(string path)
+        {
+            var result = path.Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+            result = Path.GetFullPath(result);
+            return result;
         }
 
         private static bool ParseCommandLine(string[] args)

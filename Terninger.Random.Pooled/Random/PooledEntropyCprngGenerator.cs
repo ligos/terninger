@@ -670,16 +670,16 @@ namespace MurrayGrant.Terninger.Random
             if (_PersistentStateReader == null)
                 return null;
 
-            Logger.Trace("Loading persistent state from '{0}'", _PersistentStateReader.GetType().Name);
+            Logger.Trace("Loading persistent state from '{0}⁞{1}'", _PersistentStateReader.GetType().Name, _PersistentStateReader.Location);
             try
             {
                 var result = await _PersistentStateReader.ReadAsync();
-                Logger.Debug("Loaded {0:N0} key-value-pairs from persistent state '{1}'.", result.Count, _PersistentStateReader.GetType().Name);
+                Logger.Debug("Loaded {0:N0} key-value-pairs from persistent state '{1}⁞{2}'.", result.Count, _PersistentStateReader.GetType().Name, _PersistentStateReader.Location);
                 return result;
             }
             catch (Exception ex)
             {
-                Logger.ErrorException("Unable to load persistent state from '{0}'.", ex, _PersistentStateReader.GetType().Name);
+                Logger.WarnException("Unable to load persistent state from '{0}⁞{1}'. Brand new terninger instance will be initialised.", ex, _PersistentStateReader.GetType().Name, _PersistentStateReader.Location);
                 return null;
             }
         }

@@ -356,6 +356,8 @@ namespace MurrayGrant.Terninger.Test
 
             public PersistentItemCollection Items;
 
+            public string Location => "RAM";
+
             public Task<PersistentItemCollection> ReadAsync()
                 => Task.FromResult(Items);
     

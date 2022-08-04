@@ -43,6 +43,8 @@ namespace MurrayGrant.Terninger.PersistentState
         public Encoding Encoding { get; }
         public string FilePath { get; }
 
+        public string Location => FilePath;
+
         public TextFileReaderWriter(string filePath, string separator = DefaultSeparator, Encoding encoding = null, bool disposeStream = false)
         {
             if (String.IsNullOrEmpty(filePath))
@@ -56,6 +58,9 @@ namespace MurrayGrant.Terninger.PersistentState
 
         public Task<PersistentItemCollection> ReadAsync()
         {
+            if (!File.Exists(this.FilePath))
+                return Task.FromResult<PersistentItemCollection>(null);
+
             using var stream = new FileStream(this.FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             return new TextStreamReader(stream, Separator, Encoding).ReadAsync();
         }

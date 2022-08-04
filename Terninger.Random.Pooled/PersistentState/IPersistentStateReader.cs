@@ -11,6 +11,11 @@ namespace MurrayGrant.Terninger.PersistentState
     public interface IPersistentStateReader
     {
         /// <summary>
+        /// Details of the location where state will be read from.
+        /// </summary>
+        public string Location { get; }
+
+        /// <summary>
         /// Reads all items from the underlying store.
         /// </summary>
         Task<PersistentItemCollection> ReadAsync();
