@@ -842,19 +842,28 @@ namespace MurrayGrant.Terninger.Random
                 Logger.Trace("ShouldWritePersistentState(): true - reseed.");
                 return true;
             }
-
-            var anyUpdatesFromEntropySources = _EntropySources
-                                                .Select(x => x.Source)
-                                                .OfType<IPersistentStateSource>()
-                                                .Any(x => x.HasUpdates);
-            if (anyUpdatesFromEntropySources)
+            else if (eventType == PersistentEventType.Periodic)
             {
-                Logger.Trace("ShouldWritePersistentState(): true - entropy source has updates.");
-                return true;
+                // TODO: periodic timing.
+
+                var anyUpdatesFromEntropySources = _EntropySources
+                                    .Select(x => x.Source)
+                                    .OfType<IPersistentStateSource>()
+                                    .Any(x => x.HasUpdates);
+                if (anyUpdatesFromEntropySources)
+                {
+                    Logger.Trace("ShouldWritePersistentState(): true - entropy source has updates.");
+                    return true;
+                }
+                else
+                {
+                    Logger.Trace("ShouldWritePersistentState(): false - no updates.");
+                    return false;
+                }
             }
             else
             {
-                Logger.Trace("ShouldWritePersistentState(): false - no updates.");
+                Logger.Warn("ShouldWritePersistentState(): unexpected event type '{0}'.", eventType);
                 return false;
             }
         }
