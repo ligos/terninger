@@ -165,7 +165,7 @@ namespace MurrayGrant.Terninger.Test
             var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
             var testState = new InMemoryState(new NamespacedPersistentItem[]
             {
-                NamespacedPersistentItem.CreateBinary("UniqueID", Guid.Parse("351de340-be56-46e0-b843-9bd3ca952afa").ToByteArray(), theNamespace: "PooledEntropyCprngGenerator")
+                NamespacedPersistentItem.CreateBinary(nameof(PooledEntropyCprngGenerator.UniqueId), Guid.Parse("351de340-be56-46e0-b843-9bd3ca952afa").ToByteArray(), theNamespace: nameof(PooledEntropyCprngGenerator))
             });
             var rng = PooledEntropyCprngGenerator.Create(sources, accumulator: acc, config: Conf(), persistentStateReader: testState, persistentStateWriter: testState);
             Assert.AreEqual(rng.BytesRequested, 0);
@@ -185,8 +185,8 @@ namespace MurrayGrant.Terninger.Test
             _ = rng.GetRandomBytes(1024);
             
             await rng.Stop();
-            var peristedUniqueId = new Guid(testState.Items["PooledEntropyCprngGenerator"]["UniqueID"].Value);
-            var peristedBytesRequested = BigMath.Int128.Parse(testState.Items["PooledEntropyCprngGenerator"]["BytesRequested"].ValueAsUtf8Text);
+            var peristedUniqueId = new Guid(testState.Items[nameof(PooledEntropyCprngGenerator)][nameof(PooledEntropyCprngGenerator.UniqueId)].Value);
+            var peristedBytesRequested = BigMath.Int128.Parse(testState.Items[nameof(PooledEntropyCprngGenerator)][nameof(PooledEntropyCprngGenerator.BytesRequested)].ValueAsUtf8Text);
             Assert.AreEqual(peristedUniqueId, Guid.Parse("351de340-be56-46e0-b843-9bd3ca952afa"));
             Assert.AreEqual(peristedBytesRequested, (BigMath.Int128)1024);
         }

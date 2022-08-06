@@ -75,7 +75,7 @@ namespace MurrayGrant.Terninger.PersistentState
 
             // Write to temp file.
             var tempPath = this.FilePath + ".tmp";
-            using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
             {
                 await new TextStreamWriter(stream, Separator, Encoding).WriteAsync(items);
             }

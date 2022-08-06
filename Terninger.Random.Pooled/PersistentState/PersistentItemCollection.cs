@@ -71,6 +71,14 @@ namespace MurrayGrant.Terninger.PersistentState
             _ItemLookup[itemNamespace] = items;
         }
 
+        public void SetNamespace(string itemNamespace, IEnumerable<NamespacedPersistentItem> items)
+        {
+            if (items == null)
+                return;
+            foreach (var item in items)
+                SetItem(itemNamespace, item.Key, item.ValueEncoding, item.Value);
+        }
+
         public void RemoveNamespace(string itemNamespace)
         {
             _ItemLookup.Remove(itemNamespace);
