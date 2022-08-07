@@ -298,7 +298,11 @@
     "ReseedCountBeforeSwitchToLowPriority": 10,
     // Time at Normal priority without any further random requests before generator will drop to Low priority.
     // Default: 2 hours.
-    "TimeBeforeSwitchToLowPriority": "02:00:00"
+    "TimeBeforeSwitchToLowPriority": "02:00:00",
+
+    // Time to wait between periodic writing of persistent state.
+    // Default: 5 minutes.
+    "PersistentStatePeriodicWaitTime": "00:05:00"
   },
 
   // Time to wait until first seed. 

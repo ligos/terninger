@@ -61,6 +61,7 @@ namespace MurrayGrant.Terninger.Random
 
         private IPersistentStateReader _PersistentStateReader;
         private IPersistentStateWriter _PersistentStateWriter;
+        private DateTime _LastPersistentStateWriteUtc;
 
         /// <summary>
         /// True if the generator is currently gathering entropy.
@@ -762,7 +763,12 @@ namespace MurrayGrant.Terninger.Random
             Logger.Trace("Initialising PooledEntropyCprngGenerator from persistent state.");
             ((IPersistentStateSource)this).Initialise(persistentState.Get(nameof(PooledEntropyCprngGenerator)));
 
-            // _Prng
+            var prngAsPeristentStateSource = _Prng as IPersistentStateSource;
+            if (prngAsPeristentStateSource != null)
+            {
+                Logger.Trace("Initialising PRNG from persistent state.");
+                prngAsPeristentStateSource.Initialise(persistentState.Get(nameof(PooledEntropyCprngGenerator) + ".PRNG"));
+            }
             // _Accumulator
 
             // Remove each namespace from collection so entropy sources cannot observe internal state.
@@ -814,14 +820,24 @@ namespace MurrayGrant.Terninger.Random
             Logger.Debug("Gathering persistent state for event: {0}.", eventType);
             var persistentState = new PersistentItemCollection();
 
-            persistentState.SetNamespace(nameof(PooledEntropyCprngGenerator), ((IPersistentStateSource)this).GetCurrentState(eventType));
             // Always accumulate internal objects last, so anyone trying to impersonate global namespaces gets overwritten.
+
+            Logger.Trace("Gathering persistent state from PooledEntropyCprngGenerator.");
+            persistentState.SetNamespace(nameof(PooledEntropyCprngGenerator), ((IPersistentStateSource)this).GetCurrentState(eventType));
+ 
+            var prngAsPeristentStateSource = _Prng as IPersistentStateSource;
+            if (prngAsPeristentStateSource != null)
+            {
+                Logger.Trace("Gathering persistent state from PRNG.");
+                persistentState.SetNamespace(nameof(PooledEntropyCprngGenerator) + ".PRNG", prngAsPeristentStateSource.GetCurrentState(eventType));
+            }
 
             // Save.
             try
             {
                 Logger.Debug("Writing persistent state with {0:N0} items for event: {1}.", persistentState.Count, eventType);
                 await _PersistentStateWriter.WriteAsync(persistentState);
+                _LastPersistentStateWriteUtc = DateTime.UtcNow;
                 Logger.Debug("Persistent state written.", eventType);
             }
             catch (Exception ex)
@@ -844,21 +860,26 @@ namespace MurrayGrant.Terninger.Random
             }
             else if (eventType == PersistentEventType.Periodic)
             {
-                // TODO: periodic timing.
+                var now = DateTime.UtcNow;
+                if (_LastPersistentStateWriteUtc > now.Subtract(Config.PersistentStatePeriodicWaitTime))
+                {
+                    Logger.Trace("ShouldWritePersistentState(): false - periodic wait time not elapsed.");
+                    return false;
+                }
 
                 var anyUpdatesFromEntropySources = _EntropySources
                                     .Select(x => x.Source)
                                     .OfType<IPersistentStateSource>()
                                     .Any(x => x.HasUpdates);
-                if (anyUpdatesFromEntropySources)
-                {
-                    Logger.Trace("ShouldWritePersistentState(): true - entropy source has updates.");
-                    return true;
-                }
-                else
+                if (!anyUpdatesFromEntropySources)
                 {
                     Logger.Trace("ShouldWritePersistentState(): false - no updates.");
                     return false;
+                }
+                else
+                {
+                    Logger.Trace("ShouldWritePersistentState(): true - entropy source has updates.");
+                    return true;
                 }
             }
             else
@@ -953,6 +974,12 @@ namespace MurrayGrant.Terninger.Random
             /// Default: 2 hours.
             /// </summary>
             public TimeSpan TimeBeforeSwitchToLowPriority { get; set; } = TimeSpan.FromHours(2);
+
+            /// <summary>
+            /// Time to wait between periodic writing of persistent state.
+            /// Default: 5 minutes.
+            /// </summary>
+            public TimeSpan PersistentStatePeriodicWaitTime { get; set; } = TimeSpan.FromMinutes(5);
         }
     }
 

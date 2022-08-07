@@ -74,7 +74,7 @@ namespace MurrayGrant.Terninger.Random
             }
             catch (OverflowException)
             {
-                IncrementNested();
+                AddNested(1);
             }
         }
 
@@ -90,6 +90,19 @@ namespace MurrayGrant.Terninger.Random
             Increment();
         }
 
+        /// <summary>
+        /// Set the counter after loading from persistent state.
+        /// A random uint32 is added to make observing state more difficult.
+        /// </summary>
+        internal void SetCounter(byte[] value, UInt32 randomToAdd)
+        {
+            if (Disposed) throw new ObjectDisposedException(nameof(CypherCounter));
+            if (value.Length != BlockSizeBytes)
+                return;
+            Buffer.BlockCopy(value, 0, _Counter, 0, value.Length);
+            AddNested(randomToAdd);
+        }
+
         private void IncrementLower()
         {
             // PERF: common case.
@@ -97,15 +110,16 @@ namespace MurrayGrant.Terninger.Random
             var bytes = BitConverter.GetBytes(c);
             Buffer.BlockCopy(bytes, 0, _Counter, 0, bytes.Length);
         }
-        private void IncrementNested()
+        private void AddNested(UInt32 number)
         {
             // PERF: Uncommon case.
+            var numberToAdd = number;
             var maxIterations = _Counter.Length / 8;
             for (int i = 0; i < maxIterations; i++)
             {
                 try
                 {
-                    ulong c = BitConverter.ToUInt64(_Counter, i * 8) + 1;       // Will throw on overflow.
+                    ulong c = BitConverter.ToUInt64(_Counter, i * 8) + numberToAdd;       // Will throw on overflow.
                     var bytes = BitConverter.GetBytes(c);
                     Buffer.BlockCopy(bytes, 0, _Counter, i * 8, bytes.Length);
                     return;     // If this does not overflow, we should break out of the loop.
@@ -114,6 +128,7 @@ namespace MurrayGrant.Terninger.Random
                 {
                     // On overflow, clear the chunk we just overflowed on, and loop to increment the next chunk.
                     Array.Clear(_Counter, i*8, 8);
+                    numberToAdd = 1;
                 }
             }
         }

@@ -7,10 +7,11 @@ using System.Security.Cryptography;
 
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.CryptoPrimitives;
+using MurrayGrant.Terninger.PersistentState;
 
 namespace MurrayGrant.Terninger.Random
 {
-    public class CypherBasedPrngGenerator : IReseedableRandomNumberGenerator
+    public class CypherBasedPrngGenerator : IReseedableRandomNumberGenerator, IPersistentStateSource
     {
         // A block cypher or keyed hash algorithm.
         // Default: AES with 256 bit key, as specified in 9.4
@@ -216,6 +217,7 @@ namespace MurrayGrant.Terninger.Random
             {
                 BytesRequested = BytesRequested + count;
             };
+            HasUpdates = true;
         }
 
         private void FillWithRandomBytes_Unbuffered(byte[] toFill, int offset, int count)
@@ -295,6 +297,7 @@ namespace MurrayGrant.Terninger.Random
 
             // As per spec: Increment the counter data.
             _Counter.Increment();
+            HasUpdates = true;
         }
 
         private void ResetOutputBuffer()
@@ -348,5 +351,37 @@ namespace MurrayGrant.Terninger.Random
             return a / b;
 #endif
         }
+
+        #region IPersistentStateSource
+
+        public bool HasUpdates { get; private set; }
+
+        public void Initialise(IDictionary<string, NamespacedPersistentItem> state)
+        {
+            if (state.TryGetValue(nameof(CypherCounter), out var counterValue))
+            {
+                var randomNumber = this.GetRandomUInt32();
+                _Counter.SetCounter(counterValue.Value, randomNumber);
+            }
+            if (state.TryGetValue(nameof(BytesGenerated), out var bytesGeneratedValue)
+                && Int64.TryParse(bytesGeneratedValue.ValueAsUtf8Text, out var bytesGenerated))
+                BytesGenerated = bytesGenerated;
+            if (state.TryGetValue(nameof(BytesRequested), out var bytesRequestedValue)
+                && Int64.TryParse(bytesRequestedValue.ValueAsUtf8Text, out var bytesRequested))
+                BytesRequested = bytesRequested;
+        }
+
+        public IEnumerable<NamespacedPersistentItem> GetCurrentState(PersistentEventType eventType)
+        {
+            // Always bump the counter before we save, to make it slightly harder for outside observation.
+            _Counter.Increment();
+            yield return NamespacedPersistentItem.CreateBinary(nameof(CypherCounter), _Counter.GetCounter());
+            yield return NamespacedPersistentItem.CreateText(nameof(BytesGenerated), BytesGenerated.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            yield return NamespacedPersistentItem.CreateText(nameof(BytesRequested), BytesRequested.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            
+            HasUpdates = false;
+        }
+
+        #endregion
     }
 }
