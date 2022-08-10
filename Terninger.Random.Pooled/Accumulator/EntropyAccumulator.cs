@@ -9,6 +9,7 @@ using MurrayGrant.Terninger.Random;
 
 using BigMath;
 using BigMath.Utils;
+using MurrayGrant.Terninger.PersistentState;
 
 namespace MurrayGrant.Terninger.Accumulator
 {
@@ -16,7 +17,7 @@ namespace MurrayGrant.Terninger.Accumulator
     /// Entropy Accumulator as defined in section 9.5.
     /// Consists of a number of EntropyPool objects, and methods to add entropy and derive new seed material.
     /// </summary>
-    public sealed class EntropyAccumulator
+    public sealed class EntropyAccumulator : IPersistentStateSource
     {
         // As specified in 9.5.2, up to 64 pools which are used by the _PoolIndex counter.
         // These serve as a guaranteed long term pool on entropy.
@@ -95,7 +96,6 @@ namespace MurrayGrant.Terninger.Accumulator
         /// Total random pools.
         /// </summary>
         public int RandomPoolCount => _RandomPools.Length;
-
 
         public EntropyAccumulator() : this(28, 12, CypherBasedPrngGenerator.CreateWithCheapKey(), DefaultHashCreator) { }
         public EntropyAccumulator(IRandomNumberGenerator rng) : this(28, 12, rng, DefaultHashCreator) { }
@@ -278,6 +278,29 @@ namespace MurrayGrant.Terninger.Accumulator
             i = (i & 0x3333333333333333UL) + ((i >> 2) & 0x3333333333333333UL);
             return (int)(unchecked(((i + (i >> 4)) & 0xF0F0F0F0F0F0F0FUL) * 0x101010101010101UL) >> 56);
         }
+
+        #region IPersistentStateSource
+
+        bool IPersistentStateSource.HasUpdates => true;
+
+        void IPersistentStateSource.Initialise(IDictionary<string, NamespacedPersistentItem> state)
+        {
+            if (state.TryGetValue(nameof(TotalReseedEvents), out var totalReseedEventsValue)
+                && Int128.TryParse(totalReseedEventsValue.ValueAsUtf8Text, out var totalReseedEvents))
+                TotalReseedEvents = totalReseedEvents;
+
+            if (state.TryGetValue("ReseedCount", out var reseedCountValue)
+                && UInt64.TryParse(reseedCountValue.ValueAsUtf8Text, out var reseedCount))
+                _ReseedCount = reseedCount;
+        }
+
+        IEnumerable<NamespacedPersistentItem> IPersistentStateSource.GetCurrentState(PersistentEventType eventType)
+        {
+            yield return NamespacedPersistentItem.CreateText(nameof(TotalReseedEvents), TotalReseedEvents.ToString("d", System.Globalization.CultureInfo.InvariantCulture));
+            yield return NamespacedPersistentItem.CreateText("ReseedCount", _ReseedCount.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        #endregion
     }
 }
 

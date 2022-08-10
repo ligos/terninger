@@ -767,11 +767,29 @@ namespace MurrayGrant.Terninger.Random
             if (prngAsPeristentStateSource != null)
             {
                 Logger.Trace("Initialising PRNG from persistent state.");
-                prngAsPeristentStateSource.Initialise(persistentState.Get(nameof(PooledEntropyCprngGenerator) + ".PRNG"));
+                lock (_PrngLock)
+                {
+                    prngAsPeristentStateSource.Initialise(persistentState.Get(nameof(PooledEntropyCprngGenerator) + ".PRNG"));
+                }
             }
+
             // _Accumulator
+            Logger.Trace("Initialising Accumulator from persistent state.");
+            lock (_AccumulatorLock)
+            {
+                ((IPersistentStateSource)_Accumulator).Initialise(persistentState.Get(nameof(PooledEntropyCprngGenerator) + ".Accumulator"));
+            }
 
             // Remove each namespace from collection so entropy sources cannot observe internal state.
+            persistentState.RemoveNamespace(nameof(PooledEntropyCprngGenerator));
+            persistentState.RemoveNamespace(nameof(PooledEntropyCprngGenerator) + ".PRNG");
+            persistentState.RemoveNamespace(nameof(PooledEntropyCprngGenerator) + ".Accumulator");
+
+            Logger.Trace("Reset Accumulator pool zero after loading persistent state.");
+            lock (_AccumulatorLock)
+            {
+                _Accumulator.ResetPoolZero();
+            }
         }
 
         void IPersistentStateSource.Initialise(IDictionary<string, NamespacedPersistentItem> state)
@@ -831,6 +849,9 @@ namespace MurrayGrant.Terninger.Random
                 Logger.Trace("Gathering persistent state from PRNG.");
                 persistentState.SetNamespace(nameof(PooledEntropyCprngGenerator) + ".PRNG", prngAsPeristentStateSource.GetCurrentState(eventType));
             }
+
+            Logger.Trace("Gathering persistent state from Accumulator.");
+            persistentState.SetNamespace(nameof(PooledEntropyCprngGenerator) + ".Accumulator", ((IPersistentStateSource)_Accumulator).GetCurrentState(eventType));
 
             // Save.
             try
