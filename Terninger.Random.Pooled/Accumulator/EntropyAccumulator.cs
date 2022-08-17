@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -292,13 +293,94 @@ namespace MurrayGrant.Terninger.Accumulator
             if (state.TryGetValue("ReseedCount", out var reseedCountValue)
                 && UInt64.TryParse(reseedCountValue.ValueAsUtf8Text, out var reseedCount))
                 _ReseedCount = reseedCount;
+
+            // Editing the entropy pool persisted values is a way to subvert the genreator.
+            // So, if someone reduces the number on disk, we will ignore and start fresh.
+            const int minLinearPoolCountToImport = 6;
+            const int minRandomPoolCountToImport = 4;
+            const int minTotalPoolCountToImport = 16;
+            int persistedLinearPoolCount = 0, persistedRandomPoolCount = 0;
+            if (state.TryGetValue("LinearPoolCount", out var linearPoolCountValue)
+                && Int32.TryParse(linearPoolCountValue.ValueAsUtf8Text, out var linearPoolCount)
+                && state.ContainsKey(BaseKey("Linear", linearPoolCount - 1) + "EntropyHash"))
+                persistedLinearPoolCount = linearPoolCount;
+            if (state.TryGetValue("RandomPoolCount", out var randomPoolCountValue)
+                && Int32.TryParse(randomPoolCountValue.ValueAsUtf8Text, out var randomPoolCount)
+                && state.ContainsKey(BaseKey("Random", randomPoolCount - 1) + "EntropyHash"))
+                persistedRandomPoolCount = randomPoolCount;
+            var totalPersistedPoolCount = persistedLinearPoolCount + persistedRandomPoolCount;
+
+            if (_LinearPools.Length == persistedLinearPoolCount
+                || (persistedLinearPoolCount >= minLinearPoolCountToImport && totalPersistedPoolCount >= minTotalPoolCountToImport))
+            {
+                for (int i = 0; i < _LinearPools.Length; i++)
+                {
+                    var actualKeyBase = BaseKey("Linear", i);
+                    var poolDictionary = new Dictionary<string, NamespacedPersistentItem>();
+                    foreach (var item in EntropyPool.EmptyPeristentItems)
+                    {
+                        var actualKey = actualKeyBase + item.Key;
+                        if (state.TryGetValue(actualKey, out var value))
+                        {
+                            poolDictionary[item.Key] = value.WithNewKey(item.Key);
+                        }
+                    }
+
+                    var poolAsPersistentSource = (IPersistentStateSource)_LinearPools[i];
+                    poolAsPersistentSource.Initialise(poolDictionary);
+                }
+            }
+
+            if (_RandomPools.Length == persistedRandomPoolCount
+                || (persistedRandomPoolCount >= minRandomPoolCountToImport && totalPersistedPoolCount >= minTotalPoolCountToImport))
+            {
+                for (int i = 0; i < _RandomPools.Length; i++)
+                {
+                    var actualKeyBase = BaseKey("Random", i);
+                    var poolDictionary = new Dictionary<string, NamespacedPersistentItem>();
+                    foreach (var item in EntropyPool.EmptyPeristentItems)
+                    {
+                        var actualKey = actualKeyBase + item.Key;
+                        if (state.TryGetValue(actualKey, out var value))
+                        {
+                            poolDictionary[item.Key] = value.WithNewKey(item.Key);
+                        }
+                    }
+
+                    var poolAsPersistentSource = (IPersistentStateSource)_RandomPools[i];
+                    poolAsPersistentSource.Initialise(poolDictionary);
+                }
+            }
         }
 
         IEnumerable<NamespacedPersistentItem> IPersistentStateSource.GetCurrentState(PersistentEventType eventType)
         {
-            yield return NamespacedPersistentItem.CreateText(nameof(TotalReseedEvents), TotalReseedEvents.ToString("d", System.Globalization.CultureInfo.InvariantCulture));
-            yield return NamespacedPersistentItem.CreateText("ReseedCount", _ReseedCount.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            yield return NamespacedPersistentItem.CreateText(nameof(TotalReseedEvents), TotalReseedEvents.ToString("d", CultureInfo.InvariantCulture));
+            yield return NamespacedPersistentItem.CreateText("ReseedCount", _ReseedCount.ToString(CultureInfo.InvariantCulture));
+            yield return NamespacedPersistentItem.CreateText("LinearPoolCount", _LinearPools.Length.ToString(CultureInfo.InvariantCulture));
+            yield return NamespacedPersistentItem.CreateText("RandomPoolCount", _RandomPools.Length.ToString(CultureInfo.InvariantCulture));
+            for (int i = 0; i < _LinearPools.Length; i++)
+            {
+                var pool = _LinearPools[i];
+                var stateSource = (IPersistentStateSource)pool;
+                foreach (var item in stateSource.GetCurrentState(eventType))
+                {
+                    yield return item.WithNewKey(BaseKey("Linear", i) + item.Key);
+                }
+            }
+            for (int i = 0; i < _RandomPools.Length; i++)
+            {
+                var pool = _RandomPools[i];
+                var stateSource = (IPersistentStateSource)pool;
+                foreach (var item in stateSource.GetCurrentState(eventType))
+                {
+                    yield return item.WithNewKey(BaseKey("Random", i) + item.Key);
+                }
+            }
         }
+
+        static string BaseKey(string linearOrRandom, int i)
+            => linearOrRandom + "Pool." + i.ToString(CultureInfo.InvariantCulture) + ".";
 
         #endregion
     }

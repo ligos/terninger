@@ -40,6 +40,9 @@ namespace MurrayGrant.Terninger.PersistentState
             this.Value = value;
         }
 
+        public NamespacedPersistentItem WithNewKey(string newKey)
+            => new NamespacedPersistentItem(this.Namespace, newKey, this.ValueEncoding, this.Value);
+
         public override bool Equals(object obj)
             => obj is NamespacedPersistentItem x
             && Equals(x);

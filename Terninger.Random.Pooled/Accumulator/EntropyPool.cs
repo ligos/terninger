@@ -8,13 +8,15 @@ using System.Security.Cryptography;
 using BigMath;
 
 using MurrayGrant.Terninger.EntropySources;
+using MurrayGrant.Terninger.PersistentState;
+using System.Globalization;
 
 namespace MurrayGrant.Terninger.Accumulator
 {
     /// <summary>
     /// A pool of accumulated entropy, as defined in 9.5.2 of Fortuna spec.
     /// </summary>
-    public sealed class EntropyPool
+    public sealed class EntropyPool : IPersistentStateSource
     {
         private static readonly int MaxSourcesToCount = 256;        // After this many sources, we don't bother with the single source rule.
 
@@ -220,6 +222,15 @@ namespace MurrayGrant.Terninger.Accumulator
         /// </summary>
         public byte[] GetDigest()
         {
+            var result = GetCurrentDigest();
+
+            EntropyBytesSinceLastDigest = Int128.Zero;
+            _CountOfBytesBySource.Clear();
+            return result;
+        }
+
+        private byte[] GetCurrentDigest()
+        {
             byte[] result = null;
 
             // See above for hash algorithm mess.
@@ -238,14 +249,61 @@ namespace MurrayGrant.Terninger.Accumulator
 
             if (result == null) ThrowGetDigestResultIsNull();
             if (result.Length != _HashLengthInBytes) ThrowDigestLengthIsWrong(result);
-
-            EntropyBytesSinceLastDigest = Int128.Zero;
-            _CountOfBytesBySource.Clear();
             return result;
         }
 
         private void ThrowGetDigestResultIsNull() => throw new Exception("Unable to set result in GetDigest() - internal assertion failure.");
         private void ThrowDigestLengthIsWrong(byte[] result) => throw new Exception($"Result length is wrong in GetDigest() - expected length = {_HashLengthInBytes}, actual = {result.Length}.");
+
+        #region IPersistentStateSource
+
+        bool IPersistentStateSource.HasUpdates => true;
+
+        void IPersistentStateSource.Initialise(IDictionary<string, NamespacedPersistentItem> state)
+        {
+            if (state.TryGetValue(nameof(TotalEntropyBytes), out var totalEntropyBytesValue)
+                && Int128.TryParse(totalEntropyBytesValue.ValueAsUtf8Text, out var totalEntropyBytes))
+                TotalEntropyBytes = totalEntropyBytes;
+
+            if (state.TryGetValue(nameof(EntropyBytesSinceLastDigest), out var entropyBytesSinceLastDigestValue)
+                && Int128.TryParse(entropyBytesSinceLastDigestValue.ValueAsUtf8Text, out var entropyBytesSinceLastDigest))
+                EntropyBytesSinceLastDigest = entropyBytesSinceLastDigest;
+
+            // As we are reading external (and potentially untrusted) persisted state, we include some additional entropy.
+            if (state.TryGetValue("EntropyHash", out var entropyHashValue))
+            {
+                AccumulateBlock(entropyHashValue.Value, entropyHashValue.Value.Length);
+                var extraEntropy = PortableEntropy.Get32();
+                AccumulateBlock(extraEntropy, extraEntropy.Length);
+            }
+        }
+
+        IEnumerable<NamespacedPersistentItem> IPersistentStateSource.GetCurrentState(PersistentEventType eventType)
+        {
+            yield return NamespacedPersistentItem.CreateText(nameof(TotalEntropyBytes), TotalEntropyBytes.ToString("d", CultureInfo.InvariantCulture));
+            yield return NamespacedPersistentItem.CreateText(nameof(EntropyBytesSinceLastDigest), EntropyBytesSinceLastDigest.ToString("d", CultureInfo.InvariantCulture));
+
+            // As there is no way to observe the internal state of hash algorithms, we get the current digest and accumulate it immediately.
+            // We also try to hide internal state by persisiting the hash of the hash.
+            var digest = GetCurrentDigest();
+            AccumulateBlock(digest, digest.Length);
+            var digestToPersist = GetCurrentDigest();
+            AccumulateBlock(digest, digest.Length);
+            yield return NamespacedPersistentItem.CreateBinary("EntropyHash", digestToPersist);
+        }
+
+        internal static NamespacedPersistentItem[] EmptyPeristentItems = new[] 
+        {
+            NamespacedPersistentItem.CreateText(nameof(TotalEntropyBytes), ""),
+            NamespacedPersistentItem.CreateText(nameof(EntropyBytesSinceLastDigest), ""),
+#if NET452
+            NamespacedPersistentItem.CreateBinary("EntropyHash", new byte[0]),
+#else
+            NamespacedPersistentItem.CreateBinary("EntropyHash", Array.Empty<byte>()),
+#endif
+        };
+
+#endregion
     }
 }
 
