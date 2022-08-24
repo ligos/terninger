@@ -71,7 +71,8 @@ namespace MurrayGrant.Terninger.PersistentState
             _ = items ?? throw new ArgumentNullException(nameof(items));
 
             // Ensure directory exists first.
-            Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath));
+            if (!String.IsNullOrEmpty(Path.GetDirectoryName(this.FilePath)))
+                Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath));
 
             // Write to temp file.
             var tempPath = this.FilePath + ".tmp";

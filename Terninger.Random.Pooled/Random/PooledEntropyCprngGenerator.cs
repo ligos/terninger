@@ -368,9 +368,6 @@ namespace MurrayGrant.Terninger.Random
                 }
                 else
                 {
-                    // Initialise any entropy sources from persistent state.
-                    InitialiseEntropySourcesFromPersistentState(loadedPersistentState);
-
                     // Poll all sources.
                     Logger.Trace("Gathering entropy from {0:N0} source(s).", syncSources.Count() + asyncSources.Count());
                     this.PollSources(syncSources, asyncSources).GetAwaiter().GetResult();
@@ -817,16 +814,6 @@ namespace MurrayGrant.Terninger.Random
                 UniqueId = Guid.NewGuid();
         }
 
-        private void InitialiseEntropySourcesFromPersistentState(PersistentItemCollection persistentState)
-        {
-            Logger.Trace("Initialising entropy sources from persistent state.");
-            // Only entropy sources at the moment
-            // After we reseed for the second time, we stop bothering with this (on the assumption any sources would be added by then).
-
-            // Remove each namespace from collection after a source is initialised.
-            // TODO: logging.
-        }
-
         private async Task GatherAndWritePeristentStateIfRequired(PersistentEventType eventType)
         {
             if (_PersistentStateWriter == null)
@@ -856,7 +843,7 @@ namespace MurrayGrant.Terninger.Random
             // Save.
             try
             {
-                Logger.Debug("Writing persistent state with {0:N0} items for event: {1}.", persistentState.Count, eventType);
+                Logger.Info("Writing persistent state with {0:N0} items for event: {1}.", persistentState.Count, eventType);
                 await _PersistentStateWriter.WriteAsync(persistentState);
                 _LastPersistentStateWriteUtc = DateTime.UtcNow;
                 Logger.Debug("Persistent state written.", eventType);
