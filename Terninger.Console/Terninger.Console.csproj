@@ -37,11 +37,11 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger.Random.Cypher" Version="0.2.*" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.2.*" />
-    <PackageReference Include="Terninger" Version="0.2.*" />
-    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.2.*" />
-    <PackageReference Include="Terninger.EntropySources.Network" Version="0.2.*" />
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.3.*" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.3.*" />
+    <PackageReference Include="Terninger" Version="0.3.*" />
+    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.3.*" />
+    <PackageReference Include="Terninger.EntropySources.Network" Version="0.3.*" />
   </ItemGroup>
 	
   <ItemGroup>

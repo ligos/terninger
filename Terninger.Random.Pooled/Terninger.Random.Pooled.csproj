@@ -6,7 +6,7 @@
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2022</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Description>Implementation of the Fortuna CPRNG, with various enhancements. 
     
 To get started, see the MurrayGrant.Terninger.Random.PooledEntropyCprngGenerator class.
