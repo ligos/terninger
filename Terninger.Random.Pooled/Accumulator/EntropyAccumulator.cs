@@ -310,6 +310,8 @@ namespace MurrayGrant.Terninger.Accumulator
                 persistedRandomPoolCount = randomPoolCount;
             var totalPersistedPoolCount = persistedLinearPoolCount + persistedRandomPoolCount;
 
+            // The Accumulator owns all the Pools (as far as the main Generator is concerned),
+            // so we copy data to each Pool so it can look after its own initalisation.
             if (_LinearPools.Length == persistedLinearPoolCount
                 || (persistedLinearPoolCount >= minLinearPoolCountToImport && totalPersistedPoolCount >= minTotalPoolCountToImport))
             {
@@ -359,6 +361,9 @@ namespace MurrayGrant.Terninger.Accumulator
             yield return NamespacedPersistentItem.CreateText("ReseedCount", _ReseedCount.ToString(CultureInfo.InvariantCulture));
             yield return NamespacedPersistentItem.CreateText("LinearPoolCount", _LinearPools.Length.ToString(CultureInfo.InvariantCulture));
             yield return NamespacedPersistentItem.CreateText("RandomPoolCount", _RandomPools.Length.ToString(CultureInfo.InvariantCulture));
+
+            // The Accumulator owns all the Pools (as far as the main Generator is concerned),
+            // so we copy data to each Pool so it can look after its own initalisation.
             for (int i = 0; i < _LinearPools.Length; i++)
             {
                 var pool = _LinearPools[i];

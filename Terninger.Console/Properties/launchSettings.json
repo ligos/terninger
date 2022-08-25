@@ -2,7 +2,7 @@
   "profiles": {
     "Terninger.Console": {
       "commandName": "Project",
-      "commandLineArgs": "-g TerningerPooled --debug"
+      "commandLineArgs": "-g TerningerPooled --trace"
     }
   }
 }
