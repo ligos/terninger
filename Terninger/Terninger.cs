@@ -19,36 +19,51 @@ namespace MurrayGrant.Terninger
         /// <summary>
         /// For more information.
         /// </summary>
-        public static readonly Uri Website = new Uri("https://bitbucket/ligos/terninger");
+        public static readonly Uri Website = new Uri("https://github.com/ligos/terninger");
 
         /// <summary>
         /// Creates a pooled random number generator that conforms to the Fortuna spec.
         /// This is more conservative than Terninger; no randomised pools or low priority mode.
         /// </summary>
-        public static PooledEntropyCprngGenerator CreateFortuna() => 
-                        PooledEntropyCprngGenerator.Create(
-                            initialisedSources: BasicSources(), 
-                            accumulator: new EntropyAccumulator(32, 0),
-                            config: new PooledEntropyCprngGenerator.PooledGeneratorConfig()
-                            {
-                                // Set the ways to enter low priority mode so high they should never be hit.
-                                ReseedCountBeforeSwitchToLowPriority = Int32.MaxValue,
-                                TimeBeforeSwitchToLowPriority = TimeSpan.MaxValue,
-                                // Reseed more aggressively as well.
-                                MaximumBytesGeneratedBeforeReseed = 1024L * 1024L,
-                                MinimumTimeBetweenReseeds = TimeSpan.FromHours(1),
-                            }
-                        );
+        /// <param name="persistancePath">Path to file to store persistent state.</param>
+        public static PooledEntropyCprngGenerator CreateFortuna(string persistancePath = null)
+        {
+            var persistentState = persistancePath == null ? null : new PersistentState.TextFileReaderWriter(persistancePath);
+
+            return PooledEntropyCprngGenerator.Create(
+                initialisedSources: BasicSources(),
+                accumulator: new EntropyAccumulator(32, 0),
+                config: new PooledEntropyCprngGenerator.PooledGeneratorConfig()
+                {
+                    // Set the ways to enter low priority mode so high they should never be hit.
+                    ReseedCountBeforeSwitchToLowPriority = Int32.MaxValue,
+                    TimeBeforeSwitchToLowPriority = TimeSpan.MaxValue,
+                    // Reseed more aggressively as well.
+                    MaximumBytesGeneratedBeforeReseed = 1024L * 1024L,
+                    MinimumTimeBetweenReseeds = TimeSpan.FromHours(1),
+                },
+                persistentStateReader: persistentState,
+                persistentStateWriter: persistentState
+            );
+
+        }
 
         /// <summary>
         /// Creates a pooled random number generator that makes improvements and changes to the Fortuna spec.
         /// This allows for less CPU usage, uses randomised pools, but isn't "official".
         /// </summary>
-        public static PooledEntropyCprngGenerator CreateTerninger() =>
-                        PooledEntropyCprngGenerator.Create(
-                            initialisedSources: BasicSources(),
-                            accumulator: new EntropyAccumulator(16, 16, CypherBasedPrngGenerator.CreateWithCheapKey())
-                        );
+        /// <param name="persistancePath">Path to file to store persistent state.</param>
+        public static PooledEntropyCprngGenerator CreateTerninger(string persistancePath = null)
+        {
+            var persistentState = persistancePath == null ? null : new PersistentState.TextFileReaderWriter(persistancePath);
+            return PooledEntropyCprngGenerator.Create(
+                initialisedSources: BasicSources(),
+                accumulator: new EntropyAccumulator(16, 16, CypherBasedPrngGenerator.CreateWithCheapKey()),
+                persistentStateReader: persistentState,
+                persistentStateWriter: persistentState
+            );
+        }
+
 
 
         /// <summary>
