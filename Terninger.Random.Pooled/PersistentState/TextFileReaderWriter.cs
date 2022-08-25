@@ -27,7 +27,7 @@ namespace MurrayGrant.Terninger.PersistentState
     ///  - hex
     ///  - utf8text
     ///
-    /// This works pretty well for ~100 items, each of ~64 bytes each.
+    /// This works pretty well for ~500 items, each of ~64 bytes each.
     /// But isn't so great for more items or larger items.
     /// </remarks>
     public sealed class TextFileReaderWriter : IPersistentStateReader, IPersistentStateWriter
@@ -45,7 +45,7 @@ namespace MurrayGrant.Terninger.PersistentState
 
         public string Location => FilePath;
 
-        public TextFileReaderWriter(string filePath, string separator = DefaultSeparator, Encoding encoding = null, bool disposeStream = false)
+        public TextFileReaderWriter(string filePath, string separator = DefaultSeparator, Encoding encoding = null)
         {
             if (String.IsNullOrEmpty(filePath))
                 throw new ArgumentNullException(nameof(filePath));

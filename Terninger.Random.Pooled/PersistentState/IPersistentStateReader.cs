@@ -12,6 +12,7 @@ namespace MurrayGrant.Terninger.PersistentState
     {
         /// <summary>
         /// Details of the location where state will be read from.
+        /// Eg: Path on disk, database server, etc.
         /// </summary>
         public string Location { get; }
 
