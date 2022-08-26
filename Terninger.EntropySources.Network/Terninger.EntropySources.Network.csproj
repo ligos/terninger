@@ -14,9 +14,10 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <RootNamespace>MurrayGrant.Terninger</RootNamespace>
     <LangVersion>default</LangVersion>
     <NoWarn>1701;1702;1591</NoWarn>
-    <RepositoryUrl></RepositoryUrl>
-    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
-    <PackageProjectUrl>https://bitbucket.org/ligos/terninger</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ligos/terninger.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ligos/terninger</PackageProjectUrl>
     <PackageTags>security random number generator CPRNG PRNG RNG Fortuna network ping dns http</PackageTags>
   </PropertyGroup>
 
@@ -48,10 +49,10 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger" Version="0.3.*" />
-    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.3.*" />
-    <PackageReference Include="Terninger.Random.Cypher" Version="0.3.*" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.3.*" />
+    <PackageReference Include="Terninger" Version="0.3.0" />
+    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.3.0" />
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.3.0" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.3.0" />
   </ItemGroup>
   
 </Project>

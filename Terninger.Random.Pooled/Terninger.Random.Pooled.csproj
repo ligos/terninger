@@ -17,9 +17,10 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
     <RootNamespace>MurrayGrant.Terninger</RootNamespace>
     <LangVersion>default</LangVersion>
     <NoWarn>1701;1702;1591</NoWarn>
-    <RepositoryUrl></RepositoryUrl>
-    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
-    <PackageProjectUrl>https://bitbucket.org/ligos/terninger</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ligos/terninger.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ligos/terninger</PackageProjectUrl>
     <PackageTags>security random number generator CPRNG PRNG RNG Fortuna</PackageTags>
 
     <!-- Overflow must be detected and handled. Note that some code paths depend on OverflowExceptions being thrown. -->
@@ -58,6 +59,6 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger.Random.Cypher" Version="0.2.*" />
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.3.0" />
   </ItemGroup>
 </Project>
