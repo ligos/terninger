@@ -79,8 +79,12 @@ namespace BigMath
         /// <param name="value">if set to <c>true</c> [value].</param>
         public Int128(bool value)
         {
-            _hi = 0;
-            _lo = (ulong)(value ? 1 : 0);
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                _hi = 0;
+                _lo = (ulong)(value ? 1 : 0);
+            }
         }
 
         /// <summary>
@@ -99,24 +103,28 @@ namespace BigMath
         /// <param name="value">The value.</param>
         public Int128(decimal value)
         {
-            bool isNegative = value < 0;
-            uint[] bits = decimal.GetBits(value).ConvertAll(i => (uint)i);
-            uint scale = (bits[3] >> 16) & 0x1F;
-            if (scale > 0)
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
             {
-                uint[] quotient;
-                uint[] reminder;
-                MathUtils.DivModUnsigned(bits, new[] { 10U * scale }, out quotient, out reminder);
+                bool isNegative = value < 0;
+                uint[] bits = decimal.GetBits(value).ConvertAll(i => (uint)i);
+                uint scale = (bits[3] >> 16) & 0x1F;
+                if (scale > 0)
+                {
+                    uint[] quotient;
+                    uint[] reminder;
+                    MathUtils.DivModUnsigned(bits, new[] { 10U * scale }, out quotient, out reminder);
 
-                bits = quotient;
-            }
+                    bits = quotient;
+                }
 
-            _hi = bits[2];
-            _lo = bits[0] | (ulong)bits[1] << 32;
+                _hi = bits[2];
+                _lo = bits[0] | (ulong)bits[1] << 32;
 
-            if (isNegative)
-            {
-                Negate();
+                if (isNegative)
+                {
+                    Negate();
+                }
             }
         }
 
@@ -229,21 +237,25 @@ namespace BigMath
                 throw new ArgumentNullException("ints");
             }
 
-            var value = new ulong[2];
-            for (int i = 0; i < ints.Length && i < 4; i++)
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
             {
-                Buffer.BlockCopy(ints[i].ToBytes(), 0, value, i * 4, 4);
-            }
+                var value = new ulong[2];
+                for (int i = 0; i < ints.Length && i < 4; i++)
+                {
+                    Buffer.BlockCopy(ints[i].ToBytes(), 0, value, i * 4, 4);
+                }
 
-            _hi = value[1];
-            _lo = value[0];
+                _hi = value[1];
+                _lo = value[0];
 
-            if (sign < 0 && (_hi > 0 || _lo > 0))
-            {
-                // We use here two's complement numbers representation,
-                // hence such operations for negative numbers.
-                Negate();
-                _hi |= NegativeSignMask; // Ensure negative sign.
+                if (sign < 0 && (_hi > 0 || _lo > 0))
+                {
+                    // We use here two's complement numbers representation,
+                    // hence such operations for negative numbers.
+                    Negate();
+                    _hi |= NegativeSignMask; // Ensure negative sign.
+                }
             }
         }
 
@@ -632,43 +644,47 @@ namespace BigMath
                 throw new OverflowException();
             }
 
-            result = Zero;
-            bool hi = false;
-            int pos = 0;
-            for (int i = value.Length - 1; i >= 0; i--)
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
             {
-                char ch = value[i];
-                ulong b;
-                if ((ch >= '0') && (ch <= '9'))
+                result = Zero;
+                bool hi = false;
+                int pos = 0;
+                for (int i = value.Length - 1; i >= 0; i--)
                 {
-                    b = (ulong)(ch - '0');
-                }
-                else if ((ch >= 'A') && (ch <= 'F'))
-                {
-                    b = (ulong)(ch - 'A' + 10);
-                }
-                else if ((ch >= 'a') && (ch <= 'f'))
-                {
-                    b = (ulong)(ch - 'a' + 10);
-                }
-                else
-                {
-                    return false;
-                }
-
-                if (hi)
-                {
-                    result._hi |= b << pos;
-                    pos += 4;
-                }
-                else
-                {
-                    result._lo |= b << pos;
-                    pos += 4;
-                    if (pos == 64)
+                    char ch = value[i];
+                    ulong b;
+                    if ((ch >= '0') && (ch <= '9'))
                     {
-                        pos = 0;
-                        hi = true;
+                        b = (ulong)(ch - '0');
+                    }
+                    else if ((ch >= 'A') && (ch <= 'F'))
+                    {
+                        b = (ulong)(ch - 'A' + 10);
+                    }
+                    else if ((ch >= 'a') && (ch <= 'f'))
+                    {
+                        b = (ulong)(ch - 'a' + 10);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                    if (hi)
+                    {
+                        result._hi |= b << pos;
+                        pos += 4;
+                    }
+                    else
+                    {
+                        result._lo |= b << pos;
+                        pos += 4;
+                        if (pos == 64)
+                        {
+                            pos = 0;
+                            hi = true;
+                        }
                     }
                 }
             }
@@ -677,21 +693,25 @@ namespace BigMath
 
         private static bool TryParseNum(string value, out Int128 result)
         {
-            result = Zero;
-            foreach (char ch in value)
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
             {
-                byte b;
-                if ((ch >= '0') && (ch <= '9'))
+                result = Zero;
+                foreach (char ch in value)
                 {
-                    b = (byte)(ch - '0');
-                }
-                else
-                {
-                    return false;
-                }
+                    byte b;
+                    if ((ch >= '0') && (ch <= '9'))
+                    {
+                        b = (byte)(ch - '0');
+                    }
+                    else
+                    {
+                        return false;
+                    }
 
-                result = 10 * result;
-                result += b;
+                    result = 10 * result;
+                    result += b;
+                }
             }
             return true;
         }
@@ -925,9 +945,13 @@ namespace BigMath
         /// </returns>
         public static Int128 Abs(Int128 value)
         {
-            if (value.Sign < 0)
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
             {
-                return -value;
+                if (value.Sign < 0)
+                {
+                    return -value;
+                }
             }
 
             return value;
@@ -941,7 +965,11 @@ namespace BigMath
         /// <returns>The sum of left and right.</returns>
         public static Int128 Add(Int128 left, Int128 right)
         {
-            return left + right;
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                return left + right;
+            }
         }
 
         /// <summary>
@@ -952,7 +980,11 @@ namespace BigMath
         /// <returns>The result of subtracting right from left.</returns>
         public static Int128 Subtract(Int128 left, Int128 right)
         {
-            return left - right;
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                return left - right;
+            }
         }
 
         /// <summary>
@@ -963,8 +995,12 @@ namespace BigMath
         /// <returns>The quotient of the division.</returns>
         public static Int128 Divide(Int128 dividend, Int128 divisor)
         {
-            Int128 integer;
-            return DivRem(dividend, divisor, out integer);
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                Int128 integer;
+                return DivRem(dividend, divisor, out integer);
+            }
         }
 
         /// <summary>
@@ -985,16 +1021,21 @@ namespace BigMath
             {
                 throw new DivideByZeroException();
             }
-            int dividendSign = dividend.Sign;
-            dividend = dividendSign < 0 ? -dividend : dividend;
-            int divisorSign = divisor.Sign;
-            divisor = divisorSign < 0 ? -divisor : divisor;
 
-            uint[] quotient;
-            uint[] rem;
-            MathUtils.DivModUnsigned(dividend.ToUIn32Array(), divisor.ToUIn32Array(), out quotient, out rem);
-            remainder = new Int128(1, rem);
-            return new Int128(dividendSign * divisorSign, quotient);
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                int dividendSign = dividend.Sign;
+                dividend = dividendSign < 0 ? -dividend : dividend;
+                int divisorSign = divisor.Sign;
+                divisor = divisorSign < 0 ? -divisor : divisor;
+
+                uint[] quotient;
+                uint[] rem;
+                MathUtils.DivModUnsigned(dividend.ToUIn32Array(), divisor.ToUIn32Array(), out quotient, out rem);
+                remainder = new Int128(1, rem);
+                return new Int128(dividendSign * divisorSign, quotient);
+            }
         }
 
         /// <summary>
@@ -1005,9 +1046,13 @@ namespace BigMath
         /// <returns>The remainder after dividing dividend by divisor.</returns>
         public static Int128 Remainder(Int128 dividend, Int128 divisor)
         {
-            Int128 remainder;
-            DivRem(dividend, divisor, out remainder);
-            return remainder;
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                Int128 remainder;
+                DivRem(dividend, divisor, out remainder);
+                return remainder;
+            }
         }
 
         /// <summary>
@@ -1041,34 +1086,38 @@ namespace BigMath
         /// <returns>The product of the left and right parameters.</returns>
         public static Int128 Multiply(Int128 left, Int128 right)
         {
-            int leftSign = left.Sign;
-            left = leftSign < 0 ? -left : left;
-            int rightSign = right.Sign;
-            right = rightSign < 0 ? -right : right;
-
-            uint[] xInts = left.ToUIn32Array();
-            uint[] yInts = right.ToUIn32Array();
-            var mulInts = new uint[8];
-
-            for (int i = 0; i < xInts.Length; i++)
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
             {
-                int index = i;
-                ulong remainder = 0;
-                foreach (uint yi in yInts)
-                {
-                    remainder = remainder + (ulong)xInts[i] * yi + mulInts[index];
-                    mulInts[index++] = (uint)remainder;
-                    remainder = remainder >> 32;
-                }
+                int leftSign = left.Sign;
+                left = leftSign < 0 ? -left : left;
+                int rightSign = right.Sign;
+                right = rightSign < 0 ? -right : right;
 
-                while (remainder != 0)
+                uint[] xInts = left.ToUIn32Array();
+                uint[] yInts = right.ToUIn32Array();
+                var mulInts = new uint[8];
+
+                for (int i = 0; i < xInts.Length; i++)
                 {
-                    remainder += mulInts[index];
-                    mulInts[index++] = (uint)remainder;
-                    remainder = remainder >> 32;
+                    int index = i;
+                    ulong remainder = 0;
+                    foreach (uint yi in yInts)
+                    {
+                        remainder = remainder + (ulong)xInts[i] * yi + mulInts[index];
+                        mulInts[index++] = (uint)remainder;
+                        remainder = remainder >> 32;
+                    }
+
+                    while (remainder != 0)
+                    {
+                        remainder += mulInts[index];
+                        mulInts[index++] = (uint)remainder;
+                        remainder = remainder >> 32;
+                    }
                 }
+                return new Int128(leftSign * rightSign, mulInts);
             }
-            return new Int128(leftSign * rightSign, mulInts);
         }
 
         /// <summary>
@@ -1297,7 +1346,11 @@ namespace BigMath
                 return 0;
             }
 
-            return new decimal((int)(value._lo & 0xFFFFFFFF), (int)(value._lo >> 32), (int)(value._hi & 0xFFFFFFFF), value.Sign < 0, 0);
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                return new decimal((int)(value._lo & 0xFFFFFFFF), (int)(value._lo >> 32), (int)(value._hi & 0xFFFFFFFF), value.Sign < 0, 0);
+            }
         }
 
         /// <summary>
@@ -1618,7 +1671,11 @@ namespace BigMath
         /// </returns>
         public static Int128 operator -(Int128 left, Int128 right)
         {
-            return left + -right;
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                return left + -right;
+            }
         }
 
 
@@ -1674,10 +1731,13 @@ namespace BigMath
                 return value;
             }
 
-            ulong[] bits = MathUtils.ShiftRightSigned(value.ToUIn64Array(), shift);
-            value._hi = bits[1];
-            value._lo = bits[0];    //lo is stored in array entry 0
-
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                ulong[] bits = MathUtils.ShiftRightSigned(value.ToUIn64Array(), shift);
+                value._hi = bits[1];
+                value._lo = bits[0];    //lo is stored in array entry 0
+            }
             return value;
         }
 
@@ -1694,10 +1754,13 @@ namespace BigMath
                 return value;
             }
 
-            ulong[] bits = MathUtils.ShiftLeft(value.ToUIn64Array(), shift);
-            value._hi = bits[1];
-            value._lo = bits[0];    //lo is stored in array entry 0
-
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                ulong[] bits = MathUtils.ShiftLeft(value.ToUIn64Array(), shift);
+                value._hi = bits[1];
+                value._lo = bits[0];    //lo is stored in array entry 0
+            }
             return value;
         }
 
@@ -1719,10 +1782,14 @@ namespace BigMath
                 return left;
             }
 
-            Int128 result = left;
-            result._hi |= right._hi;
-            result._lo |= right._lo;
-            return result;
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                Int128 result = left;
+                result._hi |= right._hi;
+                result._lo |= right._lo;
+                return result;
+            }
         }
 
         /// <summary>
@@ -1738,10 +1805,14 @@ namespace BigMath
                 return Zero;
             }
 
-            Int128 result = left;
-            result._hi &= right._hi;
-            result._lo &= right._lo;
-            return result;
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                Int128 result = left;
+                result._hi &= right._hi;
+                result._lo &= right._lo;
+                return result;
+            }
         }
 
         /// <summary>
@@ -1751,7 +1822,11 @@ namespace BigMath
         /// <returns>The result of the operator.</returns>
         public static Int128 operator ~(Int128 value)
         {
-            return new Int128(~value._hi, ~value._lo);
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                return new Int128(~value._hi, ~value._lo);
+            }
         }
 
         /// <summary>
@@ -1761,7 +1836,11 @@ namespace BigMath
         /// <returns>The result of the operator.</returns>
         public static Int128 operator ++(Int128 value)
         {
-            return value + 1;
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                return value + 1;
+            }
         }
 
         /// <summary>
@@ -1771,7 +1850,11 @@ namespace BigMath
         /// <returns>The result of the operator.</returns>
         public static Int128 operator --(Int128 value)
         {
-            return value - 1;
+            // This library was originally coded with unchecked enabled. All math operations assume unchecked behaviour.
+            unchecked
+            {
+                return value - 1;
+            }
         }
     }
 }
