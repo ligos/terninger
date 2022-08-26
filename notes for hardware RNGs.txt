@@ -1,4 +1,2 @@
 https://defuse.ca/online-x86-assembler.htm
 
-https://drand.love/developer/http-api/#info
-https://drand.cloudflare.com/public/latest
