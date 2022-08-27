@@ -311,6 +311,24 @@ namespace MurrayGrant.Terninger.Test
             await rng.Stop();
         }
 
+        public async Task PooledGeneratorThrowsAfterDispose()
+        {
+            var sources = new IEntropySource[] { new CryptoRandomSource(64), new CurrentTimeSource(), new GCMemorySource(), new TimerSource(), new UserSuppliedSource(CypherBasedPrngGenerator.CreateWithCheapKey().GetRandomBytes(2048)) };
+            var acc = new EntropyAccumulator(new StandardRandomWrapperGenerator());
+            var rng = PooledEntropyCprngGenerator.Create(sources, accumulator: acc, config: Conf());
+            await rng.StartAndWaitForFirstSeed();
+
+            Assert.IsTrue(rng.ReseedCount >= 1);
+            _ = rng.GetRandomBytes(32);
+
+            await rng.DisposeAsync();
+
+            Assert.ThrowsException<ObjectDisposedException>(() => rng.GetRandomBytes(32));
+            Assert.ThrowsException<ObjectDisposedException>(() => rng.Reseed());
+            Assert.ThrowsException<ObjectDisposedException>(() => rng.Start());
+
+        }
+
 
         private PooledEntropyCprngGenerator.PooledGeneratorConfig Conf() => new PooledEntropyCprngGenerator.PooledGeneratorConfig()
         {

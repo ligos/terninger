@@ -184,5 +184,16 @@ namespace MurrayGrant.Terninger.Test
             var postReseedResult2 = crng2.GetRandomBytes(64);
             Assert.IsFalse(postReseedResult1.SequenceEqual(postReseedResult2));
         }
+
+        [TestMethod]
+        public void ObjectThrowsAfterDispose()
+        {
+            var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
+            crng.GetRandomBytes(64);
+
+            crng.Dispose();
+            Assert.ThrowsException<ObjectDisposedException>(() => crng.GetRandomBytes(64));
+            Assert.ThrowsException<ObjectDisposedException>(() => crng.Reseed(_ZeroKey32Bytes));
+        }
     }
 }

@@ -36,7 +36,7 @@ namespace MurrayGrant.Terninger.Random
         private Task _SchedulerTask;
         private readonly List<Task> _OutstandingEntropySourceTasks = new List<Task>();
 
-        private bool _Disposed = false;
+        public bool IsDisposed { get; private set; } = false;
         private readonly static ILog Logger = LogProvider.For<PooledEntropyCprngGenerator>();
 
         public int MaxRequestBytes => _Prng.MaxRequestBytes;
@@ -128,19 +128,34 @@ namespace MurrayGrant.Terninger.Random
 
         public void Dispose()
         {
-            if (_Disposed) return;
+            if (IsDisposed) return;
+            Stop().Wait(TimeSpan.FromSeconds(1));
+            DisposeObjects();
+        }
 
+        public async Task DisposeAsync()
+        {
+            if (IsDisposed) return;
+            await Stop();
+            DisposeObjects();
+        }
+
+        private void DisposeObjects()
+        {
             lock (_PrngLock)
             {
-                this.RequestStop();
-
-                if (_Prng != null)
-                    _Prng.TryDispose();
-                if (_EntropySources != null)
-                    foreach (var s in _EntropySources)
-                        s.Source.TryDispose();
-                _Disposed = true;
+                _Prng.TryDispose();
             }
+            lock (_EntropySources)
+            {
+                foreach (var s in _EntropySources)
+                    s.Source.TryDispose();
+            }
+            lock (_AccumulatorLock)
+            {
+                _Accumulator.TryDispose();
+            }
+            IsDisposed = true;
         }
 
         /// <summary>
@@ -154,6 +169,8 @@ namespace MurrayGrant.Terninger.Random
         /// </summary>
         public void FillWithRandomBytes(byte[] toFill, int offset, int count)
         {
+            this.ThrowIfDisposed(IsDisposed);
+
             if (this.ReseedCount == 0)
                 throw new InvalidOperationException("The random number generator has not accumulated enough entropy to be used. Please wait until ReSeedCount > 1, or await StartAndWaitForFirstSeed().");
 
@@ -174,13 +191,13 @@ namespace MurrayGrant.Terninger.Random
         }
 
 
-
-
         /// <summary>
         /// Start the main entropy loop, to gather entropy over time.
         /// </summary>
         public void Start()
         {
+            this.ThrowIfDisposed(IsDisposed);
+
             if (this._SchedulerTask == null)
             {
                 Logger.Debug("Starting Terninger worker task.");
@@ -273,7 +290,10 @@ namespace MurrayGrant.Terninger.Random
         /// <summary>
         /// Request the internal random number generator be reseeded as soon as possible. A Task is returned when the reseed is completed.
         /// </summary>
-        public Task Reseed() {
+        public Task Reseed()
+        {
+            this.ThrowIfDisposed(IsDisposed);
+
             Logger.Debug("Received external reseed request.");
             this.EntropyPriority = EntropyPriority.High;
             var reseedCount = this.ReseedCount;
@@ -288,6 +308,8 @@ namespace MurrayGrant.Terninger.Random
         /// </summary>
         public void ResetPoolZero()
         {
+            this.ThrowIfDisposed(IsDisposed);
+
             Logger.Debug("Received external pool zero reset.");
             lock (_AccumulatorLock)
             {
@@ -301,6 +323,8 @@ namespace MurrayGrant.Terninger.Random
         /// </summary>
         public void SetPriority(EntropyPriority priority)
         {
+            this.ThrowIfDisposed(IsDisposed);
+
             Logger.Debug("Received external priority: {0}, was {1}.", priority, EntropyPriority);
             this.EntropyPriority = priority;
             if (this.EntropyPriority == EntropyPriority.High)
@@ -312,6 +336,8 @@ namespace MurrayGrant.Terninger.Random
         /// </summary>
         public void AddInitialisedSource(IEntropySource source)
         {
+            this.ThrowIfDisposed(IsDisposed);
+
             if (source == null) return;
             lock(_EntropySources)
             {
@@ -323,6 +349,8 @@ namespace MurrayGrant.Terninger.Random
         /// </summary>
         public void AddInitialisedSources(IEnumerable<IEntropySource> sources)
         {
+            this.ThrowIfDisposed(IsDisposed);
+
             if (sources == null) return;
             lock (_EntropySources)
             {

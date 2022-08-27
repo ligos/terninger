@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using BigMath;
 
 using MurrayGrant.Terninger.EntropySources;
+using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.PersistentState;
 using System.Globalization;
 
@@ -16,7 +17,7 @@ namespace MurrayGrant.Terninger.Accumulator
     /// <summary>
     /// A pool of accumulated entropy, as defined in 9.5.2 of Fortuna spec.
     /// </summary>
-    public sealed class EntropyPool : IPersistentStateSource
+    public sealed class EntropyPool : IPersistentStateSource, IDisposable
     {
         private static readonly int MaxSourcesToCount = 256;        // After this many sources, we don't bother with the single source rule.
 
@@ -41,6 +42,7 @@ namespace MurrayGrant.Terninger.Accumulator
         private readonly int _QuarterHashLengthInBytes;
         private readonly double _MaxSingleSourceRatio;
         private readonly Dictionary<IEntropySource, int> _CountOfBytesBySource = new Dictionary<IEntropySource, int>(EntropySourceComparer.Value);
+        public bool IsDisposed { get; private set; }
 
         // Counters so we know how much entropy has accumulated in this pool.
         public Int128 TotalEntropyBytes { get; private set; }
@@ -99,6 +101,24 @@ namespace MurrayGrant.Terninger.Accumulator
                 _MaxSingleSourceRatio = 1.0;        // 0 means nothing could be accumulated, so interpert it as 1.0, which means the single source rule is not enforced.        
         }
 
+        public void Dispose()
+        {
+            if (IsDisposed == true)
+                return;
+
+            _ = GetDigest();        // Destroy any state in the pool.
+
+            // See below for hash algorithm mess.
+#if (NETSTANDARD2_0 || NETSTANDARD1_3)
+            _IncHash?.Dispose();
+#endif
+#if (NETSTANDARD2_0 || NET452)
+            _HashAlg?.Dispose();
+#endif
+            IsDisposed = true;
+        }
+
+
 #if (NETSTANDARD1_3 || NETSTANDARD2_0)
         private IncrementalHash GetIncrementalHashOrThrow(string hashAlgorithmClassName)
         {
@@ -131,6 +151,7 @@ namespace MurrayGrant.Terninger.Accumulator
             if (e == null) throw new ArgumentNullException(nameof(e));
             if (e.Entropy == null) throw new ArgumentNullException(nameof(e.Entropy));
             if (e.Source == null) throw new ArgumentNullException(nameof(e.Source));
+            this.ThrowIfDisposed(IsDisposed);
             Add(e.Entropy, e.Source);
         }
         internal void Add(byte[] entropy, IEntropySource source)
@@ -222,6 +243,7 @@ namespace MurrayGrant.Terninger.Accumulator
         /// </summary>
         public byte[] GetDigest()
         {
+            this.ThrowIfDisposed(IsDisposed);
             var result = GetCurrentDigest();
 
             EntropyBytesSinceLastDigest = Int128.Zero;

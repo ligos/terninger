@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 using MurrayGrant.Terninger.EntropySources;
+using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.Random;
 
 using BigMath;
@@ -18,7 +19,7 @@ namespace MurrayGrant.Terninger.Accumulator
     /// Entropy Accumulator as defined in section 9.5.
     /// Consists of a number of EntropyPool objects, and methods to add entropy and derive new seed material.
     /// </summary>
-    public sealed class EntropyAccumulator : IPersistentStateSource
+    public sealed class EntropyAccumulator : IPersistentStateSource, IDisposable
     {
         // As specified in 9.5.2, up to 64 pools which are used by the _PoolIndex counter.
         // These serve as a guaranteed long term pool on entropy.
@@ -37,6 +38,8 @@ namespace MurrayGrant.Terninger.Accumulator
         private int _PoolIndex;
         // Incoming entropy is broken into chunks at least this long, so that large entropy packets (eg: 1kB) are distributed more evenly.
         private const int _ChunkSize = 16;      // TODO: allow this to be configurable.
+
+        public bool IsDisposed { get; private set; }
 
         // Counters and totals to see how much entropy is in the accumulator.
 
@@ -128,11 +131,25 @@ namespace MurrayGrant.Terninger.Accumulator
         }
         private static HashAlgorithm DefaultHashCreator() => SHA512.Create();
 
+        public void Dispose()
+        {
+            if (IsDisposed)
+                return;
+
+            foreach (var p in _AllPools)
+                p.TryDispose();
+            _Rng.TryDispose();
+
+            IsDisposed = true;
+        }
+
         /// <summary>
         /// Adds entropy from a particular source to the accumulator.
         /// </summary>
         public void Add(EntropyEvent entropy)
         {
+            this.ThrowIfDisposed(IsDisposed);
+
             // Based on Fortunata spec 9.5.6
 
             // Entropy is added in a round robin fashion.
@@ -154,6 +171,8 @@ namespace MurrayGrant.Terninger.Accumulator
         /// </summary>
         public byte[] NextSeed()
         {
+            this.ThrowIfDisposed(IsDisposed);
+
             // Get the number used to determine which pools will be used.
             ulong reseedCount = unchecked(_ReseedCount + 1);
 
@@ -184,8 +203,10 @@ namespace MurrayGrant.Terninger.Accumulator
         /// </summary>
         public void ResetPoolZero()
         {
+            this.ThrowIfDisposed(IsDisposed);
+
             // Get the digest from pool zero and discard it.
-            _AllPools[0].GetDigest();
+            _ =_AllPools[0].GetDigest();
         }
 
         private ulong GetDigestsFromLinearPools(ICollection<byte[]> digests, ulong reseedCount)
