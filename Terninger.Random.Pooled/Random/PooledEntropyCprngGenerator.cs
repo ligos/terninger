@@ -716,7 +716,7 @@ namespace MurrayGrant.Terninger.Random
             else if (Config.MaximumBytesGeneratedBeforeReseed < this.BytesRequested - _BytesGeneratedAtLastReseed)
             {
                 // Generated too many bytes: must reseed.
-                Logger.Trace("ShuldReseed(): true - exceeded allowed bytes generated.");
+                Logger.Trace("ShouldReseed(): true - exceeded allowed bytes generated.");
                 return true;
             }
             else if (this.EntropyPriority == EntropyPriority.High)
@@ -825,7 +825,10 @@ namespace MurrayGrant.Terninger.Random
 
             if (state.TryGetValue(nameof(BytesRequested), out var bytesRequestedValue)
                 && Int128.TryParse(bytesRequestedValue.ValueAsUtf8Text, out var bytesRequested))
+            {
                 BytesRequested = bytesRequested;
+                _BytesGeneratedAtLastReseed = bytesRequested;
+            }
         }
 
         bool IPersistentStateSource.HasUpdates => true;

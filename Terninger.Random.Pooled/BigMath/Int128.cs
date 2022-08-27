@@ -28,7 +28,7 @@ namespace BigMath
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay
         {
-            get { return this == Int128.Zero ? "0x0" : "0x" + ToString("X1"); }
+            get => unchecked(this == Int128.Zero ? "0x0" : "0x" + ToString("X1"));
         }
 
         private const ulong NegativeSignMask = 0x1UL << 63;
@@ -352,24 +352,26 @@ namespace BigMath
             {
                 formatProvider = CultureInfo.CurrentCulture;
             }
-
-            if (!string.IsNullOrEmpty(format))
+            unchecked
             {
-                char ch = format[0];
-                if ((ch == 'x') || (ch == 'X'))
+                if (!string.IsNullOrEmpty(format))
                 {
-                    int min;
-                    int.TryParse(format.Substring(1).Trim(), out min);
-                    return this.ToBytes(false).ToHexString(ch == 'X', min, trimZeros: true);
-                }
+                    char ch = format[0];
+                    if ((ch == 'x') || (ch == 'X'))
+                    {
+                        int min;
+                        int.TryParse(format.Substring(1).Trim(), out min);
+                        return this.ToBytes(false).ToHexString(ch == 'X', min, trimZeros: true);
+                    }
 
-                if (((ch != 'G') && (ch != 'g')) && ((ch != 'D') && (ch != 'd')))
-                {
-                    throw new NotSupportedException("Not supported format: " + format);
+                    if (((ch != 'G') && (ch != 'g')) && ((ch != 'D') && (ch != 'd')))
+                    {
+                        throw new NotSupportedException("Not supported format: " + format);
+                    }
                 }
-            }
 
             return ToString((NumberFormatInfo)formatProvider.GetFormat(typeof(NumberFormatInfo)));
+            }
         }
 
         private string ToString(NumberFormatInfo info)
