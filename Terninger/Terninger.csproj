@@ -6,7 +6,7 @@
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2022</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.3.0-beta1</Version>
+    <Version>0.3.0</Version>
     <Description>Implementation of the Fortuna CPRNG, with various enhancements. Plus a high speed PRNG, and extensions to safely get random integers, doubles, decimals and booleans.
 
 To get started, see the MurrayGrant.Terninger.RandomGenerator class.
@@ -43,7 +43,7 @@ See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nug
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger.Random.Cypher" Version="0.3.0-beta1" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.3.0-beta1" />
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.3.0" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.3.0" />
   </ItemGroup>
 </Project>
