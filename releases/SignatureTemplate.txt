@@ -1,5 +1,5 @@
 For more information, see:
-https://bitbucket.org/ligos/terninger/wiki/Signatures-and-Hashes
+https://github.com/ligos/terninger
 
 PGP Signature: bitbucket@ligos.net (181278846ED12B2D4B8BD77393219E8E622EDAF0)
 KeyBase Signature: https://keybase.io/ligos
