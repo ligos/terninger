@@ -93,7 +93,6 @@ namespace MurrayGrant.Terninger.Test.Slow
                 new BeaconNistExternalRandomSource(),
                 new DrandExternalRandomSource(),
                 new ExternalWebContentSource(),
-                new HotbitsExternalRandomSource(),
                 new PingStatsSource(),
                 new QrngEthzChExternalRandomSource(),
                 new RandomNumbersInfoExternalRandomSource(),

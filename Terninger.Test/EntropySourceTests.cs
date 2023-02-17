@@ -228,11 +228,6 @@ namespace MurrayGrant.Terninger.Test
             FuzzEntropySource(1, new AnuExternalRandomSource(true), "Entropy_" + nameof(AnuExternalRandomSource) + "_FromFile", DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
-        public void ExternalServerRandomSource_HotBits()
-        {
-            FuzzEntropySource(1, new HotbitsExternalRandomSource(true), "Entropy_" + nameof(HotbitsExternalRandomSource) + "_FromFile", DoNothing).GetAwaiter().GetResult();
-        }
-        [TestMethod]
         public void ExternalServerRandomSource_RandomOrgPublic()
         {
             FuzzEntropySource(1, new RandomOrgExternalRandomSource(true, String.Empty), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public_FromFile", DoNothing).GetAwaiter().GetResult();

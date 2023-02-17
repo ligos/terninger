@@ -211,24 +211,6 @@ namespace MurrayGrant.Terninger.Test.Slow
         }
         [TestMethod]
         [TestCategory("Network")]
-        public void HotbitsExternalRandomSourcePseudoRandom_Network()
-        {
-            FuzzEntropySource(5, new HotbitsExternalRandomSource(UnitTestUserAgent(), 32, "", TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(HotbitsExternalRandomSource) + "_PseudoRangom", Sleep500).GetAwaiter().GetResult();
-        }
-        [TestMethod]
-        [TestCategory("Network")]
-        public void HotbitsExternalRandomSourceTrueRandom_Network()
-        {
-            var maybeApiKey = Environment.GetEnvironmentVariable("Terninger_UnitTest_HotBitsApiKey") ?? "";
-            if (String.IsNullOrEmpty(maybeApiKey))
-            {
-                Assert.Inconclusive("No API key available: get one from https://www.fourmilab.ch/hotbits/ and set it in the 'Terninger_UnitTest_HotBitsApiKey' environment variable.");
-                return;
-            }
-            FuzzEntropySource(2, new HotbitsExternalRandomSource(UnitTestUserAgent(), 32, maybeApiKey, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(HotbitsExternalRandomSource) + "_TrueRandom", Sleep500).GetAwaiter().GetResult();
-        }
-        [TestMethod]
-        [TestCategory("Network")]
         public void RandomNumbersInfoExternalRandomSource_Network()
         {
             FuzzEntropySource(5, new RandomNumbersInfoExternalRandomSource(UnitTestUserAgent(), 32, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomNumbersInfoExternalRandomSource), Sleep500).GetAwaiter().GetResult();
