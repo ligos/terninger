@@ -15,6 +15,7 @@ Or use the 'Terninger' nuget package.
 
 See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
     </Description>
+    <PackageReleaseNotes></PackageReleaseNotes>
     <RootNamespace>MurrayGrant.Terninger</RootNamespace>
     <LangVersion>default</LangVersion>
     <NoWarn>1701;1702;1591</NoWarn>
