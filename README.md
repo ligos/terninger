@@ -134,6 +134,10 @@ TODO - other features
 
 ### Changes ###
 
+**0.4.0**:
+
+* Removed [HotBits](https://www.fourmilab.ch/hotbits/) network source due to [retirement](https://www.fourmilab.ch/hotbits/retired.html) of true random source.
+ 
 **0.3.0**:
 
 * Target frameworks: net48, netcoreapp3.1, net60.

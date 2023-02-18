@@ -11,6 +11,10 @@
 
 See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
     </Description>
+    <PackageReleaseNotes>
+     0.4.0
+     - Removed HotBits network source due to retirement of true random source.
+    </PackageReleaseNotes>
     <RootNamespace>MurrayGrant.Terninger</RootNamespace>
     <LangVersion>default</LangVersion>
     <NoWarn>1701;1702;1591</NoWarn>
