@@ -9,7 +9,7 @@
     <Version>0.2.0</Version>
     <Description>Console app for benchmarks and performance tests of Terninger.
 
-See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
+See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
     <RootNamespace>MurrayGrant.Terninger</RootNamespace>
     <LangVersion>default</LangVersion>
     <NoWarn>1701;1702;1591</NoWarn>

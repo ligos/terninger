@@ -9,7 +9,7 @@
     <Version>0.3.0</Version>
     <Description>Additional local entropy sources based on .NET Standard 2.0 APIs. Sources are runtime and machine architecture portable.
 
-See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
+See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
     </Description>
     <PackageReleaseNotes></PackageReleaseNotes>
     <RootNamespace>MurrayGrant.Terninger</RootNamespace>

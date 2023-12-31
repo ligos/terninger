@@ -9,7 +9,7 @@
     <Version>0.1.0</Version>
     <Description>Windows Forms GUI for showing Terninger in action in real time.
 
-See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
+See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
     <RootNamespace>MurrayGrant.Terninger.Realtime</RootNamespace>
     <LangVersion>default</LangVersion>
     <NoWarn>1701;1702;1591</NoWarn>

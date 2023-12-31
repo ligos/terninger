@@ -13,7 +13,7 @@ To get started, see the MurrayGrant.Terninger.RandomGenerator class.
 
 Or use the 'Terninger' nuget package.
 
-See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
+See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
     </Description>
     <PackageReleaseNotes></PackageReleaseNotes>
     <RootNamespace>MurrayGrant.Terninger</RootNamespace>

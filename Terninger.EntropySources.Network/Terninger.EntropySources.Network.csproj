@@ -9,7 +9,7 @@
     <Version>0.4.0</Version>
     <Description>Active network based entropy sources for Terninger including ping, external http sites and other random sources (via http).
 
-See https://keybase.pub/ligos/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
+See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
     </Description>
     <PackageReleaseNotes>
      0.4.0
