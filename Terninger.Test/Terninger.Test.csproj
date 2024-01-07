@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net80;net60;netcoreapp3.1;net48</TargetFrameworks>
+    <TargetFrameworks>net80;net60;net48</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2022</Copyright>
