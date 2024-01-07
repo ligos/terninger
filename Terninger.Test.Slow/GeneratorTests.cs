@@ -80,6 +80,7 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Fuzzing")]
         public async Task PooledGenerator_RunFor15Minutes_WithNetworkSources_WithPersistentState()
         {
+            var userAgent = HttpClientHelpers.UserAgentString(usageIdentifier: "UnitTest");
             var sources = new IEntropySource[]
             {
                 new CryptoRandomSource(64),
@@ -90,13 +91,13 @@ namespace MurrayGrant.Terninger.Test.Slow
                 new TimerSource(),
 
                 // Network sources that don't require API keys
-                new BeaconNistExternalRandomSource(),
-                new DrandExternalRandomSource(),
-                new ExternalWebContentSource(),
+                new BeaconNistExternalRandomSource(userAgent: userAgent),
+                new DrandExternalRandomSource(userAgent: userAgent),
+                new ExternalWebContentSource(userAgent: userAgent),
                 new PingStatsSource(),
-                new QrngEthzChExternalRandomSource(),
-                new RandomNumbersInfoExternalRandomSource(),
-                new RandomOrgExternalRandomSource(),
+                new QrngEthzChExternalRandomSource(userAgent: userAgent),
+                new RandomNumbersInfoExternalRandomSource(userAgent: userAgent),
+                new RandomOrgExternalRandomSource(userAgent: userAgent),
             };
 
             var onDiskPersistentState = new TextFileReaderWriter("TerningerUnitTestPersistentState.txt");
