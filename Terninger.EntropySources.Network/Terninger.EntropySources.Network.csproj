@@ -1,17 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net60;netstandard2.0;net452</TargetFrameworks>
+    <TargetFrameworks>net80;net60;netstandard2.0;net452</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
-    <Copyright>Copyright © Murray Grant 2017-2023</Copyright>
+    <Copyright>Copyright © Murray Grant 2017-2024</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
     <Description>Active network based entropy sources for Terninger including ping, external http sites and other random sources (via http).
 
 See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
     </Description>
     <PackageReleaseNotes>
+     0.5.0
+     - Add net80 target
      0.4.0
      - Removed HotBits network source due to retirement of true random source.
     </PackageReleaseNotes>

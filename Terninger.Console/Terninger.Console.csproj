@@ -1,18 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net60;netcoreapp3.1;net48</TargetFrameworks>
+    <TargetFrameworks>net80;net60;netcoreapp3.1;net48</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
-    <Copyright>Copyright © Murray Grant 2017-2023</Copyright>
+    <Copyright>Copyright © Murray Grant 2017-2024</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
     <Description>Console app to use Terninger from all .NET command line environments.
 
 To get started, see the MurrayGrant.Terninger.RandomGenerator class.
 
 See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
     <PackageReleaseNotes>
+     0.5.0
+     - Add net80 target
      0.4.0
      - Removed HotBits network source due to retirement of true random source.
     </PackageReleaseNotes>
