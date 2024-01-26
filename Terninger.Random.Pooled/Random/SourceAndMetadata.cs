@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MurrayGrant.Terninger.EntropySources;
+using MurrayGrant.Terninger.PersistentState;
 
 namespace MurrayGrant.Terninger.Random
 {
@@ -44,6 +45,8 @@ namespace MurrayGrant.Terninger.Random
         /// </summary>
         public int ExceptionScore { get; private set; }
 
+        public bool IsExternalStateInitialised { get; private set; }
+
         public override string ToString() => $"{UniqueName} - {AsyncHint}. AsyncScore: {AsyncScore}, ExceptionScore: {ExceptionScore}";
 
         public void ScoreAsync()
@@ -66,6 +69,24 @@ namespace MurrayGrant.Terninger.Random
         {
             if (ExceptionScore <= 1000)
                 ExceptionScore = ExceptionScore + 1;
+        }
+
+        public bool TryInitialiseFromExternalState(PersistentItemCollection state)
+        {
+            if (IsExternalStateInitialised)
+                return false;
+
+            if (Source is IPersistentStateSource sourceForPersistentState)
+            {
+                sourceForPersistentState.Initialise(state.Get(Source.GetType().Name));
+                IsExternalStateInitialised = true;
+                return true;
+            }
+            else
+            {
+                IsExternalStateInitialised = true;
+                return false;
+            }
         }
     }
 }

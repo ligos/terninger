@@ -211,6 +211,7 @@ namespace MurrayGrant.Terninger.Random
                         var persistentState = TryLoadPersistentState().GetAwaiter().GetResult();
                         InitialiseInternalObjectsFromPersistentState(persistentState);
                         InitialiseInternalObjects();
+                        InitialiseEntropySourcesFromPersistentState(persistentState);
                         Logger.Debug("Initialisation complete.");
 
                         Logger.Info("Starting Terninger worker loop for generator {0}.", UniqueId);
@@ -398,7 +399,7 @@ namespace MurrayGrant.Terninger.Random
                 {
                     // Poll all sources.
                     Logger.Trace("Gathering entropy from {0:N0} source(s).", syncSources.Count() + asyncSources.Count());
-                    this.PollSources(syncSources, asyncSources).GetAwaiter().GetResult();
+                    this.PollSources(syncSources, asyncSources, loadedPersistentState).GetAwaiter().GetResult();
                     Logger.Trace("Accumulator stats (bytes): available entropy = {0}, first pool entropy = {1}, min pool entropy = {2}, max pool entropy = {3}, total entropy ever seen {4}.", _Accumulator.AvailableEntropyBytesSinceLastSeed, _Accumulator.PoolZeroEntropyBytesSinceLastSeed, _Accumulator.MinPoolEntropyBytesSinceLastSeed, _Accumulator.MaxPoolEntropyBytesSinceLastSeed, _Accumulator.TotalEntropyBytes);
 
 
@@ -467,7 +468,7 @@ namespace MurrayGrant.Terninger.Random
             return (syncSources, asyncSources);
         }
 
-        private async Task PollSources(IEnumerable<SourceAndMetadata> syncSources, IEnumerable<SourceAndMetadata> asyncSources)
+        private async Task PollSources(IEnumerable<SourceAndMetadata> syncSources, IEnumerable<SourceAndMetadata> asyncSources, PersistentItemCollection loadedPersistentState)
         {
             // Poll all sources.
             if (_OutstandingEntropySourceTasks.Any())
@@ -478,7 +479,7 @@ namespace MurrayGrant.Terninger.Random
             }
 
             // Start all likely async sources up front.
-            var asyncTasks = asyncSources.Select(x => ReadAndAccumulate(x)).ToList();
+            var asyncTasks = asyncSources.Select(x => ReadAndAccumulate(x, loadedPersistentState)).ToList();
             Logger.Trace("Reading from {0:N0} async sources.", asyncTasks.Count);
 
             // While the async sources are running, we do a mini-polling loop on the sync ones.
@@ -487,7 +488,7 @@ namespace MurrayGrant.Terninger.Random
             int loops = 1;
             do
             {
-                await PollSyncSources(syncSources, asyncTasks);
+                await PollSyncSources(syncSources, asyncTasks, loadedPersistentState);
 
                 if (_ShouldStop.IsCancellationRequested)
                     break;
@@ -522,11 +523,11 @@ namespace MurrayGrant.Terninger.Random
             await AwaitOrParkUnfinishedAsyncTasks(asyncTasks);
         }
 
-        private async Task PollSyncSources(IEnumerable<SourceAndMetadata> syncSources, IEnumerable<Task> asyncTasks)
+        private async Task PollSyncSources(IEnumerable<SourceAndMetadata> syncSources, IEnumerable<Task> asyncTasks, PersistentItemCollection loadedPersistentState)
         {
             foreach (var sm in syncSources)
             {
-                await ReadAndAccumulate(sm);
+                await ReadAndAccumulate(sm, loadedPersistentState);
 
                 if (_ShouldStop.IsCancellationRequested)
                     break;
@@ -556,8 +557,13 @@ namespace MurrayGrant.Terninger.Random
             }
         }
 
-        private async Task ReadAndAccumulate(SourceAndMetadata sm)
+        private async Task ReadAndAccumulate(SourceAndMetadata sm, PersistentItemCollection loadedPersistentState)
         {
+            // Although we try to initialise external state up front, its possible a source is added after the generator starts.
+            // So, we check each time we read. Note that if we've already intitialised state, this returns early.
+            if (sm.TryInitialiseFromExternalState(loadedPersistentState))
+                Logger.Trace("Initialised entropy source '{0}' from persistent state.", sm.Source.GetType().Name);
+
             var maybeEntropy = await ReadFromSourceSafely(sm);
             if (maybeEntropy != null)
             {
@@ -814,6 +820,22 @@ namespace MurrayGrant.Terninger.Random
             lock (_AccumulatorLock)
             {
                 _Accumulator.ResetPoolZero();
+            }
+        }
+
+        private void InitialiseEntropySourcesFromPersistentState(PersistentItemCollection persistentState)
+        {
+            if (persistentState == null)
+                return;
+            Logger.Trace("Initialising entropy sources from persistent state.");
+
+            lock (_EntropySources)
+            {
+                foreach (var source in _EntropySources)
+                {
+                    if (source.TryInitialiseFromExternalState(persistentState))
+                        Logger.Trace("Initialised entropy source '{0}' from persistent state.", source.Source.GetType().Name);
+                }
             }
         }
 
