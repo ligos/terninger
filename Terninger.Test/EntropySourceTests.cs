@@ -159,8 +159,8 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void PingStatsSource_ServersPerSample()
         {
-            var source = new PingStatsSource(serversPerSample: 20);
-            Assert.AreEqual(source.ServersPerSample, 20);
+            var source = new PingStatsSource(targetsPerSample: 20);
+            Assert.AreEqual(source.TargetsPerSample, 20);
         }
         [TestMethod]
         public void PingStatsSource_PingsPerSample()
@@ -177,8 +177,13 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void PingStatsSource_Servers()
         {
-            var source = new PingStatsSource(servers: new[] { IPAddress.Parse("127.0.0.1"), IPAddress.Parse("1.1.1.1") });
-            Assert.AreEqual(source.ServerCount, 2);
+            var source = new PingStatsSource(targets: new PingStatsSource.PingTarget[] 
+            { 
+                PingStatsSource.PingTarget.ForIpAddressOnly(IPAddress.Parse("127.0.0.1")),
+                PingStatsSource.PingTarget.ForIcmpPing(IPAddress.Parse("1.1.1.1")),
+                PingStatsSource.PingTarget.ForTcpPing(IPAddress.Parse("9.9.9.9"), 80),
+            });
+            Assert.AreEqual(source.TargetCount, 3);
         }
 
         [TestMethod]

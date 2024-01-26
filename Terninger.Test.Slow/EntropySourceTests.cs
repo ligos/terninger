@@ -114,33 +114,33 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void PingStatsSource_Network()
         {
-            FuzzEntropySource(10, new PingStatsSource(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, null, 6, 8, null, null), "Entropy_" + nameof(PingStatsSource), DoNothing).GetAwaiter().GetResult();
+            FuzzEntropySource(10, new PingStatsSource(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, null, false, 0, null, 6, 8, null, null), "Entropy_" + nameof(PingStatsSource), DoNothing).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]
         public async Task PingStatsSource_EnsureAllServers()
         {
-            var servers = await PingStatsSource.LoadInternalServerListAsync();
+            var targets = await PingStatsSource.LoadInternalTargetListAsync();
             var p = new Ping();
             var failedServers = new List<Tuple<IPAddress, object>>();
-            foreach (var s in servers)
+            foreach (var t in targets)
             {
                 // Make 5 attempts to successfully ping each server.
                 for (int i = 0; i < 5; i++)
                 {
                     try
                     {
-                        var result = await p.SendPingAsync(s, 5000);
+                        var result = await p.SendPingAsync(t.IPAddress, 5000);
                         if (result.Status == IPStatus.Success)
                             break;
                         if (i == 4)
-                            failedServers.Add(Tuple.Create(s, (object)result.Status));
+                            failedServers.Add(Tuple.Create(t.IPAddress, (object)result.Status));
                         else
                             await Task.Delay(1000);
                     }
                     catch (Exception ex)
                     {
-                        failedServers.Add(Tuple.Create(s, (object)ex));
+                        failedServers.Add(Tuple.Create(t.IPAddress, (object)ex));
                         break;
                     }
                 }
