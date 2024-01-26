@@ -213,7 +213,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         // TODO: implement properly
 
-        bool IPersistentStateSource.HasUpdates => false;
+        bool IPersistentStateSource.HasUpdates => true;
 
         void IPersistentStateSource.Initialise(IDictionary<string, NamespacedPersistentItem> state)
         {
@@ -223,7 +223,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         IEnumerable<NamespacedPersistentItem> IPersistentStateSource.GetCurrentState(PersistentEventType eventType)
         {
             // TODO: implement.
-            yield break;
+            yield return NamespacedPersistentItem.CreateText("Test", "Value");
         }
 
         #endregion
