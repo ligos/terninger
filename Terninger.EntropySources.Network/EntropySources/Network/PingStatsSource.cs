@@ -284,6 +284,9 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private Task DiscoverTargets(int targetCount)
         {
+            if (targetCount == 0)
+                return Task.FromResult(new object());
+
             var targets = new List<IpAddressTarget>(targetCount);
             var bytes = new byte[4];
 
@@ -330,10 +333,9 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 allPossibleTargets = allPossibleTargets.Concat(targets.Select(x => PingTarget.ForTcpPing(x.IPAddress, port)).Cast<PingTarget>());
             var targetsToSample = allPossibleTargets.Select(x => new PingAndStopwatch(x, _Timeout)).ToList();
 
-            for (int c = 0; c < 3; c++)
-            {
-                await Task.WhenAll(targetsToSample.Select(x => x.ResetAndRun()).ToArray());
-            }
+            await Task.WhenAll(targetsToSample.Where(x => x.Failures >= 0).Select(x => x.ResetAndRun()).ToArray());
+            await Task.WhenAll(targetsToSample.Where(x => x.Failures >= 1).Select(x => x.ResetAndRun()).ToArray());
+            await Task.WhenAll(targetsToSample.Where(x => x.Failures >= 2).Select(x => x.ResetAndRun()).ToArray());
 
             var toAdd = targetsToSample.Where(x => x.Failures < 3).Select(x => x.Target).ToList();
             AddNewTargets(toAdd);
