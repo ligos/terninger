@@ -287,10 +287,31 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             public int PingsPerSample { get; set; } = 6;
 
             /// <summary>
-            /// Path to file containing server list.
+            /// Path to file containing initial server list.
             /// If left blank, an internal list is used.
+            /// Note this is only used as the initial list once, persistent state is used after that.
             /// </summary>
             public string ServerFilePath { get; set; }
+
+            /// <summary>
+            /// Automatically discover new servers to ping by randomly scanning the Internet.
+            /// Default: true.
+            /// </summary>
+            public bool DiscoverServers { get; set; } = true;
+
+            /// <summary>
+            /// Count of servers to accumulate when discovering servers.
+            /// Default: 1024. Minimum: 1. Maximum: 65536.
+            /// Each server will be recorded in persistent state.
+            /// </summary>
+            public int DesiredServerCount { get; set; } = 1024;
+
+            /// <summary>
+            /// List of ports to try TCP pings.
+            /// Default: 21, 22, 53, 80, 161, 443, 8080, 8443
+            /// Set to an empty list to disable TCP ping.
+            /// </summary>
+            public IEnumerable<ushort> TcpPingPorts { get; set; } = new ushort[] { 21, 22, 53, 80, 161, 443, 8080, 8443 };  // Based on https://www.shodan.io/search/facet?query=*&facet=port
 
             /// <summary>
             /// Timeout to use for ping requests. Default: 5 seconds.
@@ -308,9 +329,9 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             public TimeSpan PeriodHighPriority { get; set; } = TimeSpan.FromSeconds(15);
 
             /// <summary>
-            /// Sample period at low priority. Default: 25 minutes.
+            /// Sample period at low priority. Default: 1 hour.
             /// </summary>
-            public TimeSpan PeriodLowPriority { get; set; } = TimeSpan.FromHours(25);
+            public TimeSpan PeriodLowPriority { get; set; } = TimeSpan.FromHours(1);
         }
     }
 }

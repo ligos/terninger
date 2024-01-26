@@ -90,8 +90,9 @@
     // Gather entropy from timing of pings to a list of servers.
     // Remove this key to disable source.
     "PingStats": {
-      // Path to file containing server list.
+      // Path to file containing initial server list.
       // If left blank, an internal list is used.
+      // Note this is only used as the initial list once, external state is used after that.
       "ServerFilePath": null,
 
       // Number of servers to ping from the list each sample.
@@ -101,6 +102,20 @@
       // Number of times to ping each server per sample.
       // Default: 6. Minimum: 1. Maximum: 100.
       "PingsPerSample": 6,
+
+      // Automatically discover new servers to ping by randomly scanning the Internet.
+      // Default: true
+      "DiscoverServers": true,
+
+      // Count of servers to accumulate when discovering servers.
+      // Default: 1024. Minimum: 1. Maximum: 65536.
+      // Each server will be recorded in persistent state.
+      "DesiredServerCount": 1024,
+
+      // List of ports to try TCP pings.
+      // Default: 21, 22, 53, 80, 161, 443, 8080, 8443
+      // Set to an empty list to disable TCP ping.
+      "TcpPingPorts": [ 21, 22, 53, 80, 161, 443, 8080, 8443 ],
 
       // Timeout to use for ping requests. Default: 5 seconds.
       "Timeout": "00:00:05",
