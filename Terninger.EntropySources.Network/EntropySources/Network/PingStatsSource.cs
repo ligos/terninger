@@ -133,8 +133,9 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         public static async Task<IReadOnlyCollection<PingTarget>> LoadServerListAsync(Stream stream)
         {
             var log = LibLog.LogProvider.For<PingStatsSource>();
-            
-            var servers = new List<IPAddress>();
+
+            var splitCharacter = new[] { ' ' };
+            var servers = new List<PingTarget>();
             using (var reader = new StreamReader(stream, Encoding.UTF8, false, 32 * 1024, true))
             {
                 int lineNum = 0;
@@ -147,14 +148,32 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                         continue;
                     if (l.StartsWith("#"))
                         continue;
-                    if (IPAddress.TryParse(l.Trim(), out var ip))
+                    var parts = l.Split(splitCharacter, StringSplitOptions.RemoveEmptyEntries);
+                    IPAddress ip;
+                    if (parts.Length == 1 
+                        && IPAddress.TryParse(parts[0].Trim(), out ip))
                     {
-                        log.Trace("Read IP {0} on line {1}", ip, lineNum);
-                        servers.Add(ip);
+                        log.Trace("Read IP target (no ICMP or port) {0} on line {1}", ip, lineNum);
+                        servers.Add(PingTarget.ForIpAddressOnly(ip));
+                    }
+                    else if (parts.Length == 2 
+                        && IPAddress.TryParse(parts[0].Trim(), out ip) 
+                        && String.Equals(parts[1], "ICMP", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        log.Trace("Read ICMP target {0} on line {1}", ip, lineNum);
+                        servers.Add(PingTarget.ForIcmpPing(ip));
+                    }
+                    else if (parts.Length == 2 
+                        && IPAddress.TryParse(parts[0].Trim(), out ip) 
+                        && ushort.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var port) 
+                        && port > 0)
+                    {
+                        log.Trace("Read TCP target {0} on line {1}", ip, lineNum);
+                        servers.Add(PingTarget.ForTcpPing(ip, port));
                     }
                     else
-                        // Couldn't parse IP.
-                        log.Warn("Unable to parse IP for {0}: {1} (line {2:N0})", nameof(PingStatsSource), l, lineNum);
+                        // Couldn't parse target.
+                        log.Warn("Unable to parse target for {0}: {1} (line {2:N0})", nameof(PingStatsSource), l, lineNum);
                 }
             }
             log.Debug("Loaded {0:N0} server IP addresses.", servers.Count);
@@ -234,7 +253,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             // Check for IPs where every attempt was a failure: something is likely wrong.
             foreach (var server in serversToSample.Where(x => x.Failures == _PingsPerSample))
-                Log.Warn("Every attempt to ping IP {0} failed. Server is likely offline or firewalled.", server.IP);
+                Log.Warn("Every attempt to ping {0} failed. Server is likely offline or firewalled.", server.Target);
 
             return result.ToArray();
         }
@@ -355,16 +374,16 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             public static TcpTarget ForTcpPing(IPAddress ip, ushort port)
                 => new TcpTarget(ip, port);
 
-            public PingTarget(IPAddress iPAddress)
+            public PingTarget(IPAddress ipAddress)
             {
-                IPAddress = iPAddress;
+                IPAddress = ipAddress;
             }
 
             public enum Status
             {
-                Untested,
-                Working,
-                Failure,
+                Untested = 0,
+                Working = 1,
+                Failure = 2,
             }
         }
 
@@ -376,7 +395,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             { }
 
             public override string ToString()
-                => "IpAddress:" + IPAddress.ToString();
+                => IPAddress.ToString();
         }
 
         // IP address as ICMP ping target.
