@@ -199,7 +199,6 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!forDiscovery.Any() && _EnableServerDiscovery && _Servers.Count < _DesiredServerCount && !_UseRandomSourceForUnitTest)
             {
                 await DiscoverTargets(_ServersPerSample);
-                RemoveTargets(Enumerable.Empty<PingTarget>(), forDiscovery);
             }
 
             EnsureCountersAreValid();
@@ -275,20 +274,6 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             return (result.ToArray(), forDiscovery, forRemoval);
         }
 
-        private void RemoveTargets(IEnumerable<PingTarget> failedTargets, IEnumerable<PingTarget> discoveryTargets)
-        {
-            foreach (var t in failedTargets)
-            {
-                if (_Servers.Remove(t))
-                    Log.Trace("Removed target {0} after all ping attempts failed.", t);
-            }
-            foreach (var t in discoveryTargets)
-            {
-                if (_Servers.Remove(t))
-                    Log.Trace("Removed target {0} after discovery was run.", t);
-           }
-        }
-
         private Task DiscoverTargets(int targetCount)
         {
             var targets = new List<IpAddressTarget>(targetCount);
@@ -310,8 +295,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                     // 224-239.x.x.x is multicast
                     // 240-255.x.x.x is reserved for future use (probably never)
                     continue;
+                
+                var ip = new IPAddress(bytes);
+                if (_Servers.Any(x => ip.Equals(x.IPAddress)))
+                    // Let's not add the same server twice!
+                    continue;
 
-                targets.Add(PingTarget.ForIpAddressOnly(new IPAddress(bytes)));
+                targets.Add(PingTarget.ForIpAddressOnly(ip));
             }
 
             return DiscoverTargets(targets);
@@ -321,6 +311,11 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         {
             // Discovery runs 3 pings for ICMP + all TCP ports configured.
             // If any one of the pings returns OK, the target will be added, and IpAddressTarget removed.
+            if (!targets.Any())
+                return;
+
+            Log.Debug("Running discovery pings for {0:N0} IP addresses. Before discovery, there are {1:N0} targets.", targets.Count(), _Servers.Count);
+            Log.Trace("Running discovery pings for: {0}", String.Join(",", targets.Select(x => x.IPAddress)));
 
             var allPossibleTargets = targets.Select(x => PingTarget.ForIcmpPing(x.IPAddress)).Cast<PingTarget>();
             foreach (var port in _TcpPorts)
@@ -334,15 +329,37 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             var toAdd = serversToSample.Where(x => x.Failures < 3).Select(x => x.Target).ToList();
             AddNewTargets(toAdd);
+            RemoveTargets(Enumerable.Empty<PingTarget>(), targets);
+
+            Log.Debug("After discovery, there are {0:N0} targets.", _Servers.Count);
         }
 
         private void AddNewTargets(IReadOnlyCollection<PingTarget> newTargets)
         {
-            _Servers.AddRange(newTargets);
+            foreach (var target in newTargets)
+            {
+                Log.Trace("Adding discovered target {0} to server list.", target);
+                _Servers.Add(target);
+            }
+           
 
             if (newTargets.Any())
                 // Reshuffle whenever we add something new.
                 RandomNumberExtensions.ShuffleInPlace(_Servers, _Rng);
+        }
+
+        private void RemoveTargets(IEnumerable<PingTarget> failedTargets, IEnumerable<PingTarget> discoveryTargets)
+        {
+            foreach (var t in failedTargets)
+            {
+                if (_Servers.Remove(t))
+                    Log.Trace("Removed target {0} after all ping attempts failed.", t);
+            }
+            foreach (var t in discoveryTargets)
+            {
+                if (_Servers.Remove(t))
+                    Log.Trace("Removed target {0} after discovery was run.", t);
+            }
         }
 
         private void EnsureCountersAreValid()
