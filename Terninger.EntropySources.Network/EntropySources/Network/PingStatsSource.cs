@@ -37,6 +37,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private List<IPAddress> _Servers = new List<IPAddress>();
         public int ServerCount => _Servers.Count;
 
+        private readonly bool _EnableServerDiscovery;
+        private readonly int _DesiredServerCount;
+        private readonly ushort[] _TcpPorts;
+
         private int _NextServer;
         private bool _ServersInitialised;
 
@@ -45,6 +49,9 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         public PingStatsSource(Configuration config)
             : this(
                   sourcePath:           config?.ServerFilePath,
+                  discoverServers:      config?.DiscoverServers      ?? Configuration.Default.DiscoverServers,
+                  desiredServerCount:   config?.DesiredServerCount   ?? Configuration.Default.DesiredServerCount,
+                  tcpPingPorts:         config?.TcpPingPorts         ?? Configuration.Default.TcpPingPorts,
                   pingsPerSample:       config?.PingsPerSample       ?? Configuration.Default.PingsPerSample,
                   serversPerSample:     config?.ServersPerSample     ?? Configuration.Default.ServersPerSample,
                   timeout:              config?.Timeout              ?? Configuration.Default.Timeout,
@@ -53,11 +60,27 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                   periodLowPriority:    config?.PeriodLowPriority    ?? Configuration.Default.PeriodLowPriority
             )
         { }
-        public PingStatsSource(TimeSpan? periodNormalPriority = null, TimeSpan? periodHighPriority = null, TimeSpan? periodLowPriority = null, string sourcePath = null, IEnumerable<IPAddress> servers = null, int? pingsPerSample = null, int? serversPerSample = null, IRandomNumberGenerator rng = null, TimeSpan? timeout = null)
+        public PingStatsSource(
+            TimeSpan? periodNormalPriority = null, 
+            TimeSpan? periodHighPriority = null, 
+            TimeSpan? periodLowPriority = null, 
+            string sourcePath = null, 
+            IEnumerable<IPAddress> servers = null, 
+            bool? discoverServers = null,
+            int? desiredServerCount = null,
+            IEnumerable<ushort> tcpPingPorts = null,
+            int? pingsPerSample = null, 
+            int? serversPerSample = null, 
+            IRandomNumberGenerator rng = null, 
+            TimeSpan? timeout = null
+        )
             : base (periodNormalPriority.GetValueOrDefault(Configuration.Default.PeriodNormalPriority),
                   periodHighPriority.GetValueOrDefault(Configuration.Default.PeriodHighPriority),
                   periodLowPriority.GetValueOrDefault(Configuration.Default.PeriodLowPriority))
         {
+            this._EnableServerDiscovery = discoverServers.GetValueOrDefault(Configuration.Default.DiscoverServers);
+            this._DesiredServerCount = desiredServerCount.GetValueOrDefault(Configuration.Default.DesiredServerCount);
+            this._TcpPorts = (tcpPingPorts ?? Configuration.Default.TcpPingPorts).ToArray();
             this._ServersPerSample = serversPerSample.GetValueOrDefault(Configuration.Default.ServersPerSample);
             this._PingsPerSample = pingsPerSample.GetValueOrDefault(Configuration.Default.PingsPerSample);
             if (_ServersPerSample <= 0)
@@ -71,7 +94,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             this._Timeout = timeout.GetValueOrDefault(Configuration.Default.Timeout);
         }
         internal PingStatsSource(bool useDiskSourceForUnitTests)
-            : this(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, null, 6, 8, null)
+            : this(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, null, false, 0, Enumerable.Empty<ushort>(), 6, 8, null)
         {
             this._UseRandomSourceForUnitTest = useDiskSourceForUnitTests;
         }
