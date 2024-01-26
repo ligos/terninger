@@ -477,11 +477,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
           
         }
 
-        public abstract class PingTarget
+        public abstract class PingTarget : IEquatable<PingTarget>
         {
             public readonly IPAddress IPAddress;
 
-            public Status State { get; internal set; }
             private readonly static char[] SplitCharacter = new[] { ' ' };
 
             public static IpAddressTarget ForIpAddressOnly(IPAddress ip)
@@ -525,43 +524,56 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 }
             }
 
+            public override bool Equals(object obj)
+                => obj is PingTarget t
+                && Equals(t);
+
+            public virtual bool Equals(PingTarget other)
+                => other != null
+                && GetType() == other.GetType()
+                && IPAddress == other.IPAddress;
+
+            public override int GetHashCode()
+                => GetType().GetHashCode() ^ IPAddress.GetHashCode();
+
             public PingTarget(IPAddress ipAddress)
             {
                 IPAddress = ipAddress;
             }
-
-            public enum Status
-            {
-                Untested = 0,
-                Working = 1,
-                Failure = 2,
-            }
         }
 
         // Just an IP address, no ICMP or port number. Need to test both
-        public sealed class IpAddressTarget : PingTarget
+        public sealed class IpAddressTarget : PingTarget, IEquatable<IpAddressTarget>
         {
             internal IpAddressTarget(IPAddress ip)
                 : base(ip)
             { }
+
+            public bool Equals(IpAddressTarget other)
+                => other != null
+                && IPAddress == other.IPAddress;
 
             public override string ToString()
                 => IPAddress.ToString();
         }
 
         // IP address as ICMP ping target.
-        public sealed class IcmpTarget : PingTarget
+        public sealed class IcmpTarget : PingTarget, IEquatable<IcmpTarget>
         {
             internal IcmpTarget(IPAddress ip)
                 : base(ip)
             { }
+
+            public bool Equals(IcmpTarget other)
+                => other != null
+                && IPAddress == other.IPAddress;
 
             public override string ToString()
                 => IPAddress.ToString() + ":ICMP";
         }
 
         // IP address + port number as TCP ping target.
-        public sealed class TcpTarget : PingTarget
+        public sealed class TcpTarget : PingTarget, IEquatable<TcpTarget>
         {
             public ushort Port { get; }
 
@@ -570,6 +582,19 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             {
                 Port = port;
             }
+
+            public override bool Equals(PingTarget other)
+                => base.Equals(other)
+                && other is TcpTarget t
+                && Port == t.Port;
+
+            public bool Equals(TcpTarget other)
+                => other != null
+                && IPAddress == other.IPAddress
+                && Port == other.Port;
+
+            public override int GetHashCode()
+                => GetType().GetHashCode() ^ IPAddress.GetHashCode() ^ Port;
 
             public override string ToString()
                 => IPAddress.ToString() + ":" + Port.ToString(CultureInfo.InvariantCulture);
