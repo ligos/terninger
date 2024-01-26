@@ -178,8 +178,8 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
 
             byte[] result = null;
-            IReadOnlyCollection<IpAddressTarget> forDiscovery = Array.Empty<IpAddressTarget>();
-            IReadOnlyCollection<PingTarget> forRemoval = Array.Empty<PingTarget>();
+            IEnumerable<IpAddressTarget> forDiscovery = Enumerable.Empty<IpAddressTarget>();
+            IEnumerable<PingTarget> forRemoval = Enumerable.Empty<PingTarget>();
             if (_Servers.Count > 0)
             {
                 (result, forDiscovery, forRemoval) = await GatherEntropyFromTargets();
@@ -187,7 +187,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             // Anything which failed all ping attempts will be removed.
             if (forRemoval.Any())
-                RemoveTargets(forRemoval, Array.Empty<PingTarget>());
+                RemoveTargets(forRemoval, Enumerable.Empty<PingTarget>());
 
             // Anything which was just an IP address should run discovery to convert into an ICMP / TCP target.
             if (forDiscovery.Any() && !_UseRandomSourceForUnitTest)
@@ -199,6 +199,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!forDiscovery.Any() && _EnableServerDiscovery && _Servers.Count < _DesiredServerCount && !_UseRandomSourceForUnitTest)
             {
                 await DiscoverTargets(_ServersPerSample);
+                RemoveTargets(Enumerable.Empty<PingTarget>(), forDiscovery);
             }
 
             EnsureCountersAreValid();
@@ -316,13 +317,14 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             return DiscoverTargets(targets);
         }
 
-        private async Task DiscoverTargets(IReadOnlyCollection<IpAddressTarget> targets)
+        private async Task DiscoverTargets(IEnumerable<IpAddressTarget> targets)
         {
             // Discovery runs 3 pings for ICMP + all TCP ports configured.
             // If any one of the pings returns OK, the target will be added, and IpAddressTarget removed.
 
-            var allPossibleTargets = targets.Select(x => PingTarget.ForIcmpPing(x.IPAddress)).Cast<PingTarget>()
-                .Concat(targets.Select(x => x.IPAddress).SelectMany((_) => _TcpPorts, (ip, port) => PingTarget.ForTcpPing(ip, port)).Cast<PingTarget>());
+            var allPossibleTargets = targets.Select(x => PingTarget.ForIcmpPing(x.IPAddress)).Cast<PingTarget>();
+            foreach (var port in _TcpPorts)
+                allPossibleTargets = allPossibleTargets.Concat(targets.Select(x => PingTarget.ForTcpPing(x.IPAddress, port)).Cast<PingTarget>());
             var serversToSample = allPossibleTargets.Select(x => new PingAndStopwatch(x, _Timeout)).ToList();
 
             for (int c = 0; c < 3; c++)
