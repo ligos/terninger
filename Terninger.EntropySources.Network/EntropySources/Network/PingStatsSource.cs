@@ -13,7 +13,6 @@ using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.LibLog;
 using MurrayGrant.Terninger.PersistentState;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 
 namespace MurrayGrant.Terninger.EntropySources.Network
 {
@@ -27,7 +26,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private IRandomNumberGenerator _Rng;
 
-        private int _ServersPerSample;                   // Runs this many pings in parallel to different servers.
+        private readonly int _ServersPerSample;                   // Runs this many pings in parallel to different servers.
         public int ServersPerSample => _ServersPerSample;
         private readonly int _PingsPerSample;                    // Runs this many pings in sequence to the same server.
         public int PingsPerSample => _PingsPerSample;
@@ -44,7 +43,6 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly ushort[] _TcpPorts;
 
         private int _NextServer;
-        private bool _ServersInitialised;
 
         private bool _UseRandomSourceForUnitTest;
 
@@ -163,45 +161,80 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         protected override async Task<byte[]> GetInternalEntropyAsync(EntropyPriority priority)
         {
-            if (!_ServersInitialised && !_UseRandomSourceForUnitTest)
+            if (_Servers.Count == 0 && !_UseRandomSourceForUnitTest)
             {
-                Log.Debug("Initialising server list.");
-                try
-                {
-                    if (!String.IsNullOrEmpty(SourcePath))
-                        _Servers.AddRange(await LoadServerListAsync(SourcePath));
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Unable to open Server Source File '{0}'.", SourcePath);
-                }
-                if (String.IsNullOrEmpty(SourcePath) && _Servers.Count == 0)
-                    _Servers.AddRange(await LoadInternalServerListAsync());
-                if (_Servers.Count == 0)
-                    Log.Error("No servers are available. This entropy source will be disabled.");
-
-                this._ServersPerSample = Math.Min(_ServersPerSample, _Servers.Count);
-                _Servers.ShuffleInPlace(_Rng);
-                _ServersInitialised = true;
+                // No prior persisted state: load a seed list to get started.
+                await InitialiseServersFromSeedSource();
             }
-            if (_Servers.Count == 0)
+            if (_Servers.Count == 0 && !_EnableServerDiscovery)
             {
+                // No servers and no discovery means no entropy! Return early; an error is logged in InitialiseServersFromSeedSource()
                 return null;
             }
-            if (!IsNetworkAvailable(10_000_000))
+            if (!IsNetworkAvailable(10_000_000) && !_UseRandomSourceForUnitTest)
             {
                 Log.Info("No usable network interface is up yet. Will wait and try again later.");
                 return null;
             }
 
+            byte[] result = null;
+            IReadOnlyCollection<IpAddressTarget> forDiscovery = Array.Empty<IpAddressTarget>();
+            IReadOnlyCollection<PingTarget> forRemoval = Array.Empty<PingTarget>();
+            if (_Servers.Count > 0)
+            {
+                (result, forDiscovery, forRemoval) = await GatherEntropyFromTargets();
+            }
+
+            // Anything which failed all ping attempts will be removed.
+            if (forRemoval.Any())
+                RemoveTargets(forRemoval, Array.Empty<PingTarget>());
+
+            // Anything which was just an IP address should run discovery to convert into an ICMP / TCP target.
+            if (forDiscovery.Any() && !_UseRandomSourceForUnitTest)
+            {
+                await DiscoverTargets(forDiscovery);
+            }
+
+            // Finally, if nothing needed to be discovered from the main ping run, try to discover new targets up until the desired count.
+            if (!forDiscovery.Any() && _EnableServerDiscovery && _Servers.Count < _DesiredServerCount && !_UseRandomSourceForUnitTest)
+            {
+                await DiscoverTargets(_ServersPerSample);
+            }
+
+            EnsureCountersAreValid();
+
+            return result;
+        }
+
+        private async Task InitialiseServersFromSeedSource()
+        {
+            Log.Debug("Initialising server list.");
+            try
+            {
+                if (!String.IsNullOrEmpty(SourcePath))
+                    _Servers.AddRange(await LoadServerListAsync(SourcePath));
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Unable to open Server Source File '{0}'.", SourcePath);
+            }
+            if (String.IsNullOrEmpty(SourcePath) && _Servers.Count == 0)
+                _Servers.AddRange(await LoadInternalServerListAsync());
+            if (_Servers.Count == 0 && !_EnableServerDiscovery)
+                Log.Error("No servers are available and server discovery is disabled. This entropy source will be disabled.");
+
+            RandomNumberExtensions.ShuffleInPlace(_Servers, _Rng);
+            EnsureCountersAreValid();
+        }
+
+        private async Task<(byte[] entropy, IReadOnlyCollection<IpAddressTarget> forDiscovery, IReadOnlyCollection<PingTarget> forRemoval)> GatherEntropyFromTargets()
+        {
             // Do x pings to y servers in parallel.
             // Time each of them, use the high precision part as the result.
-            // TODO: perhaps do real DNS queries rather than ICMP pings, as many have disabled ping. Note that this will need a 3rd party library.
-
-            // TODO: check to see if there is a network available before trying this. Eg: https://stackoverflow.com/a/8345173/117070
 
             // Select the servers we will ping.
-            var serversToSample = new List<PingAndStopwatch>(_ServersPerSample);
+            var countToSample = Math.Min(_ServersPerSample, _Servers.Count);
+            var serversToSample = new List<PingAndStopwatch>(countToSample);
             for (int i = 0; i < _ServersPerSample; i++)
             {
                 if (_NextServer >= _Servers.Count)
@@ -211,7 +244,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
 
             // Now ping the servers and time how long it takes.
-            var result = new List<byte>((_ServersPerSample + _PingsPerSample) * sizeof(ushort));
+            var result = new List<byte>((countToSample + _PingsPerSample) * sizeof(ushort));
             for (int c = 0; c < _PingsPerSample; c++)
             {
                 if (!_UseRandomSourceForUnitTest)
@@ -232,11 +265,88 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 }
             }
 
-            // Check for IPs where every attempt was a failure: something is likely wrong.
-            foreach (var server in serversToSample.Where(x => x.Failures == _PingsPerSample))
-                Log.Warn("Every attempt to ping {0} failed. Server is likely offline or firewalled.", server.Target);
+            // Collect any IP targets, which will be sent to discovery.
+            var forDiscovery = serversToSample.Where(x => x.Target is IpAddressTarget).Select(x => x.Target).Cast<IpAddressTarget>().ToList();
 
-            return result.ToArray();
+            // Collect any other targets which failed every attempt, which will be removed from the server list.
+            var forRemoval = serversToSample.Where(x => x.Target is not IpAddressTarget && x.Failures == _PingsPerSample).Select(x => x.Target).ToList();
+
+            return (result.ToArray(), forDiscovery, forRemoval);
+        }
+
+        private void RemoveTargets(IEnumerable<PingTarget> failedTargets, IEnumerable<PingTarget> discoveryTargets)
+        {
+            foreach (var t in failedTargets)
+            {
+                if (_Servers.Remove(t))
+                    Log.Trace("Removed target {0} after all ping attempts failed.", t);
+            }
+            foreach (var t in discoveryTargets)
+            {
+                if (_Servers.Remove(t))
+                    Log.Trace("Removed target {0} after discovery was run.", t);
+           }
+        }
+
+        private Task DiscoverTargets(int targetCount)
+        {
+            var targets = new List<IpAddressTarget>(targetCount);
+            var bytes = new byte[4];
+
+            while (targets.Count < targetCount)
+            {
+                // TODO: IPv6 support
+                // IPv4 address space is so full we can pick random bytes and its pretty likely we'll hit something.
+                _Rng.FillWithRandomBytes(bytes);
+
+                if (bytes[0] == 0
+                    || bytes[0] == 127
+                    || (bytes[0] >= 224 && bytes[0] <= 239)
+                    || bytes[0] >= 240
+                )
+                    // 0.x.x.x is reserved for "this" network
+                    // 127.x.x.x is localhost and won't give useful timings
+                    // 224-239.x.x.x is multicast
+                    // 240-255.x.x.x is reserved for future use (probably never)
+                    continue;
+
+                targets.Add(PingTarget.ForIpAddressOnly(new IPAddress(bytes)));
+            }
+
+            return DiscoverTargets(targets);
+        }
+
+        private async Task DiscoverTargets(IReadOnlyCollection<IpAddressTarget> targets)
+        {
+            // Discovery runs 3 pings for ICMP + all TCP ports configured.
+            // If any one of the pings returns OK, the target will be added, and IpAddressTarget removed.
+
+            var allPossibleTargets = targets.Select(x => PingTarget.ForIcmpPing(x.IPAddress)).Cast<PingTarget>()
+                .Concat(targets.Select(x => x.IPAddress).SelectMany((_) => _TcpPorts, (ip, port) => PingTarget.ForTcpPing(ip, port)).Cast<PingTarget>());
+            var serversToSample = allPossibleTargets.Select(x => new PingAndStopwatch(x, _Timeout)).ToList();
+
+            for (int c = 0; c < 3; c++)
+            {
+                await Task.WhenAll(serversToSample.Select(x => x.ResetAndRun()).ToArray());
+            }
+
+            var toAdd = serversToSample.Where(x => x.Failures < 3).Select(x => x.Target).ToList();
+            AddNewTargets(toAdd);
+        }
+
+        private void AddNewTargets(IReadOnlyCollection<PingTarget> newTargets)
+        {
+            _Servers.AddRange(newTargets);
+
+            if (newTargets.Any())
+                // Reshuffle whenever we add something new.
+                RandomNumberExtensions.ShuffleInPlace(_Servers, _Rng);
+        }
+
+        private void EnsureCountersAreValid()
+        {
+            if (_NextServer > _Servers.Count)
+                _NextServer = 0;
         }
 
         #region IPersistentStateSource
