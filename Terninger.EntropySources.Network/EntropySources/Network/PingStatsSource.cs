@@ -11,6 +11,7 @@ using System.Diagnostics;
 using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.LibLog;
+using MurrayGrant.Terninger.PersistentState;
 
 namespace MurrayGrant.Terninger.EntropySources.Network
 {
@@ -18,7 +19,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
     /// An entropy source which uses ping timings as input.
     /// </summary>
     [AsyncHint(IsAsync.Always)]
-    public class PingStatsSource : EntropySourceWithPeriod
+    public class PingStatsSource : EntropySourceWithPeriod, IPersistentStateSource
     {
         public override string Name { get; set; }
 
@@ -35,6 +36,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         public string SourcePath { get; private set; }
         private List<IPAddress> _Servers = new List<IPAddress>();
         public int ServerCount => _Servers.Count;
+
         private int _NextServer;
         private bool _ServersInitialised;
 
@@ -206,6 +208,25 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             return result.ToArray();
         }
+
+        #region IPersistentStateSource
+
+        // TODO: implement properly
+
+        bool IPersistentStateSource.HasUpdates => false;
+
+        void IPersistentStateSource.Initialise(IDictionary<string, NamespacedPersistentItem> state)
+        {
+            // TODO: implement.
+        }
+
+        IEnumerable<NamespacedPersistentItem> IPersistentStateSource.GetCurrentState(PersistentEventType eventType)
+        {
+            // TODO: implement.
+            yield break;
+        }
+
+        #endregion
 
         private class PingAndStopwatch
         {
