@@ -75,18 +75,30 @@ namespace MurrayGrant.Terninger.Random
         {
             if (IsExternalStateInitialised)
                 return false;
+            return TryInitialiseFromExternalStateInternal();
 
-            if (Source is IPersistentStateSource sourceForPersistentState)
+            bool TryInitialiseFromExternalStateInternal()
             {
-                sourceForPersistentState.Initialise(state.Get(Source.GetType().Name));
-                IsExternalStateInitialised = true;
-                return true;
+                if (Source is IPersistentStateSource sourceForPersistentState)
+                {
+                    sourceForPersistentState.Initialise(state.Get(UniqueName));
+                    IsExternalStateInitialised = true;
+                    return true;
+                }
+                else
+                {
+                    IsExternalStateInitialised = true;
+                    return false;
+                }
             }
+        }
+
+        public IEnumerable<NamespacedPersistentItem> GetPersistentStateOrNull(PersistentEventType eventType)
+        {
+            if (Source is IPersistentStateSource sourceForPersistentState && sourceForPersistentState.HasUpdates)
+                return sourceForPersistentState.GetCurrentState(eventType);
             else
-            {
-                IsExternalStateInitialised = true;
-                return false;
-            }
+                return null;
         }
     }
 }

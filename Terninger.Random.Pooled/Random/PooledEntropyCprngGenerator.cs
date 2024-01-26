@@ -562,7 +562,7 @@ namespace MurrayGrant.Terninger.Random
             // Although we try to initialise external state up front, its possible a source is added after the generator starts.
             // So, we check each time we read. Note that if we've already intitialised state, this returns early.
             if (sm.TryInitialiseFromExternalState(loadedPersistentState))
-                Logger.Trace("Initialised entropy source '{0}' from persistent state.", sm.Source.GetType().Name);
+                Logger.Trace("Initialised entropy source '{0}' from persistent state.", sm.UniqueName);
 
             var maybeEntropy = await ReadFromSourceSafely(sm);
             if (maybeEntropy != null)
@@ -834,7 +834,7 @@ namespace MurrayGrant.Terninger.Random
                 foreach (var source in _EntropySources)
                 {
                     if (source.TryInitialiseFromExternalState(persistentState))
-                        Logger.Trace("Initialised entropy source '{0}' from persistent state.", source.Source.GetType().Name);
+                        Logger.Trace("Initialised entropy source '{0}' from persistent state.", source.UniqueName);
                 }
             }
         }
@@ -877,6 +877,22 @@ namespace MurrayGrant.Terninger.Random
             // Accumulate state from all sources.
             Logger.Debug("Gathering persistent state for event: {0}.", eventType);
             var persistentState = new PersistentItemCollection();
+
+            // Accumulate state from entropy sources.
+            SourceAndMetadata[] sources;
+            lock (_EntropySources)
+            {
+                sources = _EntropySources.ToArray();
+            }
+            foreach (var sm in sources)
+            {
+                var state = sm.GetPersistentStateOrNull(eventType);
+                if (state != null)
+                {
+                    Logger.Trace("Gathering persistent state from {0}.", sm.UniqueName);
+                    persistentState.SetNamespace(sm.UniqueName, state);
+                }
+            }
 
             // Always accumulate internal objects last, so anyone trying to impersonate global namespaces gets overwritten.
 
