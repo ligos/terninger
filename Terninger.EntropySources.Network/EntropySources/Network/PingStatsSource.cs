@@ -188,6 +188,11 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             {
                 return null;
             }
+            if (!IsNetworkAvailable(10_000_000))
+            {
+                Log.Info("No usable network interface is up yet. Will wait and try again later.");
+                return null;
+            }
 
             // Do x pings to y servers in parallel.
             // Time each of them, use the high precision part as the result.
@@ -252,6 +257,39 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         }
 
         #endregion
+
+        // From https://stackoverflow.com/a/8345173
+        private static bool IsNetworkAvailable(long minimumSpeed)
+        {
+            if (!NetworkInterface.GetIsNetworkAvailable())
+                return false;
+
+            foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                // discard because of standard reasons
+                if ((ni.OperationalStatus != OperationalStatus.Up) ||
+                    (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback) ||
+                    (ni.NetworkInterfaceType == NetworkInterfaceType.Tunnel))
+                    continue;
+
+                // this allow to filter modems, serial, etc.
+                // I use 10000000 as a minimum speed for most cases
+                if (ni.Speed < minimumSpeed)
+                    continue;
+
+                // discard virtual cards (virtual box, virtual pc, etc.)
+                if ((ni.Description.IndexOf("virtual", StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (ni.Name.IndexOf("virtual", StringComparison.OrdinalIgnoreCase) >= 0))
+                    continue;
+
+                // discard "Microsoft Loopback Adapter", it will not show as NetworkInterfaceType.Loopback but as Ethernet Card.
+                if (ni.Description.Equals("Microsoft Loopback Adapter", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                return true;
+            }
+            return false;
+        }
 
         private class PingAndStopwatch
         {

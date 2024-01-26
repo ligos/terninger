@@ -1,4 +1,11 @@
-﻿# Based on the following lists:
+﻿# Internal list of ping targets
+# Format:
+#  <IP address (ipv4 or ipv6)> [optional CSV list of TCP ports or 'ICMP']
+
+# An IP address on its own will try ICMP and TCP pings (and may result in several servers)
+# Each IP address plus a port or ICMP is considered a distinct server
+
+# Based on the following lists:
 # https://www.lifewire.com/free-and-public-dns-servers-2626062
 # https://wiki.ipfire.org/dns/public-servers
 # https://www.iana.org/domains/root/servers
