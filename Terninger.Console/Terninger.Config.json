@@ -87,31 +87,31 @@
       "PeriodLowPriority": "01:00:00"
     },
 
-    // Gather entropy from timing of pings to a list of servers.
+    // Gather entropy from timing of pings to a list of target servers.
     // Remove this key to disable source.
     "PingStats": {
-      // Path to file containing initial server list.
+      // Path to file containing initial target list.
       // If left blank, an internal list is used.
       // Note this is only used as the initial list once, external state is used after that.
-      "ServerFilePath": null,
+      "TargetFilePath": null,
 
-      // Number of servers to ping from the list each sample.
+      // Number of targets to ping from the list each sample.
       // Default: 8. Minimum: 1. Maximum: 100.
-      "ServersPerSample": 8,
+      "TargetsPerSample": 8,
 
-      // Number of times to ping each server per sample.
+      // Number of times to ping each target per sample.
       // Default: 6. Minimum: 1. Maximum: 100.
       "PingsPerSample": 6,
 
-      // Automatically discover new servers to ping by randomly scanning the Internet.
+      // Automatically discover new targets to ping by randomly scanning the Internet.
       // Default: true
-      "DiscoverServers": true,
+      "DiscoverTargets": true,
 
-      // Count of servers to accumulate when discovering servers.
+      // Count of targets to accumulate when discovering targets.
       // Default: 1024. Minimum: 1. Maximum: 65536.
-      // Each server will be recorded in persistent state.
-      // Note that each endpoint is counted as one server. So 1.1.1.1:80 and 1.1.1.1:443 count as two.
-      "DesiredServerCount": 1024,
+      // Each target will be recorded in persistent state.
+      // Note that each endpoint is counted as one server. So 1.1.1.1:80 and 1.1.1.1:443 and 1.1.1.1:ICMP count as three.
+      "DesiredTargetCount": 1024,
 
       // List of ports to try TCP pings.
       // Default: 21, 22, 53, 80, 161, 443, 8080, 8443
