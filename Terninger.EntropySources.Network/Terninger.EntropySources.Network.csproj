@@ -33,12 +33,12 @@ See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of n
 
   <ItemGroup>
     <None Remove="EntropySources\Network\ExternalWebServerList.txt" />
-    <None Remove="EntropySources\Network\PingServerList.txt" />
+    <None Remove="EntropySources\Network\PingTargetList.txt" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="EntropySources\Network\ExternalWebServerList.txt" />
-    <EmbeddedResource Include="EntropySources\Network\PingServerList.txt" />
+    <EmbeddedResource Include="EntropySources\Network\PingTargetList.txt" />
   </ItemGroup>
   
   <ItemGroup>

@@ -26,34 +26,34 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private IRandomNumberGenerator _Rng;
 
-        private readonly int _ServersPerSample;                   // Runs this many pings in parallel to different servers.
-        public int ServersPerSample => _ServersPerSample;
-        private readonly int _PingsPerSample;                    // Runs this many pings in sequence to the same server.
+        private readonly int _TargetsPerSample;                   // Runs this many pings in parallel to different targets.
+        public int TargetsPerSample => _TargetsPerSample;
+        private readonly int _PingsPerSample;                    // Runs this many pings in sequence to the same target.
         public int PingsPerSample => _PingsPerSample;
-        public int TotalPingsPerSample => _ServersPerSample * _PingsPerSample;
+        public int TotalPingsPerSample => _TargetsPerSample * _PingsPerSample;
 
         private readonly TimeSpan _Timeout;
 
         public string SourcePath { get; private set; }
-        private List<PingTarget> _Servers = new List<PingTarget>();
-        public int ServerCount => _Servers.Count;
+        private List<PingTarget> _Targets = new List<PingTarget>();
+        public int TargetCount => _Targets.Count;
 
-        private readonly bool _EnableServerDiscovery;
-        private readonly int _DesiredServerCount;
+        private readonly bool _EnableTargetDiscovery;
+        private readonly int _DesiredTargetCount;
         private readonly ushort[] _TcpPorts;
 
-        private int _NextServer;
+        private int _NextTarget;
 
         private bool _UseRandomSourceForUnitTest;
 
         public PingStatsSource(Configuration config)
             : this(
-                  sourcePath:           config?.ServerFilePath,
-                  discoverServers:      config?.DiscoverServers      ?? Configuration.Default.DiscoverServers,
-                  desiredServerCount:   config?.DesiredServerCount   ?? Configuration.Default.DesiredServerCount,
+                  sourcePath:           config?.TargetFilePath,
+                  discoverTargets:      config?.DiscoverTargets      ?? Configuration.Default.DiscoverTargets,
+                  desiredTargetCount:   config?.DesiredTargetCount   ?? Configuration.Default.DesiredTargetCount,
                   tcpPingPorts:         config?.TcpPingPorts         ?? Configuration.Default.TcpPingPorts,
                   pingsPerSample:       config?.PingsPerSample       ?? Configuration.Default.PingsPerSample,
-                  serversPerSample:     config?.ServersPerSample     ?? Configuration.Default.ServersPerSample,
+                  targetsPerSample:     config?.TargetsPerSample     ?? Configuration.Default.TargetsPerSample,
                   timeout:              config?.Timeout              ?? Configuration.Default.Timeout,
                   periodNormalPriority: config?.PeriodNormalPriority ?? Configuration.Default.PeriodNormalPriority,
                   periodHighPriority:   config?.PeriodHighPriority   ?? Configuration.Default.PeriodHighPriority,
@@ -65,12 +65,12 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             TimeSpan? periodHighPriority = null, 
             TimeSpan? periodLowPriority = null, 
             string sourcePath = null, 
-            IEnumerable<PingTarget> servers = null, 
-            bool? discoverServers = null,
-            int? desiredServerCount = null,
+            IEnumerable<PingTarget> targets = null, 
+            bool? discoverTargets = null,
+            int? desiredTargetCount = null,
             IEnumerable<ushort> tcpPingPorts = null,
             int? pingsPerSample = null, 
-            int? serversPerSample = null, 
+            int? targetsPerSample = null, 
             IRandomNumberGenerator rng = null, 
             TimeSpan? timeout = null
         )
@@ -78,18 +78,20 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                   periodHighPriority.GetValueOrDefault(Configuration.Default.PeriodHighPriority),
                   periodLowPriority.GetValueOrDefault(Configuration.Default.PeriodLowPriority))
         {
-            this._EnableServerDiscovery = discoverServers.GetValueOrDefault(Configuration.Default.DiscoverServers);
-            this._DesiredServerCount = desiredServerCount.GetValueOrDefault(Configuration.Default.DesiredServerCount);
+            this._EnableTargetDiscovery = discoverTargets.GetValueOrDefault(Configuration.Default.DiscoverTargets);
+            this._DesiredTargetCount = desiredTargetCount.GetValueOrDefault(Configuration.Default.DesiredTargetCount);
             this._TcpPorts = (tcpPingPorts ?? Configuration.Default.TcpPingPorts).ToArray();
-            this._ServersPerSample = serversPerSample.GetValueOrDefault(Configuration.Default.ServersPerSample);
+            this._TargetsPerSample = targetsPerSample.GetValueOrDefault(Configuration.Default.TargetsPerSample);
             this._PingsPerSample = pingsPerSample.GetValueOrDefault(Configuration.Default.PingsPerSample);
-            if (_ServersPerSample <= 0)
+            if (_TargetsPerSample <= 0)
                 throw new ArgumentOutOfRangeException(nameof(pingsPerSample), pingsPerSample, "Pings per sample must be at least one.");
             if (_PingsPerSample <= 0)
-                throw new ArgumentOutOfRangeException(nameof(serversPerSample), serversPerSample, "Servers per sample must be at least one.");
+                throw new ArgumentOutOfRangeException(nameof(targetsPerSample), targetsPerSample, "Targets per sample must be at least one.");
+            if (_DesiredTargetCount <= 0 && _EnableTargetDiscovery)
+                throw new ArgumentOutOfRangeException(nameof(targetsPerSample), targetsPerSample, "Desired target count must be at least one.");
             this.SourcePath = sourcePath;
-            if (servers != null)
-                this._Servers.AddRange(servers);
+            if (targets != null)
+                this._Targets.AddRange(targets);
             this._Rng = rng ?? StandardRandomWrapperGenerator.StockRandom();
             this._Timeout = timeout.GetValueOrDefault(Configuration.Default.Timeout);
         }
@@ -110,29 +112,29 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
         }
 
-        public static Task<IReadOnlyCollection<PingTarget>> LoadInternalServerListAsync()
+        public static Task<IReadOnlyCollection<PingTarget>> LoadInternalTargetListAsync()
         {
             var log = LibLog.LogProvider.For<PingStatsSource>();
-            log.Debug("Loading internal server list...");
-            using (var stream = typeof(PingStatsSource).Assembly.GetManifestResourceStream(typeof(PingStatsSource), "PingServerList.txt"))
+            log.Debug("Loading internal target list...");
+            using (var stream = typeof(PingStatsSource).Assembly.GetManifestResourceStream(typeof(PingStatsSource), "PingTargetList.txt"))
             {
-                return LoadServerListAsync(stream);
+                return LoadTargetListAsync(stream);
             }
         }
-        public static Task<IReadOnlyCollection<PingTarget>> LoadServerListAsync(string path)
+        public static Task<IReadOnlyCollection<PingTarget>> LoadTargetListAsync(string path)
         {
             var log = LibLog.LogProvider.For<PingStatsSource>();
-            log.Debug("Loading source server list from '{0}'...", path);
+            log.Debug("Loading source target list from '{0}'...", path);
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 32 * 1024, FileOptions.SequentialScan))
             {
-                return LoadServerListAsync(stream);
+                return LoadTargetListAsync(stream);
             }
         }
-        public static async Task<IReadOnlyCollection<PingTarget>> LoadServerListAsync(Stream stream)
+        public static async Task<IReadOnlyCollection<PingTarget>> LoadTargetListAsync(Stream stream)
         {
             var log = LibLog.LogProvider.For<PingStatsSource>();
 
-            var servers = new List<PingTarget>();
+            var targets = new List<PingTarget>();
             using (var reader = new StreamReader(stream, Encoding.UTF8, false, 32 * 1024, true))
             {
                 int lineNum = 0;
@@ -149,26 +151,26 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                     if (PingTarget.TryParse(l, out var target))
                     {
                         log.Trace("Read target {0} on line {1}", target, lineNum);
-                        servers.Add(target);
+                        targets.Add(target);
                     }
                     else
                         log.Warn("Unable to parse target for {0}: {1} (line {2:N0})", nameof(PingStatsSource), l, lineNum);
                 }
             }
-            log.Debug("Loaded {0:N0} server IP addresses.", servers.Count);
-            return servers;
+            log.Debug("Loaded {0:N0} targets.", targets.Count);
+            return targets;
         }
 
         protected override async Task<byte[]> GetInternalEntropyAsync(EntropyPriority priority)
         {
-            if (_Servers.Count == 0 && !_UseRandomSourceForUnitTest)
+            if (_Targets.Count == 0 && !_UseRandomSourceForUnitTest)
             {
                 // No prior persisted state: load a seed list to get started.
-                await InitialiseServersFromSeedSource();
+                await InitialiseTargetsFromSeedSource();
             }
-            if (_Servers.Count == 0 && !_EnableServerDiscovery)
+            if (_Targets.Count == 0 && !_EnableTargetDiscovery)
             {
-                // No servers and no discovery means no entropy! Return early; an error is logged in InitialiseServersFromSeedSource()
+                // No targets and no discovery means no entropy! Return early; an error is logged in InitialiseTargetsFromSeedSource()
                 return null;
             }
             if (!IsNetworkAvailable(10_000_000) && !_UseRandomSourceForUnitTest)
@@ -177,28 +179,34 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 return null;
             }
 
+            // Gather entropy!
             byte[] result = null;
             IEnumerable<IpAddressTarget> forDiscovery = Enumerable.Empty<IpAddressTarget>();
             IEnumerable<PingTarget> forRemoval = Enumerable.Empty<PingTarget>();
-            if (_Servers.Count > 0)
+            if (_Targets.Count > 0)
             {
                 (result, forDiscovery, forRemoval) = await GatherEntropyFromTargets();
             }
+            if (_UseRandomSourceForUnitTest)
+                // Discovery involves real targets; sorry unit tests :-(
+                return result;
 
             // Anything which failed all ping attempts will be removed.
             if (forRemoval.Any())
+            {
                 RemoveTargets(forRemoval, Enumerable.Empty<PingTarget>());
+            }
 
             // Anything which was just an IP address should run discovery to convert into an ICMP / TCP target.
-            if (forDiscovery.Any() && !_UseRandomSourceForUnitTest)
+            if (forDiscovery.Any())
             {
                 await DiscoverTargets(forDiscovery);
             }
 
             // Finally, if nothing needed to be discovered from the main ping run, try to discover new targets up until the desired count.
-            if (!forDiscovery.Any() && _EnableServerDiscovery && _Servers.Count < _DesiredServerCount && !_UseRandomSourceForUnitTest)
+            if (!forDiscovery.Any() && _EnableTargetDiscovery && _Targets.Count < _DesiredTargetCount)
             {
-                await DiscoverTargets(_ServersPerSample);
+                await DiscoverTargets(_TargetsPerSample);
             }
 
             EnsureCountersAreValid();
@@ -206,52 +214,52 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             return result;
         }
 
-        private async Task InitialiseServersFromSeedSource()
+        private async Task InitialiseTargetsFromSeedSource()
         {
-            Log.Debug("Initialising server list.");
+            Log.Debug("Initialising target list.");
             try
             {
                 if (!String.IsNullOrEmpty(SourcePath))
-                    _Servers.AddRange(await LoadServerListAsync(SourcePath));
+                    _Targets.AddRange(await LoadTargetListAsync(SourcePath));
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Unable to open Server Source File '{0}'.", SourcePath);
+                Log.Error(ex, "Unable to open Target Source File '{0}'.", SourcePath);
             }
-            if (String.IsNullOrEmpty(SourcePath) && _Servers.Count == 0)
-                _Servers.AddRange(await LoadInternalServerListAsync());
-            if (_Servers.Count == 0 && !_EnableServerDiscovery)
-                Log.Error("No servers are available and server discovery is disabled. This entropy source will be disabled.");
+            if (String.IsNullOrEmpty(SourcePath) && _Targets.Count == 0)
+                _Targets.AddRange(await LoadInternalTargetListAsync());
+            if (_Targets.Count == 0 && !_EnableTargetDiscovery)
+                Log.Error("No targets are available and target discovery is disabled. This entropy source will be disabled.");
 
-            RandomNumberExtensions.ShuffleInPlace(_Servers, _Rng);
+            RandomNumberExtensions.ShuffleInPlace(_Targets, _Rng);
             EnsureCountersAreValid();
         }
 
         private async Task<(byte[] entropy, IReadOnlyCollection<IpAddressTarget> forDiscovery, IReadOnlyCollection<PingTarget> forRemoval)> GatherEntropyFromTargets()
         {
-            // Do x pings to y servers in parallel.
+            // Do x pings to y targets in parallel.
             // Time each of them, use the high precision part as the result.
 
-            // Select the servers we will ping.
-            var countToSample = Math.Min(_ServersPerSample, _Servers.Count);
-            var serversToSample = new List<PingAndStopwatch>(countToSample);
-            for (int i = 0; i < _ServersPerSample; i++)
+            // Select the targets we will ping.
+            var countToSample = Math.Min(_TargetsPerSample, _Targets.Count);
+            var targetsToSample = new List<PingAndStopwatch>(countToSample);
+            for (int i = 0; i < _TargetsPerSample; i++)
             {
-                if (_NextServer >= _Servers.Count)
-                    _NextServer = 0;
-                serversToSample.Add(new PingAndStopwatch(_Servers[_NextServer], _Timeout));
-                _NextServer = _NextServer + 1;
+                if (_NextTarget >= _Targets.Count)
+                    _NextTarget = 0;
+                targetsToSample.Add(new PingAndStopwatch(_Targets[_NextTarget], _Timeout));
+                _NextTarget = _NextTarget + 1;
             }
 
-            // Now ping the servers and time how long it takes.
+            // Now ping the targets and time how long it takes.
             var result = new List<byte>((countToSample + _PingsPerSample) * sizeof(ushort));
             for (int c = 0; c < _PingsPerSample; c++)
             {
                 if (!_UseRandomSourceForUnitTest)
                 {
-                    await Task.WhenAll(serversToSample.Select(x => x.ResetAndRun()).ToArray());
+                    await Task.WhenAll(targetsToSample.Select(x => x.ResetAndRun()).ToArray());
 
-                    foreach (var s in serversToSample.Where(x => x.Timing.TotalMilliseconds > 0 && x.Timing < _Timeout))
+                    foreach (var s in targetsToSample.Where(x => x.Timing.TotalMilliseconds > 0 && x.Timing < _Timeout))
                     {
                         var timingBytes = BitConverter.GetBytes(unchecked((ushort)s.Timing.Ticks));
                         result.Add(timingBytes[0]);
@@ -266,10 +274,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
 
             // Collect any IP targets, which will be sent to discovery.
-            var forDiscovery = serversToSample.Where(x => x.Target is IpAddressTarget).Select(x => x.Target).Cast<IpAddressTarget>().ToList();
+            var forDiscovery = targetsToSample.Where(x => x.Target is IpAddressTarget).Select(x => x.Target).Cast<IpAddressTarget>().ToList();
 
-            // Collect any other targets which failed every attempt, which will be removed from the server list.
-            var forRemoval = serversToSample.Where(x => x.Target is not IpAddressTarget && x.Failures == _PingsPerSample).Select(x => x.Target).ToList();
+            // Collect any other targets which failed every attempt, which will be removed from the target list.
+            var forRemoval = targetsToSample.Where(x => x.Target is not IpAddressTarget && x.Failures == _PingsPerSample).Select(x => x.Target).ToList();
 
             return (result.ToArray(), forDiscovery, forRemoval);
         }
@@ -297,8 +305,8 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                     continue;
                 
                 var ip = new IPAddress(bytes);
-                if (_Servers.Any(x => ip.Equals(x.IPAddress)))
-                    // Let's not add the same server twice!
+                if (_Targets.Any(x => ip.Equals(x.IPAddress)))
+                    // Let's not add the same target twice!
                     continue;
 
                 targets.Add(PingTarget.ForIpAddressOnly(ip));
@@ -314,58 +322,58 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             if (!targets.Any())
                 return;
 
-            Log.Debug("Running discovery pings for {0:N0} IP addresses. Before discovery, there are {1:N0} targets.", targets.Count(), _Servers.Count);
+            Log.Debug("Running discovery pings for {0:N0} IP addresses. Before discovery, there are {1:N0} targets.", targets.Count(), _Targets.Count);
             Log.Trace("Running discovery pings for: {0}", String.Join(",", targets.Select(x => x.IPAddress)));
 
             var allPossibleTargets = targets.Select(x => PingTarget.ForIcmpPing(x.IPAddress)).Cast<PingTarget>();
             foreach (var port in _TcpPorts)
                 allPossibleTargets = allPossibleTargets.Concat(targets.Select(x => PingTarget.ForTcpPing(x.IPAddress, port)).Cast<PingTarget>());
-            var serversToSample = allPossibleTargets.Select(x => new PingAndStopwatch(x, _Timeout)).ToList();
+            var targetsToSample = allPossibleTargets.Select(x => new PingAndStopwatch(x, _Timeout)).ToList();
 
             for (int c = 0; c < 3; c++)
             {
-                await Task.WhenAll(serversToSample.Select(x => x.ResetAndRun()).ToArray());
+                await Task.WhenAll(targetsToSample.Select(x => x.ResetAndRun()).ToArray());
             }
 
-            var toAdd = serversToSample.Where(x => x.Failures < 3).Select(x => x.Target).ToList();
+            var toAdd = targetsToSample.Where(x => x.Failures < 3).Select(x => x.Target).ToList();
             AddNewTargets(toAdd);
             RemoveTargets(Enumerable.Empty<PingTarget>(), targets);
 
-            Log.Debug("After discovery, there are {0:N0} targets.", _Servers.Count);
+            Log.Debug("After discovery, there are {0:N0} targets.", _Targets.Count);
         }
 
         private void AddNewTargets(IReadOnlyCollection<PingTarget> newTargets)
         {
             foreach (var target in newTargets)
             {
-                Log.Trace("Adding discovered target {0} to server list.", target);
-                _Servers.Add(target);
+                Log.Trace("Adding discovered target {0} to target list.", target);
+                _Targets.Add(target);
             }
            
 
             if (newTargets.Any())
                 // Reshuffle whenever we add something new.
-                RandomNumberExtensions.ShuffleInPlace(_Servers, _Rng);
+                RandomNumberExtensions.ShuffleInPlace(_Targets, _Rng);
         }
 
         private void RemoveTargets(IEnumerable<PingTarget> failedTargets, IEnumerable<PingTarget> discoveryTargets)
         {
             foreach (var t in failedTargets)
             {
-                if (_Servers.Remove(t))
+                if (_Targets.Remove(t))
                     Log.Trace("Removed target {0} after all ping attempts failed.", t);
             }
             foreach (var t in discoveryTargets)
             {
-                if (_Servers.Remove(t))
+                if (_Targets.Remove(t))
                     Log.Trace("Removed target {0} after discovery was run.", t);
             }
         }
 
         private void EnsureCountersAreValid()
         {
-            if (_NextServer > _Servers.Count)
-                _NextServer = 0;
+            if (_NextTarget > _Targets.Count)
+                _NextTarget = 0;
         }
 
         #region IPersistentStateSource
@@ -382,7 +390,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         IEnumerable<NamespacedPersistentItem> IPersistentStateSource.GetCurrentState(PersistentEventType eventType)
         {
             // TODO: implement.
-            yield return NamespacedPersistentItem.CreateText("ServerCount", _Servers.Count.ToString(CultureInfo.InvariantCulture));
+            yield return NamespacedPersistentItem.CreateText("TargetCount", _Targets.Count.ToString(CultureInfo.InvariantCulture));
         }
 
         #endregion
@@ -572,37 +580,37 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             public static readonly Configuration Default = new Configuration();
 
             /// <summary>
-            /// Number of servers to ping from the list each sample.
+            /// Number of targets to ping from the list each sample.
             /// Default: 8. Minimum: 1. Maximum: 100.
             /// </summary>
-            public int ServersPerSample { get; set; } = 8;
+            public int TargetsPerSample { get; set; } = 8;
 
             /// <summary>
-            /// Number of times to ping each server per sample.
+            /// Number of times to ping each target per sample.
             /// Default: 6. Minimum: 1. Maximum: 100.
             /// </summary>
             public int PingsPerSample { get; set; } = 6;
 
             /// <summary>
-            /// Path to file containing initial server list.
+            /// Path to file containing initial target list.
             /// If left blank, an internal list is used.
             /// Note this is only used as the initial list once, persistent state is used after that.
             /// </summary>
-            public string ServerFilePath { get; set; }
+            public string TargetFilePath { get; set; }
 
             /// <summary>
-            /// Automatically discover new servers to ping by randomly scanning the Internet.
+            /// Automatically discover new targets to ping by randomly scanning the Internet.
             /// Default: true.
             /// </summary>
-            public bool DiscoverServers { get; set; } = true;
+            public bool DiscoverTargets { get; set; } = true;
 
             /// <summary>
-            /// Count of servers to accumulate when discovering servers.
+            /// Count of targets to accumulate when discovering.
             /// Default: 1024. Minimum: 1. Maximum: 65536.
-            /// Each server will be recorded in persistent state.
-            /// Note that each endpoint is counted as one server. So 1.1.1.1:80 and 1.1.1.1:443 count as two.
+            /// Each target will be recorded in persistent state.
+            /// Note that each endpoint is counted as one target. So 1.1.1.1:80 and 1.1.1.1:443 and 1.1.1.1:ICMP count as three.
             /// </summary>
-            public int DesiredServerCount { get; set; } = 1024;
+            public int DesiredTargetCount { get; set; } = 1024;
 
             /// <summary>
             /// List of ports to try TCP pings.
