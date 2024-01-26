@@ -110,6 +110,7 @@
       // Count of servers to accumulate when discovering servers.
       // Default: 1024. Minimum: 1. Maximum: 65536.
       // Each server will be recorded in persistent state.
+      // Note that each endpoint is counted as one server. So 1.1.1.1:80 and 1.1.1.1:443 count as two.
       "DesiredServerCount": 1024,
 
       // List of ports to try TCP pings.

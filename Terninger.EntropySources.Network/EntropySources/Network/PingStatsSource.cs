@@ -12,6 +12,8 @@ using MurrayGrant.Terninger.Random;
 using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.LibLog;
 using MurrayGrant.Terninger.PersistentState;
+using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace MurrayGrant.Terninger.EntropySources.Network
 {
@@ -34,7 +36,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         private readonly TimeSpan _Timeout;
 
         public string SourcePath { get; private set; }
-        private List<IPAddress> _Servers = new List<IPAddress>();
+        private List<PingTarget> _Servers = new List<PingTarget>();
         public int ServerCount => _Servers.Count;
 
         private readonly bool _EnableServerDiscovery;
@@ -65,7 +67,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             TimeSpan? periodHighPriority = null, 
             TimeSpan? periodLowPriority = null, 
             string sourcePath = null, 
-            IEnumerable<IPAddress> servers = null, 
+            IEnumerable<PingTarget> servers = null, 
             bool? discoverServers = null,
             int? desiredServerCount = null,
             IEnumerable<ushort> tcpPingPorts = null,
@@ -110,7 +112,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
         }
 
-        public static Task<IReadOnlyCollection<IPAddress>> LoadInternalServerListAsync()
+        public static Task<IReadOnlyCollection<PingTarget>> LoadInternalServerListAsync()
         {
             var log = LibLog.LogProvider.For<PingStatsSource>();
             log.Debug("Loading internal server list...");
@@ -119,7 +121,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 return LoadServerListAsync(stream);
             }
         }
-        public static Task<IReadOnlyCollection<IPAddress>> LoadServerListAsync(string path)
+        public static Task<IReadOnlyCollection<PingTarget>> LoadServerListAsync(string path)
         {
             var log = LibLog.LogProvider.For<PingStatsSource>();
             log.Debug("Loading source server list from '{0}'...", path);
@@ -128,7 +130,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 return LoadServerListAsync(stream);
             }
         }
-        public static async Task<IReadOnlyCollection<IPAddress>> LoadServerListAsync(Stream stream)
+        public static async Task<IReadOnlyCollection<PingTarget>> LoadServerListAsync(Stream stream)
         {
             var log = LibLog.LogProvider.For<PingStatsSource>();
             
@@ -246,7 +248,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         IEnumerable<NamespacedPersistentItem> IPersistentStateSource.GetCurrentState(PersistentEventType eventType)
         {
             // TODO: implement.
-            yield return NamespacedPersistentItem.CreateText("Test", "Value");
+            yield return NamespacedPersistentItem.CreateText("ServerCount", _Servers.Count.ToString(CultureInfo.InvariantCulture));
         }
 
         #endregion
@@ -255,12 +257,12 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         {
             private static readonly ILog Log = LibLog.LogProvider.For<PingStatsSource>();
 
-            public PingAndStopwatch(IPAddress ip, TimeSpan timeout)
+            public PingAndStopwatch(PingTarget target, TimeSpan timeout)
             {
-                this.IP = ip;
+                this.Target = target;
                 this.Timeout = timeout;
             }
-            public readonly IPAddress IP;
+            public readonly PingTarget Target;
             public readonly Ping Ping = new Ping();
             public readonly TimeSpan Timeout;
             public TimeSpan Timing { get; private set; }
@@ -271,9 +273,16 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 var sw = Stopwatch.StartNew();
                 try
                 {
-                    var result = await Ping.SendPingAsync(IP, (int)Timeout.TotalMilliseconds);
+                    PingReply result;
+                    if (Target is IcmpTarget icmpTarget)
+                        result = await Ping.SendPingAsync(icmpTarget.IPAddress, (int)Timeout.TotalMilliseconds);
+                    else if (Target is IpAddressTarget ipTarget)
+                        result = await Ping.SendPingAsync(ipTarget.IPAddress, (int)Timeout.TotalMilliseconds);
+                    else
+                        throw new NotImplementedException("TCP ping not implemented yet");
                     sw.Stop();
-                    Log.Trace("Ping to '{0}' in {1:N2}ms, result: {2}", IP, sw.Elapsed.TotalMilliseconds, result.Status);
+
+                    Log.Trace("Ping to '{0}' in {1:N2}ms, result: {2}", Target, sw.Elapsed.TotalMilliseconds, result.Status);
                     if (result.Status == IPStatus.Success)
                         Timing = sw.Elapsed;
                     else
@@ -284,13 +293,78 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 }
                 catch (Exception ex)
                 {
-                    Log.WarnException("Exception when trying to ping {0}", ex, IP);
+                    Log.WarnException("Exception when trying to ping {0}", ex, Target);
                     sw.Stop();
                     Timing = TimeSpan.Zero;
                     Failures = Failures + 1;
                 }
             }
           
+        }
+
+        public abstract class PingTarget
+        {
+            public readonly IPAddress IPAddress;
+
+            public Status State { get; internal set; }
+
+            public static IpAddressTarget ForIpAddressOnly(IPAddress ip)
+                => new IpAddressTarget(ip);
+
+            public static IcmpTarget ForIcmpPing(IPAddress ip)
+                => new IcmpTarget(ip);
+            
+            public static TcpTarget ForTcpPing(IPAddress ip, ushort port)
+                => new TcpTarget(ip, port);
+
+            public PingTarget(IPAddress iPAddress)
+            {
+                IPAddress = iPAddress;
+            }
+
+            public enum Status
+            {
+                Untested,
+                Working,
+                Failure,
+            }
+        }
+
+        // Just an IP address, no ICMP or port number. Need to test both
+        public sealed class IpAddressTarget : PingTarget
+        {
+            internal IpAddressTarget(IPAddress ip)
+                : base(ip)
+            { }
+
+            public override string ToString()
+                => "IpAddress:" + IPAddress.ToString();
+        }
+
+        // IP address as ICMP ping target.
+        public sealed class IcmpTarget : PingTarget
+        {
+            internal IcmpTarget(IPAddress ip)
+                : base(ip)
+            { }
+
+            public override string ToString()
+                => IPAddress.ToString() + ":ICMP";
+        }
+
+        // IP address + port number as TCP ping target.
+        public sealed class TcpTarget : PingTarget
+        {
+            public ushort Port { get; }
+
+            internal TcpTarget(IPAddress ip, ushort port)
+                : base(ip)
+            {
+                Port = port;
+            }
+
+            public override string ToString()
+                => IPAddress.ToString() + ":" + Port.ToString(CultureInfo.InvariantCulture);
         }
 
         public class Configuration
@@ -326,6 +400,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             /// Count of servers to accumulate when discovering servers.
             /// Default: 1024. Minimum: 1. Maximum: 65536.
             /// Each server will be recorded in persistent state.
+            /// Note that each endpoint is counted as one server. So 1.1.1.1:80 and 1.1.1.1:443 count as two.
             /// </summary>
             public int DesiredServerCount { get; set; } = 1024;
 
