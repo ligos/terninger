@@ -134,7 +134,6 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         {
             var log = LibLog.LogProvider.For<PingStatsSource>();
 
-            var splitCharacter = new[] { ' ' };
             var servers = new List<PingTarget>();
             using (var reader = new StreamReader(stream, Encoding.UTF8, false, 32 * 1024, true))
             {
@@ -148,31 +147,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                         continue;
                     if (l.StartsWith("#"))
                         continue;
-                    var parts = l.Split(splitCharacter, StringSplitOptions.RemoveEmptyEntries);
-                    IPAddress ip;
-                    if (parts.Length == 1 
-                        && IPAddress.TryParse(parts[0].Trim(), out ip))
+
+                    if (PingTarget.TryParse(l, out var target))
                     {
-                        log.Trace("Read IP target (no ICMP or port) {0} on line {1}", ip, lineNum);
-                        servers.Add(PingTarget.ForIpAddressOnly(ip));
-                    }
-                    else if (parts.Length == 2 
-                        && IPAddress.TryParse(parts[0].Trim(), out ip) 
-                        && String.Equals(parts[1], "ICMP", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        log.Trace("Read ICMP target {0} on line {1}", ip, lineNum);
-                        servers.Add(PingTarget.ForIcmpPing(ip));
-                    }
-                    else if (parts.Length == 2 
-                        && IPAddress.TryParse(parts[0].Trim(), out ip) 
-                        && ushort.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var port) 
-                        && port > 0)
-                    {
-                        log.Trace("Read TCP target {0} on line {1}", ip, lineNum);
-                        servers.Add(PingTarget.ForTcpPing(ip, port));
+                        log.Trace("Read target {0} on line {1}", target, lineNum);
+                        servers.Add(target);
                     }
                     else
-                        // Couldn't parse target.
                         log.Warn("Unable to parse target for {0}: {1} (line {2:N0})", nameof(PingStatsSource), l, lineNum);
                 }
             }
@@ -364,6 +345,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             public readonly IPAddress IPAddress;
 
             public Status State { get; internal set; }
+            private readonly static char[] SplitCharacter = new[] { ' ' };
 
             public static IpAddressTarget ForIpAddressOnly(IPAddress ip)
                 => new IpAddressTarget(ip);
@@ -373,6 +355,38 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             
             public static TcpTarget ForTcpPing(IPAddress ip, ushort port)
                 => new TcpTarget(ip, port);
+
+            public static bool TryParse(string s, out PingTarget result)
+            {
+                var parts = s.Split(SplitCharacter, StringSplitOptions.RemoveEmptyEntries);
+                IPAddress ip;
+                if (parts.Length == 1
+                    && IPAddress.TryParse(parts[0].Trim(), out ip))
+                {
+                    result = ForIpAddressOnly(ip);
+                    return true;
+                }
+                else if (parts.Length == 2
+                    && IPAddress.TryParse(parts[0].Trim(), out ip)
+                    && String.Equals(parts[1], "ICMP", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    result = ForIcmpPing(ip);
+                    return true;
+                }
+                else if (parts.Length == 2
+                    && IPAddress.TryParse(parts[0].Trim(), out ip)
+                    && ushort.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var port)
+                    && port > 0)
+                {
+                    result = ForTcpPing(ip, port);
+                    return true;
+                }
+                else
+                {
+                    result = null;
+                    return false;
+                }
+            }
 
             public PingTarget(IPAddress ipAddress)
             {
