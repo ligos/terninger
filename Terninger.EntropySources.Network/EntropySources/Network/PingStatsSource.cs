@@ -13,6 +13,8 @@ using MurrayGrant.Terninger.Helpers;
 using MurrayGrant.Terninger.LibLog;
 using MurrayGrant.Terninger.PersistentState;
 using System.Globalization;
+using System.Net.Sockets;
+using System.Threading;
 
 namespace MurrayGrant.Terninger.EntropySources.Network
 {
@@ -351,11 +353,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 Log.Trace("Adding discovered target {0} to target list.", target);
                 _Targets.Add(target);
             }
-           
 
             if (newTargets.Any())
+            {
                 // Reshuffle whenever we add something new.
                 RandomNumberExtensions.ShuffleInPlace(_Targets, _Rng);
+                _NextTarget = 0;
+            }
         }
 
         private void RemoveTargets(IEnumerable<PingTarget> failedTargets, IEnumerable<PingTarget> discoveryTargets)
@@ -440,7 +444,6 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 this.Timeout = timeout;
             }
             public readonly PingTarget Target;
-            public readonly Ping Ping = new Ping();
             public readonly TimeSpan Timeout;
             public TimeSpan Timing { get; private set; }
             public int Failures { get; private set; }
@@ -450,17 +453,11 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 var sw = Stopwatch.StartNew();
                 try
                 {
-                    PingReply result;
-                    if (Target is IcmpTarget icmpTarget)
-                        result = await Ping.SendPingAsync(icmpTarget.IPAddress, (int)Timeout.TotalMilliseconds);
-                    else if (Target is IpAddressTarget ipTarget)
-                        result = await Ping.SendPingAsync(ipTarget.IPAddress, (int)Timeout.TotalMilliseconds);
-                    else
-                        throw new NotImplementedException("TCP ping not implemented yet");
+                    var (success, status) = await Target.Ping(Timeout);
                     sw.Stop();
 
-                    Log.Trace("Ping to '{0}' in {1:N2}ms, result: {2}", Target, sw.Elapsed.TotalMilliseconds, result.Status);
-                    if (result.Status == IPStatus.Success)
+                    Log.Trace("Ping to '{0}' in {1:N2}ms, result: {2}", Target, sw.Elapsed.TotalMilliseconds, status);
+                    if (success)
                         Timing = sw.Elapsed;
                     else
                     {
@@ -542,6 +539,8 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             {
                 IPAddress = ipAddress;
             }
+
+            public abstract Task<(bool isSuccess, object error)> Ping(TimeSpan timeout);
         }
 
         // Just an IP address, no ICMP or port number. Need to test both
@@ -557,6 +556,13 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             public override string ToString()
                 => IPAddress.ToString();
+
+            public override async Task<(bool isSuccess, object error)> Ping(TimeSpan timeout)
+            {
+                // Although we don't know if this target is for ICMP, that's the default implementation.
+                var result = await new Ping().SendPingAsync(IPAddress, (int)timeout.TotalMilliseconds);
+                return (result.Status == IPStatus.Success, result.Status);
+            }
         }
 
         // IP address as ICMP ping target.
@@ -571,7 +577,15 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 && IPAddress == other.IPAddress;
 
             public override string ToString()
-                => IPAddress.ToString() + ":ICMP";
+                => (IPAddress.AddressFamily == AddressFamily.InterNetworkV6 ? "[" + IPAddress.ToString() + "]" : IPAddress.ToString())
+                + ":ICMP";
+
+
+            public override async Task<(bool isSuccess, object error)> Ping(TimeSpan timeout)
+            {
+                var result = await new Ping().SendPingAsync(IPAddress, (int)timeout.TotalMilliseconds);
+                return (result.Status == IPStatus.Success, result.Status);
+            }
         }
 
         // IP address + port number as TCP ping target.
@@ -599,7 +613,55 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 => GetType().GetHashCode() ^ IPAddress.GetHashCode() ^ Port;
 
             public override string ToString()
-                => IPAddress.ToString() + ":" + Port.ToString(CultureInfo.InvariantCulture);
+                => (IPAddress.AddressFamily == AddressFamily.InterNetworkV6 ? "[" + IPAddress.ToString() + "]" : IPAddress.ToString())
+                + ":" 
+                + Port.ToString(CultureInfo.InvariantCulture);
+
+            public override async Task<(bool isSuccess, object error)> Ping(TimeSpan timeout)
+            {
+                using (var socket = new Socket(IPAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
+                using (var cancel = new CancellationTokenSource())
+                {
+                    try
+                    {
+                        cancel.CancelAfter(timeout);
+#if NET6_0_OR_GREATER
+                        await socket.ConnectAsync(IPAddress, Port, cancel.Token);
+                        return (true, SocketError.Success);
+#else
+                        // netstandard2.0 doesn't have a nice async API for Socket.Connect(),
+                        // so we have to wire everything up manually
+                        var tcs = new TaskCompletionSource<(bool isSuccess, SocketError error)>();
+                        var e = new SocketAsyncEventArgs()
+                        {
+                            RemoteEndPoint = new IPEndPoint(IPAddress, Port),
+                            UserToken = tcs,
+                        };
+                        e.Completed += (sender, e2) =>
+                        {
+                            var tcs2 = (TaskCompletionSource<(bool isSuccess, SocketError error)>)e2.UserToken;
+                            tcs.TrySetResult((e2.SocketError == SocketError.Success, e2.SocketError));
+                        };
+                        cancel.Token.Register(arg =>
+                        {
+                            var tcs3 = (TaskCompletionSource<(bool isSuccess, SocketError error)>)arg;
+                            tcs.TrySetResult((false, SocketError.TimedOut));
+                        }, tcs);
+
+                        socket.ConnectAsync(e);
+                        return await tcs.Task;
+#endif
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return (false, SocketError.TimedOut);
+                    }
+                    catch (SocketException ex)
+                    {
+                        return (false, ex.SocketErrorCode);
+                    }
+                }
+            }
         }
 
         public class Configuration
