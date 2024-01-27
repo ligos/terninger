@@ -350,9 +350,12 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         {
             foreach (var target in newTargets)
             {
-                Log.Trace("Adding discovered target {0} to target list.", target);
-                _Targets.Add(target);
-                _TargetsIsModifiedForPersistentState = true;
+                if (!_Targets.Contains(target))
+                {
+                    Log.Trace("Adding discovered target {0} to target list.", target);
+                    _Targets.Add(target);
+                    _TargetsIsModifiedForPersistentState = true;
+                }
             }
 
             if (newTargets.Any())
@@ -404,14 +407,16 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 && Int32.TryParse(countItem.ValueAsUtf8Text, out var count)
                 && count > 0)
             {
-                for (int i = 0; i < count; i++)
+                for (int i = 1; i <= count; i++)
                 {
                     if (state.TryGetValue("Target." + i.ToString(CultureInfo.InvariantCulture), out var item)
-                        && PingTarget.TryParse(item.ValueAsUtf8Text, out var target))
+                        && PingTarget.TryParse(item.ValueAsUtf8Text, out var target)
+                        && !_Targets.Contains(target))
                     {
                         _Targets.Add(target);
                     }
                 }
+                RandomNumberExtensions.ShuffleInPlace(_Targets, _Rng);
                 Log.Debug("Loaded {0:N0} target(s) from persistent state.", _Targets.Count);
             }
 
@@ -420,12 +425,12 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         IEnumerable<NamespacedPersistentItem> IPersistentStateSource.GetCurrentState(PersistentEventType eventType)
         {
-            var targets = _Targets.ToList();
+            var targets = _Targets.OrderBy(x => x.IPAddress.AddressFamily).ThenBy(x => x.IPAddress.ToString()).ToList();
 
             yield return NamespacedPersistentItem.CreateText("TargetCount", targets.Count.ToString(CultureInfo.InvariantCulture));
-            for (int i = 0; i < targets.Count; i++)
+            for (int i = 1; i <= targets.Count; i++)
             {
-                yield return NamespacedPersistentItem.CreateText("Target." + i.ToString(CultureInfo.InvariantCulture), targets[i].ToString());
+                yield return NamespacedPersistentItem.CreateText("Target." + i.ToString(CultureInfo.InvariantCulture), targets[i-1].ToString());
             }
 
             _TargetsIsModifiedForPersistentState = false;
@@ -611,7 +616,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             public virtual bool Equals(PingTarget other)
                 => other != null
                 && GetType() == other.GetType()
-                && IPAddress == other.IPAddress;
+                && IPAddress.Equals(other.IPAddress);
 
             public override int GetHashCode()
                 => GetType().GetHashCode() ^ IPAddress.GetHashCode();
@@ -633,7 +638,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             public bool Equals(IpAddressTarget other)
                 => other != null
-                && IPAddress == other.IPAddress;
+                && IPAddress.Equals(other.IPAddress);
 
             public override string ToString()
                 => IPAddress.ToString();
@@ -655,7 +660,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             public bool Equals(IcmpTarget other)
                 => other != null
-                && IPAddress == other.IPAddress;
+                && IPAddress.Equals(other.IPAddress);
 
             public override string ToString()
                 => (IPAddress.AddressFamily == AddressFamily.InterNetworkV6 ? "[" + IPAddress.ToString() + "]" : IPAddress.ToString())
@@ -687,7 +692,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             public bool Equals(TcpTarget other)
                 => other != null
-                && IPAddress == other.IPAddress
+                && IPAddress.Equals(other.IPAddress)
                 && Port == other.Port;
 
             public override int GetHashCode()

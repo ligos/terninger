@@ -95,7 +95,9 @@ namespace MurrayGrant.Terninger.Random
 
         public IEnumerable<NamespacedPersistentItem> GetPersistentStateOrNull(PersistentEventType eventType)
         {
-            if (Source is IPersistentStateSource sourceForPersistentState && sourceForPersistentState.HasUpdates)
+            // Because we don't maintain the persistent state collection internally, this loads every time and doesn't check HasUpdates.
+            // Otherwise, sometimes we will sometimes miss state when there have been no updates.
+            if (Source is IPersistentStateSource sourceForPersistentState)
                 return sourceForPersistentState.GetCurrentState(eventType);
             else
                 return null;
