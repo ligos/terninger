@@ -17,6 +17,7 @@ using System.Net.NetworkInformation;
 using System.Net;
 using System.Collections.Generic;
 using Rand = System.Random;
+using MurrayGrant.Terninger.PersistentState;
 
 namespace MurrayGrant.Terninger.Test.Slow
 {
@@ -114,8 +115,21 @@ namespace MurrayGrant.Terninger.Test.Slow
         [TestCategory("Network")]
         public void PingStatsSource_Network()
         {
-            FuzzEntropySource(10, new PingStatsSource(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, null, false, 0, null, 6, 8, null, null), "Entropy_" + nameof(PingStatsSource), DoNothing).GetAwaiter().GetResult();
+            var entropySource = new PingStatsSource(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, null, true, 1024, null, 6, 8, null, null);
+            FuzzEntropySource(10, entropySource, "Entropy_" + nameof(PingStatsSource) + "_Round1", DoNothing).GetAwaiter().GetResult();
+            var state = ((IPersistentStateSource)entropySource).GetCurrentState(PersistentEventType.Stopping);
+
+            entropySource = new PingStatsSource(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, null, true, 1024, null, 6, 8, null, null);
+            ((IPersistentStateSource)entropySource).Initialise(state.ToDictionary(x => x.Key));
+            FuzzEntropySource(10, entropySource, "Entropy_" + nameof(PingStatsSource) + "_Round2", DoNothing).GetAwaiter().GetResult();
+            state = ((IPersistentStateSource)entropySource).GetCurrentState(PersistentEventType.Stopping);
+
+            entropySource = new PingStatsSource(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null, null, true, 1024, null, 6, 8, null, null);
+            ((IPersistentStateSource)entropySource).Initialise(state.ToDictionary(x => x.Key));
+            FuzzEntropySource(10, entropySource, "Entropy_" + nameof(PingStatsSource) + "_Round3", DoNothing).GetAwaiter().GetResult();
+            state = ((IPersistentStateSource)entropySource).GetCurrentState(PersistentEventType.Stopping);
         }
+
         [TestMethod]
         [TestCategory("Network")]
         public async Task PingStatsSource_EnsureAllServers()
