@@ -39,6 +39,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
         public string SourcePath { get; private set; }
         private List<PingTarget> _Targets = new List<PingTarget>();
         public int TargetCount => _Targets.Count;
+        private bool _TargetsIsModifiedForPersistentState;
 
         private readonly bool _EnableTargetDiscovery;
         private readonly int _DesiredTargetCount;
@@ -177,7 +178,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
             if (!IsNetworkAvailable(10_000_000) && !_UseRandomSourceForUnitTest)
             {
-                Log.Info("No usable network interface is up yet. Will wait and try again later.");
+                Log.Info("No usable network interface. Will wait and try again later.");
                 return null;
             }
 
@@ -236,6 +237,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             RandomNumberExtensions.ShuffleInPlace(_Targets, _Rng);
             EnsureCountersAreValid();
+            _TargetsIsModifiedForPersistentState = true;
         }
 
         private async Task<(byte[] entropy, IReadOnlyCollection<PingTarget> forRemoval)> GatherEntropyFromTargets()
@@ -292,7 +294,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             while (targets.Count < targetCount)
             {
-                // TODO: IPv6 support
+                // TODO: IPv6 support based on https://www.iana.org/assignments/ipv6-unicast-address-assignments/ipv6-unicast-address-assignments.xhtml
                 // IPv4 address space is so full we can pick random bytes and its pretty likely we'll hit something.
                 _Rng.FillWithRandomBytes(bytes);
 
@@ -350,6 +352,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             {
                 Log.Trace("Adding discovered target {0} to target list.", target);
                 _Targets.Add(target);
+                _TargetsIsModifiedForPersistentState = true;
             }
 
             if (newTargets.Any())
@@ -365,7 +368,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             foreach (var t in failedTargets)
             {
                 if (_Targets.Remove(t))
+                {
                     Log.Trace("Removed target {0} after all ping attempts failed.", t);
+                    _TargetsIsModifiedForPersistentState = true;
+                }
             }
         }
 
@@ -374,7 +380,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             foreach (var t in discoveryTargets)
             {
                 if (_Targets.Remove(t))
+                {
                     Log.Trace("Removed target {0} after discovery was run.", t);
+                    _TargetsIsModifiedForPersistentState = true;
+                }
             }
         }
 
@@ -387,19 +396,39 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         #region IPersistentStateSource
 
-        // TODO: implement properly
-
-        bool IPersistentStateSource.HasUpdates => true;
+        bool IPersistentStateSource.HasUpdates => _TargetsIsModifiedForPersistentState;
 
         void IPersistentStateSource.Initialise(IDictionary<string, NamespacedPersistentItem> state)
         {
-            // TODO: implement.
+            if (state.TryGetValue("TargetCount", out var countItem)
+                && Int32.TryParse(countItem.ValueAsUtf8Text, out var count)
+                && count > 0)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    if (state.TryGetValue("Target." + i.ToString(CultureInfo.InvariantCulture), out var item)
+                        && PingTarget.TryParse(item.ValueAsUtf8Text, out var target))
+                    {
+                        _Targets.Add(target);
+                    }
+                }
+                Log.Debug("Loaded {0:N0} target(s) from persistent state.", _Targets.Count);
+            }
+
+            _TargetsIsModifiedForPersistentState = false;
         }
 
         IEnumerable<NamespacedPersistentItem> IPersistentStateSource.GetCurrentState(PersistentEventType eventType)
         {
-            // TODO: implement.
-            yield return NamespacedPersistentItem.CreateText("TargetCount", _Targets.Count.ToString(CultureInfo.InvariantCulture));
+            var targets = _Targets.ToList();
+
+            yield return NamespacedPersistentItem.CreateText("TargetCount", targets.Count.ToString(CultureInfo.InvariantCulture));
+            for (int i = 0; i < targets.Count; i++)
+            {
+                yield return NamespacedPersistentItem.CreateText("Target." + i.ToString(CultureInfo.InvariantCulture), targets[i].ToString());
+            }
+
+            _TargetsIsModifiedForPersistentState = false;
         }
 
         #endregion
@@ -496,27 +525,76 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             public static bool TryParse(string s, out PingTarget result)
             {
-                var parts = s.Split(SplitCharacter, StringSplitOptions.RemoveEmptyEntries);
-                IPAddress ip;
-                if (parts.Length == 1
-                    && IPAddress.TryParse(parts[0].Trim(), out ip))
+                if (string.IsNullOrEmpty(s))
                 {
-                    result = ForIpAddressOnly(ip);
+                    result = null;
+                    return false;
+                }
+                s = s.Trim();
+
+                // Cases:
+                //  1.2.3.4 (just IPv4 address)
+                //  1.2.3.4:80 (IPv4 + port)
+                //  1.2.3.4:ICMP (IPv4 + ICMP)
+                //  2001::1 (just IPV6 address)
+                //  [2001::1] (just IPV6 address with brackets)
+                //  [2001::1]:80 (IPV6 address + port)
+                //  [2001::1]:ICMP (IPV6 address + ICMP)
+
+                // Start by finding the address part, and port / ICMP part.
+                var isIpv4 = s.IndexOf('.') > 0;
+                var isIpv6 = s.IndexOf('.') < 0;
+                var indexOfLastColon = s.LastIndexOf(':');
+
+                var addressPart = "";
+                var portOrIcmpPart = "";
+                if (isIpv4 && indexOfLastColon <= 0)
+                {
+                    addressPart = s;
+                }
+                else if (isIpv4 && indexOfLastColon > 0)
+                {
+                    addressPart = s.Substring(0, indexOfLastColon);
+                    portOrIcmpPart = s.Substring(indexOfLastColon + 1);
+                }
+                else if (isIpv6)
+                {
+                    var indexOfOpenBracket = s.IndexOf('[');
+                    var indexOfCloseBracket = s.IndexOf(']');
+                    var hasOpenAndCloseBracketsForIpv6 = indexOfOpenBracket >= 0 && indexOfCloseBracket > 0;
+                    var lastColonIsAfterCloseBracket = indexOfLastColon > indexOfCloseBracket;
+
+                    if (!hasOpenAndCloseBracketsForIpv6)
+                    {
+                        addressPart = s;
+                    }
+                    else // hasOpenAndCloseBracketsForIpv6
+                    {
+                        addressPart = s.Substring(indexOfOpenBracket + 1, indexOfCloseBracket - 1 - indexOfOpenBracket);
+                        if (lastColonIsAfterCloseBracket)
+                            portOrIcmpPart = s.Substring(indexOfLastColon + 1);
+                    }
+                }
+
+                // Based on if there is a port or ICMP or not, return the correct object type.
+                if (!String.IsNullOrEmpty(addressPart) && String.IsNullOrEmpty(portOrIcmpPart)
+                    && IPAddress.TryParse(addressPart, out var justIp))
+                {
+                    result = ForIpAddressOnly(justIp);
                     return true;
                 }
-                else if (parts.Length == 2
-                    && IPAddress.TryParse(parts[0].Trim(), out ip)
-                    && String.Equals(parts[1], "ICMP", StringComparison.InvariantCultureIgnoreCase))
+                else if (!String.IsNullOrEmpty(addressPart) && portOrIcmpPart.Equals("ICMP", StringComparison.InvariantCultureIgnoreCase)
+                    && IPAddress.TryParse(addressPart, out var ipForIcmp))
                 {
-                    result = ForIcmpPing(ip);
+                    result = ForIcmpPing(ipForIcmp);
                     return true;
                 }
-                else if (parts.Length == 2
-                    && IPAddress.TryParse(parts[0].Trim(), out ip)
-                    && ushort.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var port)
+                else if (!String.IsNullOrEmpty(addressPart) && !String.IsNullOrEmpty(portOrIcmpPart)
+                    && IPAddress.TryParse(addressPart, out var ipForPort)
+                    && ushort.TryParse(portOrIcmpPart, NumberStyles.Integer, CultureInfo.InvariantCulture, out var port)
                     && port > 0)
                 {
-                    result = ForTcpPing(ip, port);
+                    result = ForTcpPing(ipForPort, port);
                     return true;
                 }
                 else
