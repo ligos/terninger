@@ -183,11 +183,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             // Gather entropy!
             byte[] result = null;
-            IEnumerable<IpAddressTarget> forDiscovery = Enumerable.Empty<IpAddressTarget>();
             IEnumerable<PingTarget> forRemoval = Enumerable.Empty<PingTarget>();
             if (_Targets.Count > 0)
             {
-                (result, forDiscovery, forRemoval) = await GatherEntropyFromTargets();
+                (result, forRemoval) = await GatherEntropyFromTargets();
             }
             if (_UseRandomSourceForUnitTest)
                 // Discovery involves real targets; sorry unit tests :-(
@@ -196,10 +195,12 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             // Anything which failed all ping attempts will be removed.
             if (forRemoval.Any())
             {
-                RemoveTargets(forRemoval, Enumerable.Empty<PingTarget>());
+                RemoveFailedTargets(forRemoval);
             }
 
             // Anything which was just an IP address should run discovery to convert into an ICMP / TCP target.
+            // Collect a few IP targets, which will be sent to discovery.
+            var forDiscovery = _Targets.OfType<IpAddressTarget>().Take(_TargetsPerSample).ToList();
             if (forDiscovery.Any())
             {
                 await DiscoverTargets(forDiscovery);
@@ -237,7 +238,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             EnsureCountersAreValid();
         }
 
-        private async Task<(byte[] entropy, IReadOnlyCollection<IpAddressTarget> forDiscovery, IReadOnlyCollection<PingTarget> forRemoval)> GatherEntropyFromTargets()
+        private async Task<(byte[] entropy, IReadOnlyCollection<PingTarget> forRemoval)> GatherEntropyFromTargets()
         {
             // Do x pings to y targets in parallel.
             // Time each of them, use the high precision part as the result.
@@ -275,13 +276,10 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 }
             }
 
-            // Collect any IP targets, which will be sent to discovery.
-            var forDiscovery = targetsToSample.Where(x => x.Target is IpAddressTarget).Select(x => x.Target).Cast<IpAddressTarget>().ToList();
-
             // Collect any other targets which failed every attempt, which will be removed from the target list.
             var forRemoval = targetsToSample.Where(x => x.Target is not IpAddressTarget && x.Failures == _PingsPerSample).Select(x => x.Target).ToList();
 
-            return (result.ToArray(), forDiscovery, forRemoval);
+            return (result.ToArray(), forRemoval);
         }
 
         private Task DiscoverTargets(int targetCount)
@@ -328,7 +326,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 return;
 
             Log.Debug("Running discovery pings for {0:N0} IP addresses. Before discovery, there are {1:N0} targets.", targets.Count(), _Targets.Count);
-            Log.Trace("Running discovery pings for: {0}", String.Join(",", targets.Select(x => x.IPAddress)));
+            Log.Trace("Running discovery pings for: {0}", String.Join(", ", targets.Select(x => x.IPAddress)));
 
             var allPossibleTargets = targets.Select(x => PingTarget.ForIcmpPing(x.IPAddress)).Cast<PingTarget>();
             foreach (var port in _TcpPorts)
@@ -341,7 +339,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
             var toAdd = targetsToSample.Where(x => x.Failures < 3).Select(x => x.Target).ToList();
             AddNewTargets(toAdd);
-            RemoveTargets(Enumerable.Empty<PingTarget>(), targets);
+            RemoveDiscoveryTargets(targets);
 
             Log.Debug("After discovery, there are {0:N0} targets.", _Targets.Count);
         }
@@ -362,13 +360,17 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             }
         }
 
-        private void RemoveTargets(IEnumerable<PingTarget> failedTargets, IEnumerable<PingTarget> discoveryTargets)
+        private void RemoveFailedTargets(IEnumerable<PingTarget> failedTargets)
         {
             foreach (var t in failedTargets)
             {
                 if (_Targets.Remove(t))
                     Log.Trace("Removed target {0} after all ping attempts failed.", t);
             }
+        }
+
+        private void RemoveDiscoveryTargets(IEnumerable<PingTarget> discoveryTargets)
+        {
             foreach (var t in discoveryTargets)
             {
                 if (_Targets.Remove(t))
@@ -378,6 +380,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
 
         private void EnsureCountersAreValid()
         {
+            // Assume this is run because of adding and removing targets, so we've probably shuffled the target list recently.
             if (_NextTarget > _Targets.Count)
                 _NextTarget = 0;
         }
