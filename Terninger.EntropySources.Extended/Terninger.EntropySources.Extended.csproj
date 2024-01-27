@@ -6,12 +6,15 @@
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2022</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.3.0</Version>
+    <Version>0.5.0-beta1</Version>
     <Description>Additional local entropy sources based on .NET Standard 2.0 APIs. Sources are runtime and machine architecture portable.
 
 See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
     </Description>
-    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageReleaseNotes>
+		0.5.0
+		- Update Dependencies for Terninger.Random.Pooled
+	</PackageReleaseNotes>
     <RootNamespace>MurrayGrant.Terninger</RootNamespace>
     <LangVersion>default</LangVersion>
     <NoWarn>1701;1702;1591</NoWarn>
@@ -31,9 +34,9 @@ See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of n
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger" Version="0.3.0" />
+    <PackageReference Include="Terninger" Version="0.5.0-beta1" />
     <PackageReference Include="Terninger.Random.Cypher" Version="0.3.0" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.3.0" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.5.0-beta1" />
   </ItemGroup>
 
 </Project>

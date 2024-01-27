@@ -6,14 +6,17 @@
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2024</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.5.0</Version>
+    <Version>0.5.0-beta1</Version>
     <Description>Active network based entropy sources for Terninger including ping, external http sites and other random sources (via http).
 
 See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
     </Description>
     <PackageReleaseNotes>
      0.5.0
-     - Add net80 target
+     - IMPORTANT: configuration changes are required for PingStatsSource.
+     - Add net80 target.
+     - Enhance PingStatsSource to save working targets to persistent state.
+     - Enhance PingStatsSource to discover new targets at random.
      0.4.0
      - Removed HotBits network source due to retirement of true random source.
     </PackageReleaseNotes>
@@ -55,10 +58,10 @@ See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of n
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger" Version="0.3.0" />
-    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.3.0" />
+    <PackageReference Include="Terninger" Version="0.5.0-beta1" />
+    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.5.0-beta1" />
     <PackageReference Include="Terninger.Random.Cypher" Version="0.3.0" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.3.0" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.5.0-beta1" />
   </ItemGroup>
   
 </Project>

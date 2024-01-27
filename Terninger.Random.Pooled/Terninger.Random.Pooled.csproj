@@ -4,9 +4,9 @@
     <TargetFrameworks>netstandard1.3;netstandard2.0;net452</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
-    <Copyright>Copyright © Murray Grant 2017-2022</Copyright>
+    <Copyright>Copyright © Murray Grant 2017-2024</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.3.0</Version>
+    <Version>0.5.0-beta1</Version>
     <Description>Implementation of the Fortuna CPRNG, with various enhancements. 
     
 To get started, see the MurrayGrant.Terninger.Random.PooledEntropyCprngGenerator class.
@@ -14,7 +14,10 @@ To get started, see the MurrayGrant.Terninger.Random.PooledEntropyCprngGenerator
 Or use the 'Terninger' nuget package.
     
 See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
-    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageReleaseNotes>
+        0.5.0
+        - Add support for Entropy Sources to use Persistent State.
+    </PackageReleaseNotes>
     <RootNamespace>MurrayGrant.Terninger</RootNamespace>
     <LangVersion>default</LangVersion>
     <NoWarn>1701;1702;1591</NoWarn>
