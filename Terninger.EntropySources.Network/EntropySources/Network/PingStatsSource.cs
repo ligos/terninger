@@ -194,10 +194,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 return result;
 
             // Anything which failed all ping attempts will be removed.
-            if (forRemoval.Any())
-            {
-                RemoveFailedTargets(forRemoval);
-            }
+            RemoveFailedTargets(forRemoval);
 
             // Anything which was just an IP address should run discovery to convert into an ICMP / TCP target.
             // Collect a few IP targets, which will be sent to discovery.
@@ -207,7 +204,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                 await DiscoverTargets(forDiscovery);
             }
 
-            // Finally, if nothing needed to be discovered from the main ping run, try to discover new targets up until the desired count.
+            // Finally, if all the IP only targets are discovered already, try to discover new targets up until the desired count.
             if (!forDiscovery.Any() && _EnableTargetDiscovery && _Targets.Count < _DesiredTargetCount)
             {
                 await DiscoverTargets(_TargetsPerSample);
