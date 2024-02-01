@@ -4,9 +4,9 @@
     <TargetFrameworks>netstandard2.0;net452</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
-    <Copyright>Copyright © Murray Grant 2017-2022</Copyright>
+    <Copyright>Copyright © Murray Grant 2017-2024</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.5.0-beta1</Version>
+    <Version>0.5.0</Version>
     <Description>Additional local entropy sources based on .NET Standard 2.0 APIs. Sources are runtime and machine architecture portable.
 
 See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.
@@ -34,9 +34,9 @@ See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of n
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger" Version="0.5.0-beta1" />
+    <PackageReference Include="Terninger" Version="0.5.0" />
     <PackageReference Include="Terninger.Random.Cypher" Version="0.3.0" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.5.0-beta1" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.5.0" />
   </ItemGroup>
 
 </Project>

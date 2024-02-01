@@ -130,10 +130,17 @@ Terninger has extension methods to produce `[U]Int32`, `[U]Int64`, `Boolean`, `S
 Terninger has an `IRandomNumberGenerator` interface, which lets you use any random number generator in c# in the same way.
 Any generator which can produce a `byte[]` can be easily adapted.
 
-TODO - other features
 
 ### Changes ###
 
+**0.5.0**:
+
+* **IMPORTANT**: configuration changes are required for PingStatsSource. Please check your configuration.
+* Add net80 target.
+* Enhance PingStatsSource to save working targets to persistent state.
+* Enhance PingStatsSource to discover new targets at random.
+* Add support for Entropy Sources to use Persistent State in PooledEntropyCprngGenerator.
+ 
 **0.4.0**:
 
 * Removed [HotBits](https://www.fourmilab.ch/hotbits/) network source due to [retirement](https://www.fourmilab.ch/hotbits/retired.html) of true random source.

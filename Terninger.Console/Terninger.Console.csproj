@@ -6,7 +6,7 @@
     <Product>Terninger</Product>
     <Copyright>Copyright © Murray Grant 2017-2024</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.5.0-beta1</Version>
+    <Version>0.5.0</Version>
     <Description>Console app to use Terninger from all .NET command line environments.
 
 To get started, see the MurrayGrant.Terninger.RandomGenerator class.
@@ -46,10 +46,10 @@ See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of n
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
     <PackageReference Include="Terninger.Random.Cypher" Version="0.3.0" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.5.0-beta1" />
-    <PackageReference Include="Terninger" Version="0.5.0-beta1" />
-    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.5.0-beta1" />
-    <PackageReference Include="Terninger.EntropySources.Network" Version="0.5.0-beta1" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.5.0" />
+    <PackageReference Include="Terninger" Version="0.5.0" />
+    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.5.0" />
+    <PackageReference Include="Terninger.EntropySources.Network" Version="0.5.0" />
   </ItemGroup>
     
   <ItemGroup>
