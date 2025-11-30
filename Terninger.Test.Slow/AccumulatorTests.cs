@@ -147,11 +147,11 @@ namespace MurrayGrant.Terninger.Test.Slow
                     var availableEntropy = (long)a.AvailableEntropyBytesSinceLastSeed;
                     var seed = a.NextSeed();
                     sw.WriteLine($"{i+1:00000}:{availableEntropy:000000}:{a.PoolCountUsedInLastSeedGeneration:00}:{Convert.ToString((long)a.LinearPoolsUsedInLastSeedGeneration, 2),32}:{Convert.ToString((long)a.RandomPoolsUsedInLastSeedGeneration, 2),32}");
-                    Assert.IsTrue(availableEntropy >= a.TotalPoolCount * _Incrementing16Bytes.Length);      // Not every pool is used, so we may have extra bytes here. 
-                    Assert.IsTrue(seed.Length > 0);
+                    Assert.IsGreaterThanOrEqualTo(a.TotalPoolCount * _Incrementing16Bytes.Length, availableEntropy);      // Not every pool is used, so we may have extra bytes here. 
+                    Assert.IsNotEmpty(seed);
                 }
             }
-            Assert.AreEqual(a.TotalReseedEvents, 10000);
+            Assert.AreEqual(10000, a.TotalReseedEvents);
         }
         [TestMethod]
         public void Accumulator_ListRandomPoolsUsedIn1000SeedEvents()
@@ -167,11 +167,11 @@ namespace MurrayGrant.Terninger.Test.Slow
                     var availableEntropy = (long)a.AvailableEntropyBytesSinceLastSeed;
                     var seed = a.NextSeed();
                     sw.WriteLine($"{i + 1:00000}:{availableEntropy:000000}:{a.PoolCountUsedInLastSeedGeneration:00}:{Convert.ToString((long)a.LinearPoolsUsedInLastSeedGeneration, 2),32}:{Convert.ToString((long)a.RandomPoolsUsedInLastSeedGeneration, 2),32}");
-                    Assert.IsTrue(availableEntropy >= a.TotalPoolCount * _Incrementing16Bytes.Length);      // Not every pool is used, so we may have extra bytes here. 
-                    Assert.IsTrue(seed.Length > 0);
+                    Assert.IsGreaterThanOrEqualTo(a.TotalPoolCount * _Incrementing16Bytes.Length, availableEntropy);      // Not every pool is used, so we may have extra bytes here. 
+                    Assert.IsNotEmpty(seed);
                 }
             }
-            Assert.AreEqual(a.TotalReseedEvents, 10000);
+            Assert.AreEqual(10000, a.TotalReseedEvents);
         }
         [TestMethod]
         public void Accumulator_ListLinearAndRandomPoolsUsedIn1000SeedEvents()
@@ -187,11 +187,11 @@ namespace MurrayGrant.Terninger.Test.Slow
                     var availableEntropy = (long)a.AvailableEntropyBytesSinceLastSeed;
                     var seed = a.NextSeed();
                     sw.WriteLine($"{i + 1:00000}:{availableEntropy:000000}:{a.PoolCountUsedInLastSeedGeneration:00}:{Convert.ToString((long)a.LinearPoolsUsedInLastSeedGeneration, 2),32}:{Convert.ToString((long)a.RandomPoolsUsedInLastSeedGeneration, 2),32}");
-                    Assert.IsTrue(availableEntropy >= a.TotalPoolCount * _Incrementing16Bytes.Length);      // Not every pool is used, so we may have extra bytes here. 
-                    Assert.IsTrue(seed.Length > 0);
+                    Assert.IsGreaterThanOrEqualTo(a.TotalPoolCount * _Incrementing16Bytes.Length, availableEntropy);      // Not every pool is used, so we may have extra bytes here. 
+                    Assert.IsNotEmpty(seed);
                 }
             }
-            Assert.AreEqual(a.TotalReseedEvents, 10000);
+            Assert.AreEqual(10000, a.TotalReseedEvents);
         }
         [TestMethod]
         public void Accumulator_ListDefaultLinearAndRandomPoolsUsedIn1000SeedEvents()
@@ -208,11 +208,11 @@ namespace MurrayGrant.Terninger.Test.Slow
                     var availableEntropy = (long)a.AvailableEntropyBytesSinceLastSeed;
                     var seed = a.NextSeed();
                     sw.WriteLine($"{i + 1:00000}:{availableEntropy:000000}:{a.PoolCountUsedInLastSeedGeneration:00}:{Convert.ToString((long)a.LinearPoolsUsedInLastSeedGeneration, 2),32}:{Convert.ToString((long)a.RandomPoolsUsedInLastSeedGeneration, 2),32}");
-                    Assert.IsTrue(availableEntropy >= a.TotalPoolCount * _Incrementing16Bytes.Length);      // Not every pool is used, so we may have extra bytes here. 
-                    Assert.IsTrue(seed.Length > 0);
+                    Assert.IsGreaterThanOrEqualTo(a.TotalPoolCount * _Incrementing16Bytes.Length, availableEntropy);      // Not every pool is used, so we may have extra bytes here. 
+                    Assert.IsNotEmpty(seed);
                 }
             }
-            Assert.AreEqual(a.TotalReseedEvents, 10000);
+            Assert.AreEqual(10000, a.TotalReseedEvents);
         }
 
 

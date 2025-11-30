@@ -25,8 +25,8 @@ namespace MurrayGrant.Terninger.Test
             crng.FillWithRandomBytes(buffer);
 
             Assert.IsFalse(buffer.All(b => b == 0));
-            Assert.AreEqual(crng.BytesGenerated, buffer.Length + (crng.BlockSizeBytes * 2));
-            Assert.AreEqual(crng.BytesRequested, buffer.Length);
+            Assert.AreEqual(buffer.Length + (crng.BlockSizeBytes * 2), crng.BytesGenerated);
+            Assert.AreEqual(buffer.Length, crng.BytesRequested);
         }
         [TestMethod]
         public void GenerateSingleBlockAesCsp()
@@ -36,8 +36,8 @@ namespace MurrayGrant.Terninger.Test
             crng.FillWithRandomBytes(buffer);
 
             Assert.IsFalse(buffer.All(b => b == 0));
-            Assert.AreEqual(crng.BytesGenerated, buffer.Length + (crng.BlockSizeBytes * 2));
-            Assert.AreEqual(crng.BytesRequested, buffer.Length);
+            Assert.AreEqual(buffer.Length + (crng.BlockSizeBytes * 2), crng.BytesGenerated);
+            Assert.AreEqual(buffer.Length, crng.BytesRequested);
         }
 
 

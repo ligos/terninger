@@ -40,7 +40,7 @@ namespace MurrayGrant.Terninger.Test
                 else
                     bytesDifferent = bytesDifferent + 1;
             }
-            Assert.IsTrue(checkedLength - bytesDifferent <= 32);
+            Assert.IsLessThanOrEqualTo(32, checkedLength - bytesDifferent);
         }
     }
 }

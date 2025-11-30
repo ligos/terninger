@@ -27,7 +27,7 @@ namespace MurrayGrant.Terninger.Test
         public void CheckZeroToString()
         {
             var zero128 = BigMathInt128.Zero;
-            Assert.IsTrue(zero128.ToString() == "0");
+            Assert.AreEqual("0", zero128.ToString());
         }
 
         public void ToStringFor32k()
@@ -35,7 +35,7 @@ namespace MurrayGrant.Terninger.Test
             var num = BigMathInt128.Zero;
             for (int i = 0; i < Int16.MaxValue + 10; i++)
             {
-                Assert.IsTrue(num.ToString() == i.ToString());
+                Assert.AreEqual(i.ToString(), num.ToString());
                 num = num + 1;
             }
         }

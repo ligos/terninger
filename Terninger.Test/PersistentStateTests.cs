@@ -333,7 +333,7 @@ SomeNamespace,aKey,Utf8Text,value";
         {
             var content = new byte[(int)s.Length];
             s.Seek(0L, SeekOrigin.Begin);
-            await s.ReadAsync(content, 0, content.Length);
+            _ = await s.ReadAsync(content, 0, content.Length);
             var text = Encoding.UTF8.GetString(content);
             return text
                     .Replace("\t", ",")

@@ -21,24 +21,24 @@ namespace MurrayGrant.Terninger.Test
         {
             var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             // Creating a generator should not actually generate any bytes.
-            Assert.AreEqual(crng.BytesGenerated, 0L);
-            Assert.AreEqual(crng.BytesRequested, 0L);
+            Assert.AreEqual(0L, crng.BytesGenerated);
+            Assert.AreEqual(0L, crng.BytesRequested);
         }
         [TestMethod]
         public void ConstructAesManagedCrng()
         {
             var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256Managed(), SHA256.Create(), new CypherCounter(16));
             // Creating a generator should not actually generate any bytes.
-            Assert.AreEqual(crng.BytesGenerated, 0L);
-            Assert.AreEqual(crng.BytesRequested, 0L);
+            Assert.AreEqual(0L, crng.BytesGenerated);
+            Assert.AreEqual(0L, crng.BytesRequested);
         }
         [TestMethod]
         public void ConstructAesCspCrng()
         {
             var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes, NativeCryptoPrimitives.GetAes256Csp(), SHA256.Create(), new CypherCounter(16));
             // Creating a generator should not actually generate any bytes.
-            Assert.AreEqual(crng.BytesGenerated, 0L);
-            Assert.AreEqual(crng.BytesRequested, 0L);
+            Assert.AreEqual(0L, crng.BytesGenerated);
+            Assert.AreEqual(0L, crng.BytesRequested);
         }
 
         [TestMethod]
@@ -49,8 +49,8 @@ namespace MurrayGrant.Terninger.Test
             crng.FillWithRandomBytes(buffer);
 
             Assert.IsFalse(buffer.All(b => b == 0));
-            Assert.AreEqual(crng.BytesGenerated, buffer.Length + 32);
-            Assert.AreEqual(crng.BytesRequested, buffer.Length);
+            Assert.AreEqual(buffer.Length + 32, crng.BytesGenerated);
+            Assert.AreEqual(buffer.Length, crng.BytesRequested);
         }
 
         [TestMethod]
@@ -61,8 +61,8 @@ namespace MurrayGrant.Terninger.Test
             crng.FillWithRandomBytes(buffer);
 
             Assert.IsFalse(buffer.All(b => b == 0));
-            Assert.AreEqual(crng.BytesGenerated, buffer.Length + 32);
-            Assert.AreEqual(crng.BytesRequested, buffer.Length);
+            Assert.AreEqual(buffer.Length + 32, crng.BytesGenerated);
+            Assert.AreEqual(buffer.Length, crng.BytesRequested);
         }
 
         [TestMethod]
@@ -77,8 +77,8 @@ namespace MurrayGrant.Terninger.Test
             Assert.IsFalse(buffer1.All(b => b == 0));
             Assert.IsFalse(buffer2.All(b => b == 0));
             Assert.IsFalse(buffer1.SequenceEqual(buffer2));
-            Assert.AreEqual(crng.BytesGenerated, buffer1.Length + buffer2.Length + 64);
-            Assert.AreEqual(crng.BytesRequested, buffer1.Length + buffer2.Length);
+            Assert.AreEqual(buffer1.Length + buffer2.Length + 64, crng.BytesGenerated);
+            Assert.AreEqual(buffer1.Length + buffer2.Length, crng.BytesRequested);
         }
 
         [TestMethod]
@@ -113,8 +113,8 @@ namespace MurrayGrant.Terninger.Test
             var crng = CypherBasedPrngGenerator.Create(_ZeroKey32Bytes, outputBufferSize: 0);
             var result = crng.GetRandomBytes(1);
 
-            Assert.AreEqual(crng.BytesGenerated, crng.BlockSizeBytes + 32);
-            Assert.AreEqual(crng.BytesRequested, result.Length);
+            Assert.AreEqual(crng.BlockSizeBytes + 32, crng.BytesGenerated);
+            Assert.AreEqual(result.Length, crng.BytesRequested);
         }
         [TestMethod]
         public void GenerateFourBytes()
@@ -122,8 +122,8 @@ namespace MurrayGrant.Terninger.Test
             var crng = CypherBasedPrngGenerator.Create(_ZeroKey32Bytes, outputBufferSize: 0);
             var result = crng.GetRandomBytes(4);
 
-            Assert.AreEqual(crng.BytesGenerated, crng.BlockSizeBytes + 32);
-            Assert.AreEqual(crng.BytesRequested, result.Length);
+            Assert.AreEqual(crng.BlockSizeBytes + 32, crng.BytesGenerated);
+            Assert.AreEqual(result.Length, crng.BytesRequested);
         }
 
         [TestMethod]
@@ -132,8 +132,8 @@ namespace MurrayGrant.Terninger.Test
             var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             var result = crng.GetRandomBytes(crng.MaxRequestBytes);
 
-            Assert.AreEqual(crng.BytesGenerated, crng.MaxRequestBytes + 32);
-            Assert.AreEqual(crng.BytesRequested, result.Length);
+            Assert.AreEqual(crng.MaxRequestBytes + 32, crng.BytesGenerated);
+            Assert.AreEqual(result.Length, crng.BytesRequested);
         }
 
 
@@ -143,8 +143,8 @@ namespace MurrayGrant.Terninger.Test
             var crng = new CypherBasedPrngGenerator(_ZeroKey32Bytes);
             var result = crng.GetRandomBytes(crng.MaxRequestBytes * 2);
 
-            Assert.AreEqual(crng.BytesGenerated, result.Length + 64);
-            Assert.AreEqual(crng.BytesRequested, result.Length);
+            Assert.AreEqual(result.Length + 64, crng.BytesGenerated);
+            Assert.AreEqual(result.Length, crng.BytesRequested);
         }
 
         [TestMethod]
@@ -154,18 +154,18 @@ namespace MurrayGrant.Terninger.Test
             var preReseedResult = crng.GetRandomBytes(4);
 
             Assert.IsFalse(preReseedResult.All(b => b == 0));
-            Assert.AreEqual(crng.BytesGenerated, 1024);
-            Assert.AreEqual(crng.BytesRequested, preReseedResult.Length);
+            Assert.AreEqual(1024, crng.BytesGenerated);
+            Assert.AreEqual(preReseedResult.Length, crng.BytesRequested);
 
             crng.Reseed(_IncrementedKey32Bytes);
-            Assert.AreEqual(crng.BytesGenerated, 2048);
-            Assert.AreEqual(crng.BytesRequested, preReseedResult.Length);
+            Assert.AreEqual(2048, crng.BytesGenerated);
+            Assert.AreEqual(preReseedResult.Length, crng.BytesRequested);
 
             var postReseedResult = crng.GetRandomBytes(4);
             Assert.IsFalse(postReseedResult.All(b => b == 0));
             Assert.IsFalse(preReseedResult.SequenceEqual(postReseedResult));
-            Assert.AreEqual(crng.BytesGenerated, 2048);
-            Assert.AreEqual(crng.BytesRequested, preReseedResult.Length + postReseedResult.Length);
+            Assert.AreEqual(2048, crng.BytesGenerated);
+            Assert.AreEqual(preReseedResult.Length + postReseedResult.Length, crng.BytesRequested);
         }
 
         [TestMethod]

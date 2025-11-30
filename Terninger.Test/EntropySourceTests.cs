@@ -37,8 +37,8 @@ namespace MurrayGrant.Terninger.Test
             var result2 = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
             Assert.IsFalse(result1.All(b => b == 0));
             Assert.IsFalse(result2.All(b => b == 0));
-            Assert.AreEqual(result1.ToHexString(), "0100000000000000");
-            Assert.AreEqual(result2.ToHexString(), "0200000000000000");
+            Assert.AreEqual("0100000000000000", result1.ToHexString());
+            Assert.AreEqual("0200000000000000", result2.ToHexString());
         }
 
         [TestMethod]
@@ -100,7 +100,7 @@ namespace MurrayGrant.Terninger.Test
         {
             var source = new CryptoRandomSource();
             var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
-            Assert.AreEqual(result.Length, 16);
+            Assert.HasCount(16, result);
             Assert.IsFalse(result.All(b => b == 0));
         }
 
@@ -109,7 +109,7 @@ namespace MurrayGrant.Terninger.Test
         {
             var source = new CryptoRandomSource(32);
             var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
-            Assert.AreEqual(result.Length, 32);
+            Assert.HasCount(32, result);
             Assert.IsFalse(result.All(b => b == 0));
         }
 
@@ -118,30 +118,30 @@ namespace MurrayGrant.Terninger.Test
         public void ProcessStatsSource_ConfigPeriod()
         {
             var source = new ProcessStatsSource(TimeSpan.FromMinutes(100));
-            Assert.AreEqual(source.PeriodNormalPriority.TotalMinutes, 100.0);
+            Assert.AreEqual(100.0, source.PeriodNormalPriority.TotalMinutes);
         }
         [TestMethod]
         public void ProcessStatsSource_MaxStatCount()
         {
             var source = new ProcessStatsSource(itemsPerResultChunk: 10000);
-            Assert.AreEqual(source.StatsPerChunk, 10000);
+            Assert.AreEqual(10000, source.StatsPerChunk);
             var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
-            Assert.AreEqual(result.Length, 32);
+            Assert.HasCount(32, result);
         }
 
         [TestMethod]
         public void NetworkStatsSource_ConfigPeriod()
         {
             var source = new NetworkStatsSource(TimeSpan.FromMinutes(100));
-            Assert.AreEqual(source.PeriodNormalPriority.TotalMinutes, 100.0);
+            Assert.AreEqual(100.0, source.PeriodNormalPriority.TotalMinutes);
         }
         [TestMethod]
         public void NetworkStatsSource_MaxStatCount()
         {
             var source = new NetworkStatsSource(itemsPerResultChunk: 10000);
-            Assert.AreEqual(source.StatsPerChunk, 10000);
+            Assert.AreEqual(10000, source.StatsPerChunk);
             var result = source.GetEntropyAsync(EntropyPriority.Normal).GetAwaiter().GetResult();
-            Assert.AreEqual(result.Length, 32);
+            Assert.HasCount(32, result);
         }
 
 
@@ -154,25 +154,25 @@ namespace MurrayGrant.Terninger.Test
         public void PingStatsSource_ConfigPeriod()
         {
             var source = new PingStatsSource(TimeSpan.FromMinutes(100));
-            Assert.AreEqual(source.PeriodNormalPriority.TotalMinutes, 100.0);
+            Assert.AreEqual(100.0, source.PeriodNormalPriority.TotalMinutes);
         }
         [TestMethod]
         public void PingStatsSource_ServersPerSample()
         {
             var source = new PingStatsSource(targetsPerSample: 20);
-            Assert.AreEqual(source.TargetsPerSample, 20);
+            Assert.AreEqual(20, source.TargetsPerSample);
         }
         [TestMethod]
         public void PingStatsSource_PingsPerSample()
         {
             var source = new PingStatsSource(pingsPerSample: 1000);
-            Assert.AreEqual(source.PingsPerSample, 1000);
+            Assert.AreEqual(1000, source.PingsPerSample);
         }
         [TestMethod]
         public void PingStatsSource_SourcePath()
         {
             var source = new PingStatsSource(sourcePath: "path.txt");
-            Assert.AreEqual(source.SourcePath, "path.txt");
+            Assert.AreEqual("path.txt", source.SourcePath);
         }
         [TestMethod]
         public void PingStatsSource_Servers()
@@ -183,7 +183,7 @@ namespace MurrayGrant.Terninger.Test
                 PingStatsSource.PingTarget.ForIcmpPing(IPAddress.Parse("1.1.1.1")),
                 PingStatsSource.PingTarget.ForTcpPing(IPAddress.Parse("9.9.9.9"), 80),
             });
-            Assert.AreEqual(source.TargetCount, 3);
+            Assert.AreEqual(3, source.TargetCount);
         }
 
         [TestMethod]
@@ -195,26 +195,26 @@ namespace MurrayGrant.Terninger.Test
         public void ExternalWebContentSource_ConfigPeriod()
         {
             var source = new ExternalWebContentSource(periodNormalPriority: TimeSpan.FromMinutes(100));
-            Assert.AreEqual(source.PeriodNormalPriority.TotalMinutes, 100.0);
+            Assert.AreEqual(100.0, source.PeriodNormalPriority.TotalMinutes);
         }
         [TestMethod]
         public void ExternalWebContentSource_UrlsPerSample()
         {
             var source = new ExternalWebContentSource(urlsPerSample: 20);
-            Assert.AreEqual(source.UrlsPerSample, 20);
+            Assert.AreEqual(20, source.UrlsPerSample);
         }
         [TestMethod]
         public void ExternalWebContentSource_SourcePath()
         {
             var source = new ExternalWebContentSource(sourcePath: "urls.txt");
-            Assert.AreEqual(source.SourcePath, "urls.txt");
-            Assert.AreEqual(source.SourceCount, 0);
+            Assert.AreEqual("urls.txt", source.SourcePath);
+            Assert.AreEqual(0, source.SourceCount);
         }
         [TestMethod]
         public void ExternalWebContentSource_Sources()
         {
             var source = new ExternalWebContentSource(sources: new[] { new Uri("http://server.com"), new Uri("https://sample.org") });
-            Assert.AreEqual(source.SourceCount, 2);
+            Assert.AreEqual(2, source.SourceCount);
         }
 
         [TestMethod]

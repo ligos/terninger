@@ -29,8 +29,8 @@ namespace MurrayGrant.Terninger.Test
         public void Pool_NoEntropyIsZero()
         {
             var p = new EntropyPool();
-            Assert.AreEqual(p.TotalEntropyBytes, 0);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 0);
+            Assert.AreEqual(0, p.TotalEntropyBytes);
+            Assert.AreEqual(0, p.EntropyBytesSinceLastDigest);
         }
         [TestMethod]
         public void Pool_NoEntropyIsSameDigest()
@@ -44,8 +44,8 @@ namespace MurrayGrant.Terninger.Test
         {
             var p = new EntropyPool();
             p.Add(EventFromBytes(_Zero8Bytes));
-            Assert.AreEqual(p.TotalEntropyBytes, 8);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 8);
+            Assert.AreEqual(8, p.TotalEntropyBytes);
+            Assert.AreEqual(8, p.EntropyBytesSinceLastDigest);
         }
         [TestMethod]
         public void Pool_OneEventDigestIsNonZero()
@@ -60,8 +60,8 @@ namespace MurrayGrant.Terninger.Test
             var p = new EntropyPool();
             p.Add(EventFromBytes(_Zero8Bytes));
             p.Add(EventFromBytes(_Zero8Bytes));
-            Assert.AreEqual(p.TotalEntropyBytes, 16);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 16);
+            Assert.AreEqual(16, p.TotalEntropyBytes);
+            Assert.AreEqual(16, p.EntropyBytesSinceLastDigest);
         }
 
         [TestMethod]
@@ -69,18 +69,18 @@ namespace MurrayGrant.Terninger.Test
         {
             var p = new EntropyPool();
             p.Add(EventFromBytes(_Zero8Bytes));
-            Assert.AreEqual(p.TotalEntropyBytes, 8);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 8);
+            Assert.AreEqual(8, p.TotalEntropyBytes);
+            Assert.AreEqual(8, p.EntropyBytesSinceLastDigest);
             p.GetDigest();
-            Assert.AreEqual(p.TotalEntropyBytes, 8);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 0);
+            Assert.AreEqual(8, p.TotalEntropyBytes);
+            Assert.AreEqual(0, p.EntropyBytesSinceLastDigest);
 
             p.Add(EventFromBytes(_Zero16Bytes));
-            Assert.AreEqual(p.TotalEntropyBytes, 24);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 16);
+            Assert.AreEqual(24, p.TotalEntropyBytes);
+            Assert.AreEqual(16, p.EntropyBytesSinceLastDigest);
             p.GetDigest();
-            Assert.AreEqual(p.TotalEntropyBytes, 24);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 0);
+            Assert.AreEqual(24, p.TotalEntropyBytes);
+            Assert.AreEqual(0, p.EntropyBytesSinceLastDigest);
         }
 
 
@@ -113,7 +113,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void Pool_CanUseDifferentHashAlgorithm()
         {
-            var p = new EntropyPool(new SHA256Managed());
+            var p = new EntropyPool(SHA256.Create());
             p.Add(EventFromBytes(_Zero8Bytes));
             Assert.IsFalse(p.GetDigest().All(b => b == 0));
         }
@@ -124,7 +124,7 @@ namespace MurrayGrant.Terninger.Test
             var blake2b = System.Data.HashFunction.Blake2.Blake2BFactory.Instance.Create();
           
             Assert.Fail("TODO: must change the EntropyPool to accept an object which we can plug various hash implementations into.");
-            var p = new EntropyPool(new SHA256Managed());
+            var p = new EntropyPool(SHA256.Create());
             p.Add(EventFromBytes(_Zero8Bytes));
             Assert.IsFalse(p.GetDigest().All(b => b == 0));
         }
@@ -150,8 +150,8 @@ namespace MurrayGrant.Terninger.Test
             p.Add(evt);
             p.Add(evt);
             p.Add(evt);
-            Assert.AreEqual(p.TotalEntropyBytes, 48);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 48);
+            Assert.AreEqual(48, p.TotalEntropyBytes);
+            Assert.AreEqual(48, p.EntropyBytesSinceLastDigest);
         }
         [TestMethod]
         public void Pool_After48BytesAreIgnored()
@@ -165,8 +165,8 @@ namespace MurrayGrant.Terninger.Test
             p.Add(evt);
             p.Add(evt);
             p.Add(evt);     // This triggers the "too much entropy from one source" thing.
-            Assert.AreEqual(p.TotalEntropyBytes, 48);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 48);
+            Assert.AreEqual(48, p.TotalEntropyBytes);
+            Assert.AreEqual(48, p.EntropyBytesSinceLastDigest);
         }
         [TestMethod]
         public void Pool_TwoSourcesCanGoBeyond48BytesEachWhenEvenlyDistributed()
@@ -182,8 +182,8 @@ namespace MurrayGrant.Terninger.Test
             p.Add(evt2);
             p.Add(evt);
             p.Add(evt2);
-            Assert.AreEqual(p.TotalEntropyBytes, 128);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 128);
+            Assert.AreEqual(128, p.TotalEntropyBytes);
+            Assert.AreEqual(128, p.EntropyBytesSinceLastDigest);
         }
         [TestMethod]
         public void Pool_ThreeSourcesCanGoBeyond48BytesEachWhenEvenlyDistributed()
@@ -204,8 +204,8 @@ namespace MurrayGrant.Terninger.Test
             p.Add(evt);
             p.Add(evt2);
             p.Add(evt3);
-            Assert.AreEqual(p.TotalEntropyBytes, 192);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 192);
+            Assert.AreEqual(192, p.TotalEntropyBytes);
+            Assert.AreEqual(192, p.EntropyBytesSinceLastDigest);
         }
         [TestMethod]
         public void Pool_OneSourceIsLimitedWhenDominating()
@@ -217,21 +217,21 @@ namespace MurrayGrant.Terninger.Test
             p.Add(evt);
             p.Add(evt);
             p.Add(evt);     // Ignored.
-            Assert.AreEqual(p.TotalEntropyBytes, 48);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 48);
+            Assert.AreEqual(48, p.TotalEntropyBytes);
+            Assert.AreEqual(48, p.EntropyBytesSinceLastDigest);
 
             p.Add(evt2);
             p.Add(evt2);
             p.Add(evt2);
-            Assert.AreEqual(p.TotalEntropyBytes, 96);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 96);
+            Assert.AreEqual(96, p.TotalEntropyBytes);
+            Assert.AreEqual(96, p.EntropyBytesSinceLastDigest);
 
             p.Add(evt);
             p.Add(evt);
             p.Add(evt);
             p.Add(evt);     // Ignored.
-            Assert.AreEqual(p.TotalEntropyBytes, 144);
-            Assert.AreEqual(p.EntropyBytesSinceLastDigest, 144);
+            Assert.AreEqual(144, p.TotalEntropyBytes);
+            Assert.AreEqual(144, p.EntropyBytesSinceLastDigest);
         }
         [TestMethod]
         public void Pool_GetDigestResetsCountsBySource()
@@ -239,9 +239,9 @@ namespace MurrayGrant.Terninger.Test
             var p = new EntropyPool();
             var evt = EventFromBytes(_Zero16Bytes);
             p.Add(evt);
-            Assert.AreEqual(p.GetCountOfBytesBySource().Count, 1);
+            Assert.HasCount(1, p.GetCountOfBytesBySource());
             var digest = p.GetDigest();
-            Assert.AreEqual(p.GetCountOfBytesBySource().Count, 0);
+            Assert.HasCount(0, p.GetCountOfBytesBySource());
         }
 
 
@@ -249,127 +249,127 @@ namespace MurrayGrant.Terninger.Test
         public void Accumulator_DefaultCreator()
         {
             var a = new EntropyAccumulator();
-            Assert.AreEqual(a.LinearPoolCount, 28);
-            Assert.AreEqual(a.RandomPoolCount, 12);
-            Assert.AreEqual(a.TotalPoolCount, 40);
-            Assert.AreEqual(a.TotalEntropyBytes, 0);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.AreEqual(28, a.LinearPoolCount);
+            Assert.AreEqual(12, a.RandomPoolCount);
+            Assert.AreEqual(40, a.TotalPoolCount);
+            Assert.AreEqual(0, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_WithRandomGenerator()
         {
             var a = new EntropyAccumulator(_Rng);
-            Assert.AreEqual(a.LinearPoolCount, 28);
-            Assert.AreEqual(a.RandomPoolCount, 12);
-            Assert.AreEqual(a.TotalPoolCount, 40);
-            Assert.AreEqual(a.TotalEntropyBytes, 0);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.AreEqual(28, a.LinearPoolCount);
+            Assert.AreEqual(12, a.RandomPoolCount);
+            Assert.AreEqual(40, a.TotalPoolCount);
+            Assert.AreEqual(0, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_WithMinimumPools()
         {
             var a = new EntropyAccumulator(2, 2, _Rng);
-            Assert.AreEqual(a.LinearPoolCount, 2);
-            Assert.AreEqual(a.RandomPoolCount, 2);
-            Assert.AreEqual(a.TotalPoolCount, 4);
-            Assert.AreEqual(a.TotalEntropyBytes, 0);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.AreEqual(2, a.LinearPoolCount);
+            Assert.AreEqual(2, a.RandomPoolCount);
+            Assert.AreEqual(4, a.TotalPoolCount);
+            Assert.AreEqual(0, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_WithMaximumPools()
         {
             var a = new EntropyAccumulator(64, 64, _Rng);
-            Assert.AreEqual(a.LinearPoolCount, 64);
-            Assert.AreEqual(a.RandomPoolCount, 64);
-            Assert.AreEqual(a.TotalPoolCount, 128);
-            Assert.AreEqual(a.TotalEntropyBytes, 0);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.AreEqual(64, a.LinearPoolCount);
+            Assert.AreEqual(64, a.RandomPoolCount);
+            Assert.AreEqual(128, a.TotalPoolCount);
+            Assert.AreEqual(0, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_WithMinimumRandomPools()
         {
             var a = new EntropyAccumulator(0, 4, _Rng);
-            Assert.AreEqual(a.LinearPoolCount, 0);
-            Assert.AreEqual(a.RandomPoolCount, 4);
-            Assert.AreEqual(a.TotalPoolCount, 4);
-            Assert.AreEqual(a.TotalEntropyBytes, 0);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.AreEqual(0, a.LinearPoolCount);
+            Assert.AreEqual(4, a.RandomPoolCount);
+            Assert.AreEqual(4, a.TotalPoolCount);
+            Assert.AreEqual(0, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_WithMinimumLinearPools()
         {
             var a = new EntropyAccumulator(4, 0, _Rng);
-            Assert.AreEqual(a.LinearPoolCount, 4);
-            Assert.AreEqual(a.RandomPoolCount, 0);
-            Assert.AreEqual(a.TotalPoolCount, 4);
-            Assert.AreEqual(a.TotalEntropyBytes, 0);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.AreEqual(4, a.LinearPoolCount);
+            Assert.AreEqual(0, a.RandomPoolCount);
+            Assert.AreEqual(4, a.TotalPoolCount);
+            Assert.AreEqual(0, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_WithMaximumRandomPools()
         {
             var a = new EntropyAccumulator(0, 64, _Rng);
-            Assert.AreEqual(a.LinearPoolCount, 0);
-            Assert.AreEqual(a.RandomPoolCount, 64);
-            Assert.AreEqual(a.TotalPoolCount, 64);
-            Assert.AreEqual(a.TotalEntropyBytes, 0);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.AreEqual(0, a.LinearPoolCount);
+            Assert.AreEqual(64, a.RandomPoolCount);
+            Assert.AreEqual(64, a.TotalPoolCount);
+            Assert.AreEqual(0, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_WithMaximumLinearPools()
         {
             var a = new EntropyAccumulator(64, 0, _Rng);
-            Assert.AreEqual(a.LinearPoolCount, 64);
-            Assert.AreEqual(a.RandomPoolCount, 0);
-            Assert.AreEqual(a.TotalPoolCount, 64);
-            Assert.AreEqual(a.TotalEntropyBytes, 0);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.AreEqual(64, a.LinearPoolCount);
+            Assert.AreEqual(0, a.RandomPoolCount);
+            Assert.AreEqual(64, a.TotalPoolCount);
+            Assert.AreEqual(0, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_WithCustomHashFunction()
         {
-            var a = new EntropyAccumulator(16, 16, _Rng, () => new SHA256Managed());
-            Assert.AreEqual(a.LinearPoolCount, 16);
-            Assert.AreEqual(a.RandomPoolCount, 16);
-            Assert.AreEqual(a.TotalPoolCount, 32);
-            Assert.AreEqual(a.TotalEntropyBytes, 0);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            var a = new EntropyAccumulator(16, 16, _Rng, () => SHA256.Create());
+            Assert.AreEqual(16, a.LinearPoolCount);
+            Assert.AreEqual(16, a.RandomPoolCount);
+            Assert.AreEqual(32, a.TotalPoolCount);
+            Assert.AreEqual(0, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
 
         [TestMethod]
@@ -394,12 +394,12 @@ namespace MurrayGrant.Terninger.Test
         {
             var a = new EntropyAccumulator(_Rng);
             a.Add(EventFromBytes(_Zero8Bytes));
-            Assert.AreEqual(a.TotalEntropyBytes, 8);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 8);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 8);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 8);
+            Assert.AreEqual(8, a.TotalEntropyBytes);
+            Assert.AreEqual(8, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(8, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(8, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_AddTwiceIncreasesPoolEntropy()
@@ -407,12 +407,12 @@ namespace MurrayGrant.Terninger.Test
             var a = new EntropyAccumulator(_Rng);
             a.Add(EventFromBytes(_Zero8Bytes));
             a.Add(EventFromBytes(_Zero8Bytes));
-            Assert.AreEqual(a.TotalEntropyBytes, 16);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 16);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 8);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 8);
+            Assert.AreEqual(16, a.TotalEntropyBytes);
+            Assert.AreEqual(16, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(8, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(8, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_AddPoolCountAddsToAllPools()
@@ -420,12 +420,12 @@ namespace MurrayGrant.Terninger.Test
             var a = new EntropyAccumulator(_Rng);
             for (int i = 0; i < a.TotalPoolCount; i++)
                 a.Add(EventFromBytes(_Zero8Bytes));
-            Assert.AreEqual(a.TotalEntropyBytes, _Zero8Bytes.Length * a.TotalPoolCount);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, _Zero8Bytes.Length * a.TotalPoolCount);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 8);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 8);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 8);
+            Assert.AreEqual(_Zero8Bytes.Length * a.TotalPoolCount, a.TotalEntropyBytes);
+            Assert.AreEqual(_Zero8Bytes.Length * a.TotalPoolCount, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(8, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(8, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(8, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_AddPoolCountPlusOneAddsToAllPoolsAndFirstPool()
@@ -434,12 +434,12 @@ namespace MurrayGrant.Terninger.Test
             for (int i = 0; i < a.TotalPoolCount; i++)
                 a.Add(EventFromBytes(_Zero8Bytes));
             a.Add(EventFromBytes(_Zero8Bytes));
-            Assert.AreEqual(a.TotalEntropyBytes, (_Zero8Bytes.Length * a.TotalPoolCount) + _Zero8Bytes.Length);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, (_Zero8Bytes.Length * a.TotalPoolCount) + _Zero8Bytes.Length);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 16);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 8);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 16);
+            Assert.AreEqual((_Zero8Bytes.Length * a.TotalPoolCount) + _Zero8Bytes.Length, a.TotalEntropyBytes);
+            Assert.AreEqual((_Zero8Bytes.Length * a.TotalPoolCount) + _Zero8Bytes.Length, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(16, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(8, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(16, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_AddPoolCountTwiceAddsToAllPools()
@@ -447,59 +447,59 @@ namespace MurrayGrant.Terninger.Test
             var a = new EntropyAccumulator(_Rng);
             for (int i = 0; i < a.TotalPoolCount * 2; i++)
                 a.Add(EventFromBytes(_Zero8Bytes));
-            Assert.AreEqual(a.TotalEntropyBytes, _Zero8Bytes.Length * a.TotalPoolCount * 2);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, _Zero8Bytes.Length * a.TotalPoolCount * 2);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 16);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 16);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 16);
+            Assert.AreEqual(_Zero8Bytes.Length * a.TotalPoolCount * 2, a.TotalEntropyBytes);
+            Assert.AreEqual(_Zero8Bytes.Length * a.TotalPoolCount * 2, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(16, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(16, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(16, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_NextSeedWithZeroEntropy()
         {
             var a = new EntropyAccumulator(_Rng);
-            Assert.IsTrue(a.NextSeed().Length > 0);
-            Assert.AreEqual(a.TotalEntropyBytes, 0);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 1);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.IsNotEmpty(a.NextSeed());
+            Assert.AreEqual(0, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(1, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_NextSeedResetsCountersSinceLastSeed()
         {
             var a = new EntropyAccumulator(_Rng);
             a.Add(EventFromBytes(_Zero8Bytes));
-            Assert.IsTrue(a.NextSeed().Length > 0);
-            Assert.AreEqual(a.TotalEntropyBytes, 8);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 1);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.IsNotEmpty(a.NextSeed());
+            Assert.AreEqual(8, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(1, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_NextSeedResetsCountersSinceLastSeedTwice()
         {
             var a = new EntropyAccumulator(_Rng);
             a.Add(EventFromBytes(_Zero8Bytes));
-            Assert.IsTrue(a.NextSeed().Length > 0);
-            Assert.AreEqual(a.TotalEntropyBytes, 8);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 1);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.IsNotEmpty(a.NextSeed());
+            Assert.AreEqual(8, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(1, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
 
             a.Add(EventFromBytes(_Zero8Bytes));
-            Assert.IsTrue(a.NextSeed().Length > 0);
-            Assert.AreEqual(a.TotalEntropyBytes, 16);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.TotalReseedEvents, 2);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 0);
+            Assert.IsNotEmpty(a.NextSeed());
+            Assert.AreEqual(16, a.TotalEntropyBytes);
+            Assert.AreEqual(0, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(2, a.TotalReseedEvents);
+            Assert.AreEqual(0, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.PoolZeroEntropyBytesSinceLastSeed);
         }
 
         [TestMethod]
@@ -510,24 +510,24 @@ namespace MurrayGrant.Terninger.Test
             var a = new EntropyAccumulator(32, 0, _Rng);
             a.Add(EventFromBytes(_Zero1KBytes));
             a.Add(EventFromBytes(_Zero2KBytes));
-            Assert.AreEqual(a.TotalEntropyBytes, 3072);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 3072);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 96);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 96);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 96);
+            Assert.AreEqual(3072, a.TotalEntropyBytes);
+            Assert.AreEqual(3072, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(96, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(96, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(96, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_1kBEntropyPacket()
         {
             var a = new EntropyAccumulator(32, 0, _Rng);
             a.Add(EventFromBytes(_Zero1KBytes));
-            Assert.AreEqual(a.TotalEntropyBytes, _Zero1KBytes.Length);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, _Zero1KBytes.Length);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 32);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 32);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 32);
+            Assert.AreEqual(_Zero1KBytes.Length, a.TotalEntropyBytes);
+            Assert.AreEqual(_Zero1KBytes.Length, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(32, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(32, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(32, a.PoolZeroEntropyBytesSinceLastSeed);
         }
 
         [TestMethod]
@@ -535,24 +535,24 @@ namespace MurrayGrant.Terninger.Test
         {
             var a = new EntropyAccumulator(32, 0, _Rng);
             a.Add(EventFromBytes(new byte[24]));
-            Assert.AreEqual(a.TotalEntropyBytes, 24);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 24);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 16);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 16);
+            Assert.AreEqual(24, a.TotalEntropyBytes);
+            Assert.AreEqual(24, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(16, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(16, a.PoolZeroEntropyBytesSinceLastSeed);
         }
         [TestMethod]
         public void Accumulator_48ByteEntropyPacketUneven()
         {
             var a = new EntropyAccumulator(32, 0, _Rng);
             a.Add(EventFromBytes(new byte[48]));
-            Assert.AreEqual(a.TotalEntropyBytes, 48);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, 48);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
-            Assert.AreEqual(a.MaxPoolEntropyBytesSinceLastSeed, 16);
-            Assert.AreEqual(a.MinPoolEntropyBytesSinceLastSeed, 0);
-            Assert.AreEqual(a.PoolZeroEntropyBytesSinceLastSeed, 16);
+            Assert.AreEqual(48, a.TotalEntropyBytes);
+            Assert.AreEqual(48, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
+            Assert.AreEqual(16, a.MaxPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.MinPoolEntropyBytesSinceLastSeed);
+            Assert.AreEqual(16, a.PoolZeroEntropyBytesSinceLastSeed);
         }
 
 
@@ -567,9 +567,9 @@ namespace MurrayGrant.Terninger.Test
                 a.Add(EventFromBytes(bytes));
                 totalEntropy = totalEntropy + bytes.Length;
             }
-            Assert.AreEqual(a.TotalEntropyBytes, totalEntropy);
-            Assert.AreEqual(a.AvailableEntropyBytesSinceLastSeed, totalEntropy);
-            Assert.AreEqual(a.TotalReseedEvents, 0);
+            Assert.AreEqual(totalEntropy, a.TotalEntropyBytes);
+            Assert.AreEqual(totalEntropy, a.AvailableEntropyBytesSinceLastSeed);
+            Assert.AreEqual(0, a.TotalReseedEvents);
         }
 
         private static IRandomNumberGenerator CreateRandomGenerator() => new StandardRandomWrapperGenerator(new Rand(1));
