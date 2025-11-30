@@ -192,8 +192,8 @@ namespace MurrayGrant.Terninger.Test
             crng.GetRandomBytes(64);
 
             crng.Dispose();
-            Assert.ThrowsException<ObjectDisposedException>(() => crng.GetRandomBytes(64));
-            Assert.ThrowsException<ObjectDisposedException>(() => crng.Reseed(_ZeroKey32Bytes));
+            Assert.Throws<ObjectDisposedException>(() => crng.GetRandomBytes(64));
+            Assert.Throws<ObjectDisposedException>(() => crng.Reseed(_ZeroKey32Bytes));
         }
     }
 }

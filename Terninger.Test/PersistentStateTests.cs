@@ -78,7 +78,7 @@ SomeNamespace,aKey,utf8text,value");
         {
             var s = MemoryStreamOf(@"TngrData,1");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to parse header line of 'MemoryStream': at least 4 items expected, but found 2.", ex.Message);
         }
 
@@ -87,7 +87,7 @@ SomeNamespace,aKey,utf8text,value");
         {
             var s = MemoryStreamOf(@"00000000,1,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=,0");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to parse header line of 'MemoryStream': expected magic string 'TngrData', but found '00000000'.", ex.Message);
         }
 
@@ -96,7 +96,7 @@ SomeNamespace,aKey,utf8text,value");
         {
             var s = MemoryStreamOf(@"TngrData,z,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=,0");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to parse header line of 'MemoryStream': could not parse file version 'z'.", ex.Message);
         }
 
@@ -105,7 +105,7 @@ SomeNamespace,aKey,utf8text,value");
         {
             var s = MemoryStreamOf(@"TngrData,1,••™=,0");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to parse header line of 'MemoryStream': could not parse checksum '••™='.", ex.Message);
         }
 
@@ -114,7 +114,7 @@ SomeNamespace,aKey,utf8text,value");
         {
             var s = MemoryStreamOf(@"TngrData,1,abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkl,0");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to parse header line of 'MemoryStream': could not parse checksum 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkl'.", ex.Message);
         }
 
@@ -132,7 +132,7 @@ SomeNamespace,aKey,utf8text,value");
             var s = MemoryStreamOf(@"TngrData,1,0CBDE130FBE6ED6A6709013810F81CC4CB6B6D236A49569DA1DD0F0A114FDF6E,1
 SomeNamespace");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to read data line 2 of 'MemoryStream': at least 4 items expected, but found 1.", ex.Message);
         }
 
@@ -142,7 +142,7 @@ SomeNamespace");
             var s = MemoryStreamOf($@"TngrData,1,0CBDE130FBE6ED6A6709013810F81CC4CB6B6D236A49569DA1DD0F0A114FDF6E,1
 Some{"\u0001"}Namespace,aKey,base64,dmFsdWU=");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to read data line 2 of 'MemoryStream': namespace 'SomeNamespace' is blank or contains invalid characters in the range U+0000-U+001F,U+0080-U+009F.", ex.Message);
         }
 
@@ -152,7 +152,7 @@ Some{"\u0001"}Namespace,aKey,base64,dmFsdWU=");
             var s = MemoryStreamOf(@"TngrData,1,0CBDE130FBE6ED6A6709013810F81CC4CB6B6D236A49569DA1DD0F0A114FDF6E,1
 ,aKey,base64,dmFsdWU=");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to read data line 2 of 'MemoryStream': namespace '' is blank or contains invalid characters in the range U+0000-U+001F,U+0080-U+009F.", ex.Message);
         }
 
@@ -162,7 +162,7 @@ Some{"\u0001"}Namespace,aKey,base64,dmFsdWU=");
             var s = MemoryStreamOf($@"TngrData,1,0CBDE130FBE6ED6A6709013810F81CC4CB6B6D236A49569DA1DD0F0A114FDF6E,1
 SomeNamespace,a{"\u0001"}Key,base64,dmFsdWU=");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to read data line 2 of 'MemoryStream': key 'aKey' is blank or contains invalid characters in the range U+0000-U+001F,U+0080-U+009F.", ex.Message);
 
         }
@@ -173,7 +173,7 @@ SomeNamespace,a{"\u0001"}Key,base64,dmFsdWU=");
             var s = MemoryStreamOf(@"TngrData,1,0CBDE130FBE6ED6A6709013810F81CC4CB6B6D236A49569DA1DD0F0A114FDF6E,1
 SomeNamespace,,base64,dmFsdWU=");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to read data line 2 of 'MemoryStream': key '' is blank or contains invalid characters in the range U+0000-U+001F,U+0080-U+009F.", ex.Message);
         }
 
@@ -183,7 +183,7 @@ SomeNamespace,,base64,dmFsdWU=");
             var s = MemoryStreamOf(@"TngrData,1,0CBDE130FBE6ED6A6709013810F81CC4CB6B6D236A49569DA1DD0F0A114FDF6E,1
 SomeNamespace,aKey,base64,•™=");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to read data line 2 of 'MemoryStream': could not parse base64 value '•™='.", ex.Message);
         }
 
@@ -193,7 +193,7 @@ SomeNamespace,aKey,base64,•™=");
             var s = MemoryStreamOf(@"TngrData,1,0CBDE130FBE6ED6A6709013810F81CC4CB6B6D236A49569DA1DD0F0A114FDF6E,1
 SomeNamespace,aKey,hex,•™=");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to read data line 2 of 'MemoryStream': could not parse hex value '•™='.", ex.Message);
         }
 
@@ -203,7 +203,7 @@ SomeNamespace,aKey,hex,•™=");
             var s = MemoryStreamOf(@"TngrData,1,0CBDE130FBE6ED6A6709013810F81CC4CB6B6D236A49569DA1DD0F0A114FDF6E,1
 SomeNamespace,aKey,base95,•™=");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Unable to read data line 2 of 'MemoryStream': unknown value encoding 'base95'.", ex.Message);
         }
 
@@ -213,7 +213,7 @@ SomeNamespace,aKey,base95,•™=");
             var s = MemoryStreamOf(@"TngrData,1,0000000000000000000000000000000000000000000000000000000000000000,1
 SomeNamespace,aKey,base64,dmFsdWU=");
             var reader = new TextStreamReader(s);
-            var ex = await Assert.ThrowsExceptionAsync<InvalidDataException>(() => reader.ReadAsync());
+            var ex = await Assert.ThrowsAsync<InvalidDataException>(() => reader.ReadAsync());
             Assert.AreEqual("Header checksum '0000000000000000000000000000000000000000000000000000000000000000' does not match data checksum 'C6879AC3611B142E4DDDFFC1AE1F4140EA9B1F1424FBDC4F6DD2E6B848AEE855': file content has been corrupted.", ex.Message);
         }
         #endregion

@@ -323,9 +323,9 @@ namespace MurrayGrant.Terninger.Test
 
             await rng.DisposeAsync();
 
-            Assert.ThrowsException<ObjectDisposedException>(() => rng.GetRandomBytes(32));
-            Assert.ThrowsException<ObjectDisposedException>(() => rng.Reseed());
-            Assert.ThrowsException<ObjectDisposedException>(() => rng.Start());
+            Assert.Throws<ObjectDisposedException>(() => rng.GetRandomBytes(32));
+            Assert.Throws<ObjectDisposedException>(() => rng.Reseed());
+            Assert.Throws<ObjectDisposedException>(() => rng.Start());
 
         }
 

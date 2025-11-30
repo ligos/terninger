@@ -375,17 +375,17 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void Accumulator_Failure_TooManyLinearPools()
         {
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() => new EntropyAccumulator(65, 0, _Rng));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new EntropyAccumulator(65, 0, _Rng));
         }
         [TestMethod]
         public void Accumulator_Failure_TooManyRandomPools()
         {
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() => new EntropyAccumulator(0, 65, _Rng));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new EntropyAccumulator(0, 65, _Rng));
         }
         [TestMethod]
         public void Accumulator_Failure_TooFewPools()
         {
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() => new EntropyAccumulator(1, 1, _Rng));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new EntropyAccumulator(1, 1, _Rng));
         }
 
 

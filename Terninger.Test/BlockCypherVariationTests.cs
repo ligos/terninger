@@ -226,7 +226,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void MismatchedKeyMaterialAndCypherKeySizeThrows()
         {
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() => 
+            Assert.Throws<ArgumentOutOfRangeException>(() => 
                 new CypherBasedPrngGenerator(_ZeroKey16Bytes, CryptoPrimitive.Aes256Managed(), SHA256.Create(), new CypherCounter(16))
             );
         }
@@ -234,7 +234,7 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void Non16Or32ByteCypherThrows()
         {
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new CypherBasedPrngGenerator(new byte[14], CreateCryptoPrimitive(new TripleDESCryptoServiceProvider()), SHA256.Create(), new CypherCounter(16))
             );
         }
@@ -242,14 +242,14 @@ namespace MurrayGrant.Terninger.Test
         [TestMethod]
         public void SmallerHashThanCypherKeySizeThrows()
         {
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256(), MD5.Create(), new CypherCounter(16))
             );
         }
         [TestMethod]
         public void DifferentCounterAndCypherBlockSizeThrows()
         {
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new CypherBasedPrngGenerator(_ZeroKey32Bytes, CryptoPrimitive.Aes256(), SHA256.Create(), new CypherCounter(32))
             );
         }
