@@ -31,6 +31,7 @@ namespace MurrayGrant.Terninger
             new ExternalWebContentSource(userAgent),
             new AnuExternalRandomSource(anuApiKey, userAgent: userAgent),
             new BeaconNistExternalRandomSource(userAgent: userAgent),
+            new DrandExternalRandomSource(userAgent: userAgent),
             new RandomOrgExternalRandomSource(userAgent: userAgent, apiKey: randomOrgApiKey),
         };
 
