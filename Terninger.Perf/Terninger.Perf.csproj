@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net80;net60;net48</TargetFrameworks>
+    <TargetFrameworks>net10.0;net8.0;net48</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
-    <Copyright>Copyright © Murray Grant 2017-2022</Copyright>
+    <Copyright>Copyright © Murray Grant 2017-2025</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Description>Console app for benchmarks and performance tests of Terninger.
 
 See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
@@ -31,11 +31,11 @@ See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of n
 
   <!-- FOR NUGET BUILDS -->
   <ItemGroup Condition="'$(RefNugets)'=='True'">
-    <PackageReference Include="Terninger.Random.Cypher" Version="0.2.*" />
-    <PackageReference Include="Terninger.Random.Pooled" Version="0.2.*" />
-    <PackageReference Include="Terninger" Version="0.2.*" />
-    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.2.*" />
-    <PackageReference Include="Terninger.EntropySources.Network" Version="0.2.*" />
+    <PackageReference Include="Terninger.Random.Cypher" Version="0.3.0" />
+    <PackageReference Include="Terninger.Random.Pooled" Version="0.5.0" />
+    <PackageReference Include="Terninger" Version="0.5.0" />
+    <PackageReference Include="Terninger.EntropySources.Extended" Version="0.5.0" />
+    <PackageReference Include="Terninger.EntropySources.Network" Version="0.6.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,7 +43,7 @@ See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of n
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="5.0.0" />
   </ItemGroup>
 

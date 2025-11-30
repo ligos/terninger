@@ -1,23 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net80;net60;net48</TargetFrameworks>
+    <TargetFrameworks>net10.0;net8.0;net48</TargetFrameworks>
     <Company>Murray Grant</Company>
     <Product>Terninger</Product>
-    <Copyright>Copyright © Murray Grant 2017-2024</Copyright>
+    <Copyright>Copyright © Murray Grant 2017-2025</Copyright>
     <Authors>Murray Grant</Authors>
-    <Version>0.5.0</Version>
+    <Version>0.6.0</Version>
     <Description>Console app to use Terninger from all .NET command line environments.
 
 To get started, see the MurrayGrant.Terninger.RandomGenerator class.
 
 See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of nuget packages.</Description>
     <PackageReleaseNotes>
-     0.5.0
-     - Add net80 target
-     - Update configuration for enhancements to PingStatsSource (Terninger.EntropySources.Network)
-     0.4.0
-     - Removed HotBits network source due to retirement of true random source.
+      0.6.0
+      - Add net10.0 target. Remove net60 target.
+      - Target Terninger.EntropySources.Network 0.6.0
+      0.5.0
+      - Add net80 target
+      - Update configuration for enhancements to PingStatsSource (Terninger.EntropySources.Network)
+      0.4.0
+      - Removed HotBits network source due to retirement of true random source.
     </PackageReleaseNotes>
     <RootNamespace>MurrayGrant.Terninger.Console</RootNamespace>
     <LangVersion>default</LangVersion>
@@ -49,11 +52,11 @@ See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of n
     <PackageReference Include="Terninger.Random.Pooled" Version="0.5.0" />
     <PackageReference Include="Terninger" Version="0.5.0" />
     <PackageReference Include="Terninger.EntropySources.Extended" Version="0.5.0" />
-    <PackageReference Include="Terninger.EntropySources.Network" Version="0.5.0" />
+    <PackageReference Include="Terninger.EntropySources.Network" Version="0.6.0" />
   </ItemGroup>
     
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup>
