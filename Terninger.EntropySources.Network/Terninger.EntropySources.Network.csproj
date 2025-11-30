@@ -15,7 +15,9 @@ See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of n
       0.6.0
       - HTTPS connections use TLS1.2+ by default; TLS 1.0 and 1.1 must be enabled explicitly.
       - Add net10.0 target. Remove net60 target.
-      - TODO: other changes
+      - Add TrngInfoRandomSource - https://trng.info/
+      - Remove QrngEthzChExternalRandomSource and RandomNumbersInfoExternalRandomSource.
+      - Remove non-functional web URLs for ExternalWebContentSource.
       0.5.0
       - IMPORTANT: configuration changes are required for PingStatsSource.
       - Add net80 target.

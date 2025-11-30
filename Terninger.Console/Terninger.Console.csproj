@@ -15,6 +15,9 @@ See https://id.ligos.net/murray/Terninger/ for PGP &amp; Keybase signatures of n
     <PackageReleaseNotes>
       0.6.0
       - Add net10.0 target. Remove net60 target.
+      - Configuration file updates required:
+        - Removed: QrngEthzChExternal and RandomNumbersInfoExternal
+        - Added: TrngInfoExternal
       - Target Terninger.EntropySources.Network 0.6.0
       0.5.0
       - Add net80 target
