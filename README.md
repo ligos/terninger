@@ -139,6 +139,7 @@ Any generator which can produce a `byte[]` can be easily adapted.
   * Removed: QrngEthzChExternal and RandomNumbersInfoExternal (as random sources are unavailable)
   * Added: TrngInfoExternal (new source: https://trng.info/)
 * Support net10.0, net8.0 and net framework 4.8.
+* Only updated NuGet package: `Terninger.EntropySources.Network` (0.6.0)
  
 **0.5.0**:
 
