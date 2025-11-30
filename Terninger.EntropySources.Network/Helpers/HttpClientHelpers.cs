@@ -43,10 +43,10 @@ namespace MurrayGrant.Terninger.Helpers
             var handler = new HttpClientHandler();
             handler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 #if NETSTANDARD2_0
-            // TLS1.0+ by default, or whatever the user provides.
-            handler.SslProtocols = sslProtocols == SslProtocols.None ? SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12 : sslProtocols;
+            // TLS1.2+ by default, or whatever the user provides.
+            handler.SslProtocols = sslProtocols == SslProtocols.None ? SslProtocols.Tls12 : sslProtocols;
 #elif NET6_0_OR_GREATER
-            handler.SslProtocols = sslProtocols == SslProtocols.None ? SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12 | SslProtocols.Tls13 : sslProtocols;
+            handler.SslProtocols = sslProtocols == SslProtocols.None ? SslProtocols.Tls12 | SslProtocols.Tls13 : sslProtocols;
 #endif
             if (handlerCustomisation != null)
                 handlerCustomisation(handler);
