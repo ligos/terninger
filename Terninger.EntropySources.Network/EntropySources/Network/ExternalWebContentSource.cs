@@ -104,9 +104,9 @@ namespace MurrayGrant.Terninger.EntropySources.Network
             using (var reader = new StreamReader(stream, Encoding.UTF8, false, 32 * 1024, true))
             {
                 int lineNum = 0;
-                while (!reader.EndOfStream)
+                var l = await reader.ReadLineAsync();
+                while (l is not null)
                 {
-                    var l = await reader.ReadLineAsync();
                     lineNum = lineNum + 1;
 
                     if (String.IsNullOrWhiteSpace(l))
@@ -123,6 +123,7 @@ namespace MurrayGrant.Terninger.EntropySources.Network
                         log.Warn("Unable to parse URL for {0}: {1} (line {2:N0})", nameof(ExternalWebContentSource), l, lineNum);
                     }
 
+                    l = await reader.ReadLineAsync();
                 }
             }
             log.Debug("Loaded {0:N0} source URLs.", sources.Count);
