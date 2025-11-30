@@ -133,6 +133,13 @@ Any generator which can produce a `byte[]` can be easily adapted.
 
 ### Changes ###
 
+**0.6.0**:
+
+* **IMPORTANT**: configuration changes are required:
+  * Removed: QrngEthzChExternal and RandomNumbersInfoExternal (as random sources are unavailable)
+  * Added: TrngInfoExternal (new source: https://trng.info/)
+* Support net10.0, net8.0 and net framework 4.8.
+ 
 **0.5.0**:
 
 * **IMPORTANT**: configuration changes are required for PingStatsSource. Please check your configuration.
