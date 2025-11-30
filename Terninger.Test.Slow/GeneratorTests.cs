@@ -95,8 +95,7 @@ namespace MurrayGrant.Terninger.Test.Slow
                 new DrandExternalRandomSource(userAgent: userAgent),
                 new ExternalWebContentSource(userAgent: userAgent),
                 new PingStatsSource(),
-                new QrngEthzChExternalRandomSource(userAgent: userAgent),
-                new RandomNumbersInfoExternalRandomSource(userAgent: userAgent),
+                new TrngInfoRandomSource(userAgent: userAgent),
                 new RandomOrgExternalRandomSource(userAgent: userAgent),
             };
 

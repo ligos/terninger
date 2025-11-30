@@ -204,6 +204,25 @@
 
       // Sample period at low priority. Default: 32 hours.
       "PeriodLowPriority": "32:00:00"
+    },
+
+    // Gather entropy from https://trng.info/
+    // True random source with public API.
+    // No published rate limits; 4Mbps (0.5MB/sec) hardware source.
+    // Remove this key to disable source.
+    "TrngInfoExternal": {
+      // Bytes returned per request / sample. 
+      // Default: 128. Minimum: 1. Maximum: 1000.
+      "BytesPerRequest": 128,
+
+      // Sample period at normal priority. Default: 8 hours.
+      "PeriodNormalPriority": "08:00:00",
+
+      // Sample period at high priority. Default: 2 minutes.
+      "PeriodHighPriority": "00:02:00",
+
+      // Sample period at low priority. Default: 32 hours.
+      "PeriodLowPriority": "32:00:00"
     }
   },
 

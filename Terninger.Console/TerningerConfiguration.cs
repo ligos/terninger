@@ -39,6 +39,8 @@ namespace MurrayGrant.Terninger.Console
 
         public EntropySources.Network.DrandExternalRandomSource.Configuration DrandExternal { get; set; }
 
+        public EntropySources.Network.TrngInfoRandomSource.Configuration TrngInfoExternal { get; set; }
+
         public EntropySources.Network.RandomOrgExternalRandomSource.Configuration RandomOrgExternal { get; set; }
     }
 }

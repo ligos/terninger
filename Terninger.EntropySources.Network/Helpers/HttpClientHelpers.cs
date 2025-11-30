@@ -67,7 +67,7 @@ namespace MurrayGrant.Terninger.Helpers
 
             result.DefaultRequestHeaders.UserAgent.Clear();
             result.DefaultRequestHeaders.UserAgent.ParseAdd(String.IsNullOrEmpty(userAgent) ? UserAgentString() : userAgent);
-            
+
             result.Timeout = timeout <= TimeSpan.Zero ? DefaultTimeout : timeout;
 
             return result;

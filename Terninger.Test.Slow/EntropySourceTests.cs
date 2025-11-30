@@ -225,12 +225,6 @@ namespace MurrayGrant.Terninger.Test.Slow
         }
         [TestMethod]
         [TestCategory("Network")]
-        public void RandomNumbersInfoExternalRandomSource_Network()
-        {
-            FuzzEntropySource(5, new RandomNumbersInfoExternalRandomSource(UnitTestUserAgent(), 32, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomNumbersInfoExternalRandomSource), Sleep500).GetAwaiter().GetResult();
-        }
-        [TestMethod]
-        [TestCategory("Network")]
         public void RandomOrgExternalRandomSourcePublic_Network()
         {
             FuzzEntropySource(5, new RandomOrgExternalRandomSource(UnitTestUserAgent(), 32, String.Empty, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(RandomOrgExternalRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
@@ -249,9 +243,9 @@ namespace MurrayGrant.Terninger.Test.Slow
         }
         [TestMethod]
         [TestCategory("Network")]
-        public void QrngEthzChExternalRandomSourcePublic_Network()
+        public void TrngInfoRandomSource_Network()
         {
-            FuzzEntropySource(5, new QrngEthzChExternalRandomSource(UnitTestUserAgent(), 32, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(QrngEthzChExternalRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
+            FuzzEntropySource(5, new TrngInfoRandomSource(UnitTestUserAgent(), 128, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), "Entropy_" + nameof(TrngInfoRandomSource) + "_Public", Sleep500).GetAwaiter().GetResult();
         }
         [TestMethod]
         [TestCategory("Network")]

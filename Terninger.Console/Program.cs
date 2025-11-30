@@ -355,6 +355,8 @@ namespace MurrayGrant.Terninger.Console
                         sources.Add(new BeaconNistExternalRandomSource(userAgent, config?.EntropySources?.BeaconNistExternal));
                     if (config?.EntropySources?.DrandExternal != null)
                         sources.Add(new DrandExternalRandomSource(userAgent, config?.EntropySources?.DrandExternal));
+                    if (config?.EntropySources?.TrngInfoExternal != null)
+                        sources.Add(new TrngInfoRandomSource(userAgent, config?.EntropySources?.TrngInfoExternal));
                     if (config?.EntropySources?.RandomOrgExternal != null)
                         sources.Add(new RandomOrgExternalRandomSource(userAgent, config?.EntropySources?.RandomOrgExternal));
                 }
