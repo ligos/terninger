@@ -10,7 +10,6 @@ https://www.abc.net.au/news/
 https://arstechnica.com/
 https://www.foxnews.com/
 https://stackoverflow.com/
-https://www.news.com.au/
 https://news.google.com.au/
 https://www.smh.com.au/
 https://www.bbc.com/news/
@@ -26,12 +25,9 @@ https://www.msn.com/?st=1
 https://www.yandex.ru/
 https://www.imdb.com/
 https://www.cnet.com/
-https://www.reuters.com/            
-https://www.washingtonpost.com/            
 https://superuser.com            
 https://www.dailymotion.com/au            
 https://www.telegraph.co.uk/            
-https://www.yelp.com/sydney            
 https://news.mit.edu/
 https://www.time.com/            
 https://www.baiyewang.com/      
@@ -47,12 +43,9 @@ https://marketingland.com/
 https://www.last.fm/
 https://www.independent.co.uk/
 https://www.nature.com/news/
-https://www.cbc.ca/            
 https://news.un.org/en/
 https://www.zdnet.com/
 https://www.chicagotribune.com/            
-https://www.ftc.gov/news-events/news/press-releases
-https://www.economist.com/
 https://www.thetimes.co.uk/?region=global
 https://www.infoseek.co.jp/
 https://www.meetup.com/en-AU/find/            
