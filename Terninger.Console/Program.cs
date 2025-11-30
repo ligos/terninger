@@ -355,10 +355,6 @@ namespace MurrayGrant.Terninger.Console
                         sources.Add(new BeaconNistExternalRandomSource(userAgent, config?.EntropySources?.BeaconNistExternal));
                     if (config?.EntropySources?.DrandExternal != null)
                         sources.Add(new DrandExternalRandomSource(userAgent, config?.EntropySources?.DrandExternal));
-                    if (config?.EntropySources?.QrngEthzChExternal != null)
-                        sources.Add(new QrngEthzChExternalRandomSource(userAgent, config?.EntropySources?.QrngEthzChExternal));
-                    if (config?.EntropySources?.RandomNumbersInfoExternal != null)
-                        sources.Add(new RandomNumbersInfoExternalRandomSource(userAgent, config?.EntropySources?.RandomNumbersInfoExternal));
                     if (config?.EntropySources?.RandomOrgExternal != null)
                         sources.Add(new RandomOrgExternalRandomSource(userAgent, config?.EntropySources?.RandomOrgExternal));
                 }
